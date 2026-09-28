@@ -28,9 +28,10 @@
 >   The most likely cause is an InnoDB race that TSan's timing exposes. It is monitored in every MySQL run.
 
 > [!NOTE]
-> **Measurement resolution on MySQL.** On apollo, two builds read 0.983 and 0.954 of the base, although their code is byte-identical. Only the layout differs: the code is shifted +480 B and the data +1 page.
-> - A layout control is running now: the data shifted by a page, and the code shifted by 480 B and by 512 B.
-> - Until it reports, read MySQL differences below ~3 % with care.
+> **Measurement resolution on MySQL.** On apollo, two builds read 0.989 and 0.954 of the base, although their program code is byte-identical. The two builds come from different compiler roots.
+> - The layout control rules out the program's layout on apollo. The base with its data shifted by a page reads 1.003, and with its code shifted by 480 B or by 512 B it reads 1.005 (4 rotated runs each).
+> - The gap therefore comes from the root, most likely its TSan runtime. A test that swaps the runtimes between the two builds is queued, and the same layout control on Intel (focs) runs tonight.
+> - Until they report, read MySQL differences between roots below ~3.5 % with care. Within one root, layout moved MySQL by ≤ 0.5 % on apollo.
 > - The debug build embeds the tree path through `__FILE__`, so every arm now gets a tree path of equal length.
 
 ---
@@ -76,7 +77,7 @@
 | **DynSTC-RT** | `f` 🟡 +0.8 `?` · `a` ⚪ +0.4 | `f` 🟡 +2.6 `?` · `a` ⚪ −0.3 | `f` 🔴 −2.2 | `a` ⚪ +0.1 | `f` 🟢 **+12.0** |
 | **N1-ST front** ¹ | `f` ⚪ 0.0 `?` · `a` ⚪ +0.2 | `f` ⚪ −0.8 · `a` ⚪ −0.2 | `f` 🟡 −1.4 | `f` 🟡 −1.5 · `a` 🟡 −1.8 | `f` 🟢 **+16.9** |
 | **N1-ST miss** ¹ | `f` 🔴 −4.3 `?` · `a` 🟢 **+2.0** | `f` 🔴 −2.8 · `a` ⚪ +0.1 | `f` 🟢 **+2.1** | `f` ⚪ −0.4 · `a` 🔴 −2.6 | `f` 🟢 **+9.8** |
-| **MEMINTR** | `a` 🟡 +0.7…+2.5 (2 sessions; cs1 +3.8 in both) · `f` screening | `a` ⚪ +0.9 · `f` ⚪ −0.4 (screening) | `f` 🔴 −2.5 (idle; under review) | `f` 🟡 +1.6 (screening) · `a` re-run queued | `f` ⚪ 0.0 |
+| **MEMINTR** | `a` 🟡 +0.7…+2.5 (2 sessions; cs1 +3.8 in both) · `f` screening | `a` ⚪ +0.9 · `f` ⚪ −0.4 (screening) | `f` 🔴 −2.5 (idle; perf: no cycle change, likely noise or layout) | `f` 🟡 +1.6 (screening) · `a` re-run queued | `f` ⚪ 0.0 |
 | **FE-SINK v2** ³ | `a` ⚪ +1.1 (stress2 alone); with FE-INL 🟡 −1.0 | `a` 🟡 −1.7; with FE-INL 🔴 −2.2 | `f` 🟢 **+4.1** (call entries; FE-INL alone +6.4); with FE-INL 🟡 −1.3 | `a` 🟢 **+2.8** (call entries; FE-INL alone +5.6); with FE-INL ⚪ +0.4 | `f` 🟡 −1.2; with FE-INL 🟡 −1.0 |
 | **exact DE package** ² | `a` ⚪ +0.8 | `f` 🟢 **+3.6** | `f` 🔴 −2.6 | `f` 🟢 **+3…+6** | `f` ⚪ +0.5 |
 
@@ -93,7 +94,7 @@
 - **N1-ST**. N1's inline test is skipped while the thread is in that single-thread mode, where it would always miss.
   - **front**: the flag is read before the test. This gives the largest gain on single-threaded code and a 1-3 % tax on multi-threaded code.
   - **miss**: the flag is read only on a miss. There is no tax on hits and about half the gain.
-- **MEMINTR** (idea 8b). A memcpy/memmove whose source is a constant or an uncaptured local has only its destination checked. Small gains on SQLite (checkpoint_starvation_1 +3.8 % in both apollo sessions) and memcached. Redis loses 2.5 %; the cause is under review (two hot interceptor copies, or page effects).
+- **MEMINTR** (idea 8b). A memcpy/memmove whose source is a constant or an uncaptured local has only its destination checked. Small gains on SQLite (checkpoint_starvation_1 +3.8 % in both apollo sessions) and memcached. Redis read −2.5 %, but a perf check found no mechanism: cycles unchanged on the losing commands (PING_MBULK 1.001, ZPOPMIN 0.995), so it is likely noise or layout.
 - **exact DE package**. DE's merging of adjacent checks and its loop ranges, made exact under verified removal.
 - **FE-SINK v2** ³. The function-entry call is sunk to the first point that needs the frame. It gains only with call entries and only on the two call-heavy servers, Redis (+4.1 %) and MySQL on AMD (+2.8 %), where FE-INL alone gives more (+6.4 %, +5.6 %). On top of FE-INL it adds nothing (MySQL +0.4 %) or costs 1-2 %, so it adds nothing to the best configurations. Audit A23: sound with conditions; premise P5 pending.
   - Arms in its legs: FB is the control, FI is FE-INL alone, FS is sink with call entries, FIS is sink with FE-INL, FIC is FE-INL-CSE (table 2).
