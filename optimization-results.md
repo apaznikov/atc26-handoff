@@ -30,8 +30,8 @@
 > [!NOTE]
 > **Measurement resolution on MySQL.** On apollo, two builds read 0.989 and 0.954 of the base, although their program code is byte-identical. The two builds come from different compiler roots.
 > - The layout control rules out the program's layout on apollo. The base with its data shifted by a page reads 1.003, and with its code shifted by 480 B or by 512 B it reads 1.005 (4 rotated runs each).
-> - The gap therefore comes from the root, most likely its TSan runtime. A test that swaps the runtimes between the two builds is queued, and the same layout control on Intel (focs) runs tonight.
-> - Until they report, read MySQL differences between roots below ~3.5 % with care. Within one root, layout moved MySQL by ≤ 0.5 % on apollo.
+> - A runtime swap settles it: the gap is the TSan runtime alone. The objects of either root linked with 3da0's runtime read 1.00; with ba53's runtime, 0.97 (read_only 0.94). Which change in ba53's runtime costs this is being traced.
+> - So MySQL numbers that compare arms from different roots carry up to ~3 % from the runtime; same-root comparisons do not. Within one root, layout moved MySQL by ≤ 0.5 % on apollo. The layout control on Intel (focs) is still queued.
 > - The debug build embeds the tree path through `__FILE__`, so every arm now gets a tree path of equal length.
 
 ---
