@@ -11,7 +11,7 @@
 
 > [!WARNING]
 > **Where nothing helps yet:** SQLite, memcached, and MySQL on Intel, where FE-INL *loses* 8-9 %. The four levers built for these apps and timed on 27-28 Sep gain nothing: LIBCALL-INLINE, N1-CSE and N1-ATOMIC stay within ±1 %, and FE-SINK loses 1-2 % (table 2).
-> The 28 Sep censuses show where memcached's cost actually sits, on the runtime side (table 4):
+> The 28 Sep censuses show where memcached's cost actually sits, on the runtime side (the separate runtime track, `runtime/README.md`):
 > - 97.6 % of its range-check cells miss, ≈ 18 % of its user CPU;
 > - per run, the runtime preempts thread slots ~14 M times and wipes all shadow memory 456 times.
 
@@ -55,6 +55,7 @@
   - P1-v3 over the shipped artifact: SQLite +0.3, memcached +1.4, Redis −2.9, MySQL 0…+3, FFmpeg −0.3.
 - New levers are measured over a control built from the same compiler root with the lever switched off.
 - ✅ **Race-preserving.** Everything in tables 1-3 loses no race that stock TSan reports, under the project's stated premises. Each was checked with IR tests, check-tsan, reproducers with controls, and an independent audit.
+- 📖 Every name and abbreviation in this file is explained in the **Glossary** at the end.
 
 ---
 
@@ -172,18 +173,16 @@
 |---|---|---|---|
 | 🛑 **EA-P5/P6/P7** (soundness) | today's EA loses races when a pointer to a local is published through a pipe (write/read), through `%p` text, or through the generic `__atomic_load` libcall | ✔️ reproduced (stock 10/10, EA 0/10 each); fix designed, paused pending a decision | correctness, not speed |
 | ⭐ **LO-OBJ** | lock ownership relative to an object: fields of objects owned by one SQLite BtShared (pages, WAL, Pager), accessed while its mutex is held | design and cheap checks done (unit tests and a mutation test pass); needs ownership annotations taken from SQLite's own `mutex_held` assertions | 🟢 SQLite ≈ ×1.17-1.21 (upper estimate); memcached ≤ +0.2; MySQL ≈ 0 |
-| 🆕 **RANGE-UNIFORM** | on a range-check miss, when consecutive shadow cells hold identical values, race-check one cell and write the rest with wide stores | opened 28 Sep; exact against the stock vectorised walk, no premise needed (each cell is still loaded and compared); census of uniform missed cells today | memcached: missed range cells ≈ 18 % of user CPU (4 % of server CPU); the share uniform cells can save is unknown |
-| 🆕 **slot / epoch budget** (runtime) | stock TSan's slot preemption chains and global resets | measured 28 Sep, per run: memcached 14 M preemptions and 456 DoResets (each wipes all shadow), MySQL 2.6-2.8 M and ~200, FFmpeg ~150 k and 16, Redis 0. The slot pick is already free-first; the lever is the epoch budget (≈ 1.9 G release-driven increments per memcached run). Cycle-cost census today | memcached slot machinery ≈ 9 % of cycles (earlier profile) |
+| 🧩 **runtime track** (separate) | ideas that change only TSan's runtime: RT-SYNC, RT-RANGE (RANGE-HIT-SKIP/VEC closed, RANGE-UNIFORM open), RT-ALLOC, RT-SLOT (slot chains and the epoch budget) | kept apart from the paper's track (Alexey 25 and 28 Sep); censuses only, no implementation; overview in `runtime/README.md` | memcached: missed range cells ≈ 18 % of user CPU; 14 M slot preemptions and 456 shadow wipes per run |
 | **EA-SLOT** (idea 8a) | a value loaded from a stack slot and passed on escapes as the slot's contents, not the slot itself (memcached's `tokens` array) | repaired design v2 found unsound by audit (3 new counterexamples, fixes C11-C13); census branch ready | ≈ 3 % of memcached's checks |
 | **CLONE-ESC** (idea 9) | clone functions with hot pointer arguments into escaping and non-escaping versions; choose the clone at run time | timed oracle OA0 (unsound upper bound): SQLite ≤ +2.6 % (screening), memcached ≤ +3.5 %, Redis ≤ +6.0 %, FFmpeg ≤ +10.4 % (the stream-copy part overlaps DynSTC-RT's gain) | ≤ 7 % FFmpeg/Redis, ≤ 3 % SQLite, ≤ 1 % memcached, 0 MySQL |
 | 🆕 **FE-INL-CSE** | one thread-state load for a function's entry, exits and inline tests | audit A23 blocker (thread state read before its init) fixed; preservation with it on is clean; evidence-only arm in the FE-SINK legs (it relies on the unadopted A3-fiber premise): **memcached (apollo idle) +0.4 % over FE-INL, no effect**; MySQL and Redis today | small; trims FE's code on MySQL |
-| 🆕 **MEMINTR-INLINE** | small constant-size memcpy/memset/memmove kept as intrinsics and checked by range entries or inline tests instead of the interceptor call | census + design | limited by the range checks it keeps (see RANGE-UNIFORM) |
+| 🆕 **MEMINTR-INLINE** | small constant-size memcpy/memset/memmove kept as intrinsics and checked by range entries or inline tests instead of the interceptor call | census + design | limited by the range checks it keeps (see the runtime track) |
 | 🆕 **N1-SPLIT** | N1/VWIDE miss blocks marked cold and split to .text.unlikely | compile-only check first | front-end loss on MySQL-f, SQLite, memcached |
 | 🆕 **N1-PAIR** | one 32-byte load + movmsk tests two adjacent shadow cells | census | SQLite page/record parsing |
 | 🆕 **SPIN-ACQ** | in a loop of only atomic loads + arithmetic, poll relaxed and acquire only when the value changes (Redis getIOPendingCount: 19.1 G seq_cst acquires) | ceiling only (Alexey); can only add reports (ABA), never lose one | Redis ≤ +14 % (io-threads bound) |
 | 🆕 **compile time** | compile-time overhead of P1-v3 AllOpt over stock | measured (quiet, one build at a time): CPU user+sys SQLite +20.1 %, memcached +8.4 %, Redis +9.4 %, FFmpeg +15.6 %; worst unit sql_yacc.cc +55 %; N1 inline ×1.8-3.3; MySQL whole still open | paper says 1-18 % |
 | N1-ST (b), (c) | hoist the single-mode flag read per call-free run; or encode single mode in the fast state TSan already loads | not built | would halve or remove N1-ST front's 1-3 % multi-threaded tax |
-| RANGE-HIT-SKIP / RANGE-VEC | skip the range trace event when every cell already holds the access / a vectorised hit walk | ❌ closed by census 28 Sep. The all-hit share is FFmpeg 81 %, SQLite 73 %, Redis 50 %, memcached 11 %. Bounds: RANGE-HIT-SKIP ≤ 0.53 % (≤ 1.1 % conservative, SQLite only); RANGE-VEC ≤ 0.9 % | — |
 | sound loop ranges | one range check per loop, placed after the loop or per chunk | ❌ closed 27 Sep: no form is sound under P-EV | FFmpeg −12.7 % executed calls; memcached −0.6 %; SQLite ≈ −1 % |
 | SWMR-H | a location written only before its publication is exempt afterwards | ⏸️ parked (audit: 14 lost-race paths; needs a premise on indirect calls) | U1 ceiling: memcached +0.2, Redis 0, SQLite 0 |
 | LO-F | lock ownership per field | ⏸️ parked with data (ceiling ≈ +0.2 % memcached; blocked like SWMR-H) | ≈ 0.5 % of memcached's checks |
@@ -198,7 +197,6 @@
 | N6 | subsumption-aware shadow eviction | soundness note, open | — |
 | STC-1..4, DYN-1 | more single-threaded-context rules; drop DynSTC guards where more threads certainly exist | ❌ oracle bound: nothing hot | ≈ 0 |
 | LO-B1/B2 | private mutexes immune to unknown unlocks; callback releases | ❌ unsound, closed | — |
-| RT-SYNC / RT-ALLOC | runtime-only speedups of the sync path and the allocator | ⏸️ parked: outside the paper's topic (the range and slot parts were re-opened as censuses on 28 Sep, rows above) | — |
 
 **🔎 Key to table 4**
 - **Ceiling**: an upper bound from a profile oracle or a census of executed checks, not a timed optimization.
@@ -208,3 +206,135 @@
 - ⭐ marks the one direction with large headroom on an app where nothing else helps (SQLite).
 </content>
 </invoke>
+
+---
+
+## 📖 Glossary — every name used in this file
+
+**TSan basics**
+- **check**: the call the compiler inserts before a memory access (`__tsan_read4`, `__tsan_write8`, …). Every optimization here removes checks or makes them cheaper.
+- **shadow cell**: TSan's record of recent accesses to an 8-byte granule (4 slots per granule). **hit**: the access is already recorded, nothing to do. **miss**: the runtime must check for races and store a record.
+- **trace / trace part / event**: the per-thread log used to restore the previous access's stack in a race report.
+- **epoch / slot / preemption / DoReset**: TSan v3's logical clock per thread slot; 256 slots are shared by all threads; a thread whose slot is taken is preempted; DoReset is the global reset when all slots' epochs run out (it wipes all shadow).
+- **interceptor**: the runtime wrapper around a libc call (memcpy, strcmp, …). **range check**: a check over a byte range (`__tsan_read_range`), used by interceptors and memory intrinsics.
+
+**The paper's analyses and configurations**
+- **STC** (single-threaded context): no checks in code that can only run before the program creates threads (or after they are joined).
+- **SWMR** (single writer, multiple readers): if every write to a variable happens in single-threaded context, reads of it need no check.
+- **LO** (lock ownership): if every multi-threaded access to a variable holds a common lock, those accesses need no check.
+- **EA** (escape analysis): no checks on memory that never becomes reachable from another thread (locals whose address does not escape).
+- **DE** (dominance elimination): a check dominated by an identical check with no synchronisation in between is dropped. **loop peeling**: DE's copy of a loop's first iteration, so that checks in the body are dominated.
+- **DynSTC**: a run-time thread counter and a branch that skip checks while the process is single-threaded.
+- **AllOpt**: all of the above together (the paper's TSan+AllOpt). **stock**: unmodified TSan. **shipped artifact**: the compiler submitted with the paper.
+- **P1-v3**: the base of this file. It is the shipped configuration with DE made exact and every soundness fix since.
+- **exact / verified removal**: DE drops a check only when an inline copy of TSan's hit test shows at run time that it would hit. The alternative, DE by coverage, can lose races under TSan's bounded shadow.
+- **tier A (T0-T11)**: the 25 Sep sweep of the first new levers over the shipped artifact. T0 is stock, T1 the shipped configuration, T10 all new levers including the inexact DE items.
+- **idea 6 / 7 / 8a / 8b / 9**: item numbers in Alexey's list of improvement ideas (27 Sep).
+
+**Levers in tables 1-2** (all measured over P1-v3 or a same-root control)
+- **FE-INL**: inline function entry/exit. **FE**: short for FE-INL in combinations.
+  - **FE-INL exit-max=1**: at most one inlined exit per function.
+  - **FE-INL unified exit**: returns are merged before the exit is inlined; the code turned out byte-identical to FE on -O2 code.
+- **FE-SINK v2**: the function-entry call is sunk to the first point that needs the frame. **FE-INL-CSE**: one thread-state load per function for FE-INL. The arms in the FE-SINK legs:
+  - FB: the control;
+  - FI: FE-INL alone;
+  - FS: sink with call entries;
+  - FIS: sink with FE-INL;
+  - FIC: FE-INL-CSE.
+- **VWIDE / VWIDE-loops**: exact DE also where no covering check dominates (verified at run time); VWIDE-loops does it only inside loops.
+- **N1**: TSan's hit test inlined at every access; the runtime is called only on a miss. Its variants:
+  - **N1-L**: N1 only in loops with at most 20 checks (`max-loop=20`).
+  - **N1-LOOPS-∞**: N1-L without that cap.
+  - **N1-PM**: N1 whose miss call goes through `preserve_most` entries with a hand-written hit path, saving fewer registers at the call site.
+  - **N1b**: no inline test, but the runtime call itself goes through cheaper `preserve_most` entries.
+  - **N1-S**: N1 only at statically hot sites (budget 2 per function).
+  - **N1-CSE**: accesses in a run share the sibling shadow address and the byte mask.
+  - **N1-ATOMIC**: N1 extended to relaxed atomic loads and stores.
+  - **N1-ST**: N1's test skipped in the run-time single-thread mode. **front**: the flag is read before the test. **miss**: the flag is read only on a miss. **(b)/(c)**: the flag hoisted per call-free run, or kept in TSan's fast state.
+- **DynSTC-RT**: the run-time single-thread mode itself; while one thread lives, the runtime records nothing.
+- **MEMINTR**: memcpy/memmove from a constant or uncaptured local source checks only the destination.
+- **exact DE package**: DE's adjacent-check merging and loop ranges, made exact.
+- **LIBCALL-INLINE**: calls to strcmp/memcmp/… go to light runtime entries without the interceptor frame.
+- **SFI** (SyncFreeInfo): DE's per-function summary of whether a call can synchronise, which decides whether a dominating check still covers across the call. Its flags:
+  - **DE-5** (cycle cut): DE's cycle scan runs only over cycles that avoid the cover.
+  - **DE-6** (SFI judges calls): SFI and the loop-free test judge calls to declarations the way the scan does.
+  - **DE-7** (directional SFI): callees that only acquire do not block dominance.
+  - **DE-8** (fence no-sync): fences treated as non-synchronising.
+  - **DE-5..8 together**: all four flags at once.
+- **WP**: whole-program summaries for the static analyses (closed world with an explicit list of external symbols).
+- **N2**: several checks batched into one runtime call.
+- **SUBS**: a shadow record of the same thread and epoch that covers the access counts as a hit.
+- **loop guard / T10**: inexact DE variants (coverage without run-time verification); excluded because they can lose races.
+
+**Table 3**
+- **U1-U5**: the universal candidates, each one configuration for every app:
+  - U1 = N1 + N1-ST miss + DynSTC-RT;
+  - U2 = U1 + FE;
+  - U3 = FE + VWIDE-loops;
+  - U4 = FE + N1;
+  - U5 = FE + N1 + N1-ST front.
+- **Oracles** (unsound upper bounds; profile-driven, not analyses):
+  - **O1-all**: no checks on memory one thread touches;
+  - **O1-stack / O1-heap**: the same, split by stack and heap;
+  - **O2-eraser / O2-strict**: also skip lock-protected memory, with or without memory written before publication;
+  - **OA0**: CLONE-ESC's oracle, where every hot pointer argument is treated as non-escaping.
+- **batch 11 / optimistic / realistic**: tonight's combination runs, pre-registered in `batch11-preregistration.md`.
+
+**Table 4**
+- **EA-P5/P6/P7**: three pre-existing escape-analysis holes: a pointer published through a pipe, through `%p` text, or through the `__atomic_load` libcall.
+- **EA-SLOT, EA-7, EA-WP, EA-TL, EA-HEAP**: escape-analysis refinements:
+  - EA-SLOT: a loaded slot's contents escape, not the slot;
+  - EA-7: fewer escapes for arguments of address-taken or external functions;
+  - EA-WP: EA with whole-program summaries;
+  - EA-TL / EA-HEAP: thread-local or "own heap" memory, statically.
+- **LO-OBJ, LO-F, LO-W, LO-B1/B2**: lock-ownership refinements:
+  - LO-OBJ: relative to an owning object, e.g. SQLite's BtShared, which owns pages, WAL and Pager state;
+  - LO-F: per field;
+  - LO-W: recognise more mutexes;
+  - LO-B1/B2: private mutexes immune to unknown unlocks, and callback releases (both unsound).
+- **SWMR-H / SWMR-G**: SWMR variants. SWMR-H: written only before publication (hand-off). SWMR-G: write-once-then-read-only memory.
+- **STC-1..4, DYN-1**: more single-threaded-context rules; drop DynSTC guards where more threads certainly exist.
+- **DE-1, DE-2, DE-4, DE-9, DE-10, DE-AA, DE-AV**: DE refinements:
+  - DE-1: prove "same address" more often;
+  - DE-2: merge adjacent fields into one check;
+  - DE-4: a larger access covers a smaller one at an offset;
+  - DE-9: constant data through underlying objects;
+  - DE-10: availability instead of strict dominance;
+  - DE-AA: stronger alias analysis;
+  - DE-AV: a dynamic guard for any repeated address.
+- **N6**: subsumption-aware shadow eviction. **N1-SPLIT**: N1 miss blocks moved to cold code. **N1-PAIR**: one 32-byte load tests two shadow cells.
+- **MEMINTR-INLINE**: small memory intrinsics checked inline instead of through the interceptor.
+- **CLONE-ESC**: clone functions by whether their pointer arguments escape.
+- **SPIN-ACQ**: spin loops of atomic loads acquire only when the value changes. **ABA**: a value changes and changes back unseen.
+- **runtime track (RT-SYNC, RT-RANGE, RT-ALLOC, RT-SLOT)**: runtime-only ideas. RT-RANGE includes RANGE-HIT-SKIP (no trace event for an all-hit range), RANGE-VEC (a vectorised hit walk) and RANGE-UNIFORM (one race check for identical missed cells). See `runtime/README.md`.
+- **C11-C13**: fix items from the EA-SLOT audit.
+
+**Premises, audits, rules**
+- **N1-family arms**: any arm with N1's inline test (N1, N1-L, N1-ST, N1-CSE, …).
+- **zero lost races**: no configuration may miss a race that stock TSan reports. **race-preserving**: meets that rule under the stated premises.
+- **P-EV**: which record TSan's bounded shadow evicts is arbitrary.
+- **P5**: widens P-EV: the evicted slot, the recycled trace part, the slot an attach takes, and the moment a thread re-locks its slot are all arbitrary (waiting for a ruling).
+- **A3**: signal handlers do not synchronise. **A3-fiber**: a signal handler returns on the same fiber (not adopted).
+- **Axx** (A16, A21, A21b, A23, …): numbered independent audits. **"sound with conditions"**: correct if the listed conditions hold.
+
+**Measurement**
+- **focs / apollo**: the two machines. Each has two benchmark halves. A timed leg owns a half.
+  - **idle**: the other half has no load.
+  - **screening**: another leg runs on the other half; the result is a lead, not a reading of record.
+- **session / leg / arm / cell**:
+  - session: one sitting;
+  - leg: one timed comparison;
+  - arm: one binary in it;
+  - cell: one run of one arm.
+- **N**: runs per arm. **M/s, G**: millions per second, billions. **ABBA / rotated**: the order of arms alternates so drift hits all arms alike.
+- **control / same-root control**: the arm built from the same compiler with the lever off.
+- **CV clause / tripped**: a subtest whose run-to-run spread exceeds its limit; the leg is re-run.
+- **re-run queued / pend.**: not yet measured or being repeated.
+- **n = k**: only k runs survived.
+- **= base / = FE**: the flag changes no code for that app, so the result equals the base (or FE).
+- **stable-4**: SQLite's geomean over four stable threadtest3 subtests: walthread1 (wt1), walthread2 (wt2), checkpoint_starvation_1 (cs1) and stress2 (st2). stress1 is bimodal and not used.
+- **App workloads**:
+  - memcached: memtier_benchmark;
+  - Redis: redis-benchmark commands;
+  - MySQL: sysbench OLTP (Select = oltp_read_only, Write-only = oltp_write_only, read-write, point and range selects);
+  - FFmpeg: transcodes of one film (copy = stream copy, single-threaded; h264, h265, mjpeg = encoders).
