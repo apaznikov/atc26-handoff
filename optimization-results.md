@@ -119,11 +119,11 @@
 | VWIDE-loops (alone) | `a` ⚪ +0.2 | `a` ⚪ 0.0 | `f` ⚪ −0.9 | `f` 🟡 −1.8 | `f` 🟡 +1.3 | noise |
 | N1-PM (N1 + preserve_most) | `a` 🔴 −2.8 · `f` 🔴 −2.1 (n=1) | `f` ⚪ −1.0 · `a` ⚪ −0.2 | `f` 🟢 +3.8 (idle; N1 alone +3.7) | `f` 🔴 −2.2 (screening) · `a` 🔴 −2.5 | `f` 🟢 +5.2 (mjpeg +14) | its gains on FFmpeg and Redis are N1's own (+5.0, +3.7); loses on SQLite/MySQL |
 | N1-LOOPS-∞ (N1-L without cap) | `a` 🟡 −1.3 · `f` ⚪ −0.4 (n=2) | `f` 🟡 +1.4 (idle; N1 alone also +1.4) · `a` ⚪ −0.8 (2 sessions) | `f` ⚪ +0.4 (idle) | `f` 🟡 −1.8 (screening) · `a` ⚪ −0.1 | `f` 🟢 +3.3 (mjpeg +9) | the FFmpeg gain is N1-L's own (+3.0) |
-| DE-5 (cycle cut) | `a` ⚪ +0.3 | `a` ⚪ −0.1 · `f` ⚪ −0.8 | pend. | `a` ⚪ +0.6 | `f` ⚪ +0.1 | no effect; Redis pending |
-| DE-6 (SFI judges calls) | `a` 🟡 +1.3 (stress2 +6) | = base (no code change) | pend. | `a` ⚪ +0.4 | `f` ⚪ 0.0 | no effect; Redis pending |
+| DE-5 (cycle cut) | `a` ⚪ +0.3 · `f` ⚪ +0.2 (2 sessions pooled) | `a` ⚪ −0.1 · `f` ⚪ −0.8 | `f` ⚪ +0.1 | `a` ⚪ +0.6 | `f` ⚪ +0.1 | no effect |
+| DE-6 (SFI judges calls) | `a` 🟡 +1.3 (stress2 +6) · `f` 🟡 +1.4 (2 sessions pooled) | = base (no code change) | `f` ⚪ −0.3 | `a` ⚪ +0.4 | `f` ⚪ 0.0 | no resolvable effect |
 | DE-7 (directional SFI) | = base | = base | = base | `a` ⚪ +0.4 | `f` ⚪ +0.7 | no effect |
 | DE-8 (fence no-sync) | = base | = base | = base | `a` ⚪ +0.5 | `f` ⚪ −0.1 | no effect |
-| DE-5..8 together | `a` ⚪ +0.3 | `a` ⚪ −0.1 (= DE-5) | pend. | `a` ⚪ +0.6 | `f` ⚪ +0.4 | no effect; Redis pending |
+| DE-5..8 together | `a` ⚪ +0.3 · `f` ⚪ +0.7 (2 sessions pooled) | `a` ⚪ −0.1 (= DE-5) | `f` ⚪ +0.4 | `a` ⚪ +0.6 | `f` ⚪ +0.4 | no effect |
 | FE-INL exit-max=1 | `a` = FE | — | — | `f` 🔴 −5.2 | — | variant, dropped |
 | FE-INL unified exit | = FE | = FE | = FE | = FE | = FE | byte-identical to FE on -O2 code, dropped |
 | N1b | `f` 🔴 −4.3 · `a` ⚪ +0.8 | `f` 🟡 +3.0 `?` · `a` 🔴 −2.7 | `f` 🟡 −1.3 | `a` 🔴 −3.7 | `f` ⚪ −0.8 | dropped |
