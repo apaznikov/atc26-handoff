@@ -1,6 +1,6 @@
 # 🧵 TSan instrumentation optimizations — results
 
-*State as of 28 Sep 2026, 12:30 (focs time). Preliminary: most cells come from one to three sessions at N = 3-4.*
+*State as of 28 Sep 2026, 12:40 (focs time). Preliminary: most cells come from one to three sessions at N = 3-4.*
 
 > [!TIP]
 > **Headline gains (race-preserving, measured together in one binary)**
@@ -10,7 +10,7 @@
 > - ⚙️ Biggest single levers: **N1-ST front +16.9 %** and **DynSTC-RT +12.0 %** on FFmpeg, **FE-INL + VWIDE-loops +6.4 %** on Redis.
 
 > [!WARNING]
-> **Where nothing helps yet:** SQLite, memcached, and MySQL on Intel, where FE-INL *loses* 8-9 %. The four levers built for these apps and timed on 27-28 Sep gain nothing: LIBCALL-INLINE, N1-CSE, N1-ATOMIC and FE-SINK all stay within ±1.6 % (table 2).
+> **Where nothing helps yet:** SQLite, memcached, and MySQL on Intel, where FE-INL *loses* 8-9 %. The four levers built for these apps and timed on 27-28 Sep gain nothing: LIBCALL-INLINE, N1-CSE and N1-ATOMIC stay within ±1 %, and FE-SINK loses 1-2 % (table 2).
 > The 28 Sep censuses show where memcached's cost actually sits, on the runtime side (table 4):
 > - 97.6 % of its range-check cells miss, ≈ 18 % of its user CPU;
 > - per run, the runtime preempts thread slots ~14 M times and wipes all shadow memory 456 times.
@@ -98,7 +98,7 @@
 | **LIBCALL-INLINE** (light compare entries) | `a` ⚪ 0.0 | `a` ⚪ +0.4 | `f` ⚪ −0.7 (screening) | `a` ⚪ −0.4 | `f` ⚪ +0.3 | **closed** 28 Sep: correct and exact, no effect |
 | **N1-CSE** | `a` ⚪ +0.3 | `a` ⚪ −0.4 · `f` ⚪ −1.0 (screening) | — | `a` ⚪ +0.9 · `f` 🟡 −1.6 (screening) | — | no effect on the three apps it was built for |
 | **N1-ATOMIC** | `a` ⚪ −0.4 (without stress2 +0.9; CV tripped, re-run queued) | — | — | — | — | no effect on its target (SQLite's relaxed atomics) |
-| **FE-SINK v2** ³ | `a` ⚪ +1.1 (stress2 alone); with FE-INL 🟡 −1.0 | `f` 🟡 −1.6 (screening) | `f` ⚪ +0.7 (screening) | pend. | `f` 🟡 −1.2; with FE-INL 🟡 −1.0 | loses 1-2 % so far; remaining legs today (below) |
+| **FE-SINK v2** ³ | `a` ⚪ +1.1 (stress2 alone); with FE-INL 🟡 −1.0 | `a` 🟡 −1.7; with FE-INL 🔴 −2.2 (FIS/FI) | `f` ⚪ +0.7 (screening) | pend. | `f` 🟡 −1.2; with FE-INL 🟡 −1.0 | loses 1-2 % on every app of record; MySQL and Redis legs today |
 | VWIDE (alone) | `a` ⚪ −0.6 | `a` ⚪ +0.6 | `f` ⚪ −0.5 | `f` ⚪ −0.3 · `a` ⚪ −0.3 | `f` ⚪ +0.8 | noise; no effect together with N1 |
 | VWIDE-loops (alone) | `a` ⚪ +0.2 | `a` ⚪ 0.0 | `f` ⚪ −0.9 | `f` 🟡 −1.8 | `f` 🟡 +1.3 | noise |
 | N1-PM (N1 + preserve_most) | `a` 🔴 −2.8 · `f` 🔴 −2.1 (n=1) | `f` ⚪ −1.0 · `a` ⚪ −0.2 | `f` 🟢 +6.0 `?` (screening; idle re-run queued) | `f` 🔴 −2.2 (screening) · `a` 🔴 −2.5 | `f` 🟢 +5.2 (mjpeg +14) | the FFmpeg gain is N1's own (+5.0); loses on SQLite/MySQL |
@@ -118,7 +118,7 @@
 | loop guard ² ⚠️ not race-preserving | +1.0 | −0.7 | +2.1 | `f` −5.2 | — | 🚫 excluded |
 | all inexact T10 ² ⚠️ not race-preserving | −1.2 | +1.7 | +0.9 | `f` −6.6 | +20.5 | 🚫 excluded |
 
-<sub>² Measured over the shipped artifact (tier A), not over P1-v3. ³ FE-SINK is still under conditions: audit A23 is sound with conditions and premise P5 is pending. Its FFmpeg and SQLite cells are readings of record; the rest are screening.</sub>
+<sub>² Measured over the shipped artifact (tier A), not over P1-v3. ³ FE-SINK is still under conditions: audit A23 is sound with conditions and premise P5 is pending. Its FFmpeg, SQLite and memcached cells are readings of record; Redis is screening.</sub>
 
 **🔎 Key to table 2**
 - **LIBCALL-INLINE**. Calls from instrumented code to strcmp, strncmp, strcasecmp, memcmp, bcmp, memchr and strlen go to light runtime entries. These record the interceptor's read ranges without its frame.
@@ -129,7 +129,7 @@
 - **N1-ATOMIC**. N1's inline hit test extended to relaxed atomic loads and stores. SQLite's walFindFrame does 151 M of them per run, and 55.5 % of the loads hit.
 - **FE-SINK v2**. `__tsan_func_entry` is sunk to the first point that needs the frame, so invocations that only hit never push one. It removes ~22 % of executed entries on FFmpeg and Redis, but that is < 1 % of cycles against 2-12 % more code.
   - Arms today: FB is the control, FI is FE-INL alone, FS is sink with call entries, FIS is sink with FE-INL, and FIC is FE-INL-CSE.
-  - Still to run: memcached and MySQL on apollo, Redis on focs.
+  - Still to run: MySQL on apollo, Redis on focs.
 - **FE-INL exit-max=1**: FE-INL with at most one inlined exit per function, a variant for C++ unwinding.
 - **N1b**: the runtime call is kept but goes through cheaper `preserve_most` entry points, which save fewer registers.
 - **N1-S** (idea 6): N1 only at statically hot sites, with a budget of 2 per function and no profile. It misses the hot sites of large functions.
@@ -176,7 +176,7 @@
 | 🆕 **slot / epoch budget** (runtime) | stock TSan's slot preemption chains and global resets | measured 28 Sep, per run: memcached 14 M preemptions and 456 DoResets (each wipes all shadow), MySQL 2.6-2.8 M and ~200, FFmpeg ~150 k and 16, Redis 0. The slot pick is already free-first; the lever is the epoch budget (≈ 1.9 G release-driven increments per memcached run). Cycle-cost census today | memcached slot machinery ≈ 9 % of cycles (earlier profile) |
 | **EA-SLOT** (idea 8a) | a value loaded from a stack slot and passed on escapes as the slot's contents, not the slot itself (memcached's `tokens` array) | repaired design v2 found unsound by audit (3 new counterexamples, fixes C11-C13); census branch ready | ≈ 3 % of memcached's checks |
 | **CLONE-ESC** (idea 9) | clone functions with hot pointer arguments into escaping and non-escaping versions; choose the clone at run time | timed oracle OA0 (unsound upper bound): SQLite ≤ +2.6 % (screening), memcached ≤ +3.5 %, Redis ≤ +6.0 %, FFmpeg ≤ +10.4 % (the stream-copy part overlaps DynSTC-RT's gain) | ≤ 7 % FFmpeg/Redis, ≤ 3 % SQLite, ≤ 1 % memcached, 0 MySQL |
-| 🆕 **FE-INL-CSE** | one thread-state load for a function's entry, exits and inline tests | audit A23 blocker (thread state read before its init) fixed; preservation with it on is clean; timed today as an evidence-only arm in the FE-SINK legs (it relies on the unadopted A3-fiber premise) | small; trims FE's code on MySQL |
+| 🆕 **FE-INL-CSE** | one thread-state load for a function's entry, exits and inline tests | audit A23 blocker (thread state read before its init) fixed; preservation with it on is clean; evidence-only arm in the FE-SINK legs (it relies on the unadopted A3-fiber premise): **memcached (apollo idle) +0.4 % over FE-INL, no effect**; MySQL and Redis today | small; trims FE's code on MySQL |
 | 🆕 **MEMINTR-INLINE** | small constant-size memcpy/memset/memmove kept as intrinsics and checked by range entries or inline tests instead of the interceptor call | census + design | limited by the range checks it keeps (see RANGE-UNIFORM) |
 | 🆕 **N1-SPLIT** | N1/VWIDE miss blocks marked cold and split to .text.unlikely | compile-only check first | front-end loss on MySQL-f, SQLite, memcached |
 | 🆕 **N1-PAIR** | one 32-byte load + movmsk tests two adjacent shadow cells | census | SQLite page/record parsing |
