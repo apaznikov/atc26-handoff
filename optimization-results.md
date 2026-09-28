@@ -30,8 +30,11 @@
 > [!NOTE]
 > **Measurement resolution on MySQL.** On apollo, two builds read 0.989 and 0.954 of the base, although their program code is byte-identical. The two builds come from different compiler roots.
 > - The layout control rules out the program's layout on apollo. The base with its data shifted by a page reads 1.003, and with its code shifted by 480 B or by 512 B it reads 1.005 (4 rotated runs each).
-> - A runtime swap settles it: the gap is the TSan runtime alone. The objects of either root linked with 3da0's runtime read 1.00; with ba53's runtime, 0.97 (read_only 0.94). Which change in ba53's runtime costs this is being traced.
-> - So MySQL numbers that compare arms from different roots carry up to ~3 % from the runtime; same-root comparisons do not. Within one root, layout moved MySQL by ≤ 0.5 % on apollo. The layout control on Intel (focs) is still queued.
+> - A runtime swap settles it: the gap is the TSan runtime alone. The objects of either root linked with 3da0's runtime read 1.00; with ba53's runtime, 0.97 (read_only 0.94). ba53's additions are cold start-up code, but they shift every hot entry by 752 B: `__tsan_read4` moves from offset 16 to offset 0 within its 64-byte line, and that is the slow position. So it is the runtime's layout, not its code.
+> - The runtime's position also moves with the program code linked before it, within one root. So a MySQL cell may carry up to ~3 % (read_only ~6 %) wherever its two arms put the hot entries at different positions, same root or not. Sign and size are known from one pair only.
+>   - **Clean** (same position as their base): DE-5..8, N1-L, N1-LOOPS-∞, WP, LIBCALL-INLINE, tier B.
+>   - **May carry it:** N1, N1-PM, N1b, N1-ST, N1-CSE, FE-SINK v2, FE-INL-CSE, MEMINTR, SUBS, the universal combinations, tier A T4/T5/T7/T10/T11. FE-INL and FE + VWIDE-loops share the base's offset within 64 B but not within the page.
+> - A discriminating leg is queued: a pad before the entries, the additions moved after them, and both runtimes built with 64-byte function alignment. If alignment removes the gap, every runtime is built that way from then on and the affected cells are re-run. The earlier "≤ 0.5 % within one root" came from relinks that never moved the runtime. The layout control on Intel (focs) is still queued.
 > - The debug build embeds the tree path through `__FILE__`, so every arm now gets a tree path of equal length.
 
 ---
