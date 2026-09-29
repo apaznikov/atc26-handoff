@@ -52,7 +52,7 @@ other thread can reach.
 this step is almost all STC's rule that an unknown call may start a thread (`main(){ start_worker(); g = 1; }`).
 Which fix costs SQLite's part is not known.
 
-**After shipping** (the fixes for shapes 24-59 and exact DE; 60-62 are still open): each fix costs at most
+**After shipping** (the fixes for shapes 24-62 and exact DE; 60-62 were fixed on 30 Sep): each fix costs at most
 1 percentage point of executed checks and no time that can be resolved, except possibly 2-3 % on Redis from exact
 DE (unresolved).
 
@@ -69,8 +69,7 @@ build does not.
 
 Every lost race reproduced end to end is recorded as a numbered **shape**. There are 62 so far:
 - **Shapes 1-23** were found before the paper compiler shipped (D), and all are fixed in it.
-- **Shapes 24-62** were found after. 34 are fixed, 2 are excluded by stated premises (32 and 41), and 3 are open
-  (60-62, all EA).
+- **Shapes 24-62** were found after. 34 are fixed, 2 are excluded by stated premises (32 and 41), and 3 more (60-62, all EA) were fixed on 30 Sep.
 - **LG-2**, a runtime case with no number, is fixed by exact DE.
 
 The largest defect, DE's "same location" test, fixed in the first review, has no shape number.
@@ -283,7 +282,7 @@ Key to table 4a:
 | setjmp's second return | Block states follow control-flow edges, and setjmp's second return has none. | EA gives up (everything escapes) in a function that calls a returns-twice function. | 57 | after D | not measured separately |
 | Pointer vectors, unresolved callee operands | A vector of pointers stored by a masked store published nothing (EA-P3: IR level only, needs AVX2 vector code). In a callee, an operand the walk could not resolve never reached the callee's argument summary (58). | Operands whose type holds a pointer are examined. An unresolved operand anywhere makes every argument escape. | 58 | after D | 0 sites, 0.000 % executed (SQLite, memcached) |
 | `main` in whole-program mode | Under `-tsan-whole-program`, `main` had no callers, so `envp` stayed local, although it is the same array as `environ`. | `main` counts as called from outside the program. | 59 | after D | whole-program mode only |
-| Pipe, `%p` text, generic atomics (EA-P5, EA-P6, EA-P7) | A slot holding `&l` is written to a pipe (60), formatted as `%p` text (61), or copied by `__atomic_load` (62), and another thread writes `l` through the pointer. | Designed, not built: a library call that reads a caller's buffer publishes its contents (except an allow-list of pure readers); variadic pointer operands escape; generic `__atomic_*` calls are modelled as copies. Paused on 28 Sep pending a decision. | 60-62 | open | unknown |
+| Pipe, `%p` text, generic atomics (EA-P5, EA-P6, EA-P7) | A slot holding `&l` is written to a pipe (60), formatted as `%p` text (61), or copied by `__atomic_load` (62), and another thread writes `l` through the pointer. | Fixed 30 Sep: a call operand escapes when the callee may send what it reads through it (or, if variadic, its value); copies are modelled as copies. | 60-62 | after shipping (30 Sep) | ≈ 0 (memcached 0.000 %, FFmpeg 0.004 % of executed checks) |
 | Use after free | A thread writes through a stale pointer into memory that has been freed and reallocated. | No fix: the no-use-after-free premise. | 32 | — | — |
 
 Key to table 4b:
@@ -387,7 +386,7 @@ Key to table 4f:
 | Shapes 24 and 33-51 (mostly EA), plus the fail-closed sync-free table | 24, 33-51 | ≤ 0.1 pp of executed checks, no measurable time. The series alone: FFmpeg +0.09 pp, SQLite and memcached +0.00. |
 | DE, STC, LO, SWMR shapes 25, 27-31, 37, 38, 40, 44 | | 0 (static counts identical) |
 | Shapes 52-59 (P1 to P1-v3) | 52-59 | 52: SQLite 0 static. 58: 0 sites, 0.000 % executed. Others not measured separately; all are inside "P1-v3 over D". |
-| EA-P5/P6/P7 | 60-62 | Open. Found 27 Sep; fix designed, paused on 28 Sep pending a decision. Cost unknown; whether D has them was not checked. |
+| EA-P5/P6/P7 | 60-62 | Fixed 30 Sep after an independent audit: a pointer operand escapes when a call may send what it reads through it. Cost ≈ 0: memcached +19 sites (0.000 % of executed checks), FFmpeg +42 (0.004 %), SQLite and Redis 0. Whether D has them was not checked. |
 
 Key to table 3:
 - **Reading the ratios.** A ratio is the configuration with the fix over the same configuration without it. 1.000
@@ -482,7 +481,7 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   also carries SWMR-2 and LO-8). Placing them in C→D is an inference.
   - The artifact commits of LO-3/5 (shape 13), DE-2 and DE-4 are not named.
   - The commits of LO-6 and LO-7 changed no counts, so their position is not recorded either.
-- **The time cost of shapes 52-62's fixes.** 52-59 are timed only as a bundle, in "P1-v3 over D". 60-62 are not built.
+- **The time cost of shapes 52-62's fixes.** 52-59 are timed only as a bundle, in "P1-v3 over D". 60-62's fix costs ≈ 0 by executed-check counts (not timed separately).
 - **Whether D has shapes 52-62.** Shapes 52-59 were not run on D, and 60-62 were not checked.
 - **Whether A has shapes 1-23.** Their presence in the March compiler is not recorded. Most of the code involved
   predates the audit *(inference)*.
