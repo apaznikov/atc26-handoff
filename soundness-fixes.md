@@ -43,6 +43,11 @@ other thread can reach.
 - *Wrong, for example:* the arguments of a function reachable through a pointer or from another unit were judged
   from the visible calls only. In `void put(int *p) { *p = 1; }` the write lost its check even when another unit
   passed a shared pointer. A pointer EA could not resolve was simply ignored.
+  The rule is narrow: a `static` function whose address is never taken still gets its arguments' status from all
+  its call sites (EA's interprocedural top-down pass), so `static void put(int *p)` called only with local pointers
+  keeps its check removed. Only when some callers are invisible (the function is visible to other units in a
+  per-unit build, or its address is taken as a callback or table entry) does its argument count as escaped. In
+  whole-program mode all callers are visible; that relaxation was measured at ≈ 0 on SQLite.
 - *Fix:* such arguments escape, and an unresolved pointer makes everything escape. An access before an object's
   publication is dropped only if every later escape is release-like. The same step made STC (single-threaded
   context) and SWMR (single writer, multiple readers) judge each unit on its own.
