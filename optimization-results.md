@@ -173,7 +173,7 @@
 
 | configuration | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|
-| 🏆 **best per app**, measured together (over P1-v3) | `a` 🟢 **+4.6** stable-4 (LO-OBJ-G) | `a` 🟡 +1.9 (FE + N1 + N1-ST front; batch 11, base n = 2) · `f` nothing | `f` 🟢 **+8.4** rand. (FE + N1) | `a` 🟢 **+4.6** rand. (FE + VWIDE-loops) · `f` nothing | `f` 🟢 **+33.5** (DynSTC-RT + FE + N1 + N1-ST front; 3 sessions) · +14.2 without N1-ST |
+| 🏆 **best per app**, measured together (over P1-v3) | `a` 🟢 **+4.6** stable-4 (LO-OBJ-G) | `a` 🟡 +1.9 (FE + N1 + N1-ST front; batch 11, base n = 2) · `f` nothing | `f` 🟢 **+8.4** rand. (FE + N1) | `a` 🟢 **+4.6** rand. (FE + VWIDE-loops) · `f` nothing | `f` 🟢 **+34.0** rand. (N1 + N1-ST front + DynSTC-RT; +33.4…+34.8 across offsets, A/A 0.999) · +33.5 single-layout with FE (3 sessions) · +14.2 without N1-ST |
 | 🌐 **universal U1** = N1 + N1-ST miss + DynSTC-RT (over P1-v3) | `f` 🔴 −4.6 `?` · `a` 🟡 −1.6 | `f` 🔴 −5.0 | `f` 🟢 **+8.5** rand. | `f` 🔴 −3.5 · `a` 🔴 −2.6 rand. | `f` 🟢 **+25.1** |
 | 🌐 **universal U2** = U1 + FE (over P1-v3) | `f` 🔴 −4.4 `?` · `a` 🟡 −1.1 | `f` 🔴 −4.7 · `a` ⚪ −0.7 (batch 11) | `f` 🟢 **+7.5** | `f` 🔴 −9.1 · `a` 🟡 +2.0 rand. | `f` 🟢 **+25.3** |
 | 📄 **the submitted paper**: TSan+AllOpt over *stock TSan* | +71 | +7 | +45 | +16 (Select) · +11 (Write-only) | +57 |
