@@ -1,20 +1,76 @@
 # Soundness fixes since the March 2026 compiler, and what they cost
 
-29 Sep 2026. This file brings together the fix inventory, the two lost-race ledgers, the results file and the
-checkpoint timings listed under Sources (section 8). Every fact comes from those sources. Anything inferred is
-marked *(inference)*.
+29 Sep 2026. Anything inferred is marked *(inference)*.
+
+## Short version
+
+- **What was timed.** ThreadSanitizer (TSan) puts a check before every memory access. The optimizing compiler
+  removes the checks its static analyses prove unnecessary. **Speedup** is the optimized build's speed over stock
+  (unmodified) TSan's. Only four compilers were timed, never a single fix: **A** the March compiler, **B** after the
+  first review, **C** after reviews 2-3, **D** the shipped compiler.
+- **What a shape is.** A shape is a small program on which stock TSan reports a race and the optimized compiler does
+  not. Shapes are numbered 1-62 in the order found. The two fixes that cost the most carry no shape number.
+
+**1. DE counted a check on one field as covering another (first review, step A→B).** DE (dominance elimination)
+drops a check when an earlier check on the same location always runs before it, with no synchronisation in between.
+- *Wrong:* "same location" meant the same object, whatever the field, index or size. DE counted `p->a` as covering
+  `p->b`, `a[i]` as covering `a[j]`, and a 1-byte check as covering an 8-byte write.
+- *Fix:* the earlier check must be provably at the same address and cover at least the same bytes.
+- *Static effect of this fix alone:* DE's share of removed checks fell from 32.5 % to 2.9 %. That reach was unsound
+  and cannot come back.
+
+**2. DE's path check missed side branches (9 Mar, step A→B).**
+- *Wrong:* between the two checks, only blocks on the main dominator chain were scanned for synchronisation. In
+  `x = 1; if (c) { lock(m); ...; unlock(m); } x = 2;` the lock in the side branch was missed, and `x = 2` lost its
+  check.
+- *Fix:* every block on every path between the two checks is scanned.
+- *Static effect of this fix alone:* DE's share of removed checks fell from 53.8 % to 32.5 %.
+
+**What step A→B cost.** It holds fixes 1 and 2 plus the first review's smaller fixes, and was timed only as a whole:
+
+| app | speedup A → B | share of the app's total loss |
+|---|---|---|
+| SQLite | ×1.48-1.51 → ×1.09-1.10 | about three quarters (the rest: B→C 18-22 %, C→D 3-4 %) |
+| Redis | ×1.41 → ×1.10 | nearly all (later steps: ×1.10 → ×1.09) |
+| memcached | ×1.11 → ×1.02 | most (later steps: ×1.02 → ×1.00) |
+| FFmpeg | ×1.356 → ×1.018 | all (D is back at ×1.018) |
+
+Across the four apps, A→B is 75-100 % of the total loss. That fixes 1 and 2 carry most of it is *(inference)* from
+static counts: DE lost 35,004 of its 36,265 removed checks in this step.
+
+**3. Escape analysis made fail-closed (reviews 2-3, step B→C).** EA (escape analysis) drops checks on memory that no
+other thread can reach.
+- *Wrong, for example:* the arguments of a function reachable through a pointer or from another unit were judged
+  from the visible calls only. In `void put(int *p) { *p = 1; }` the write lost its check even when another unit
+  passed a shared pointer. A pointer EA could not resolve was simply ignored.
+- *Fix:* such arguments escape, and an unresolved pointer makes everything escape. An access before an object's
+  publication is dropped only if every later escape is release-like. The same step made STC (single-threaded
+  context) and SWMR (single writer, multiple readers) judge each unit on its own.
+- *Measured:* SQLite ×1.09-1.10 → ×1.01, which is 18-22 % of its loss. The other apps move by at most 0.02 (Redis
+  ×1.10 → ×1.09, memcached ×1.02 → ≈×1.01-1.02, FFmpeg ×1.018 → ×0.996). That EA carries SQLite's part is
+  *(inference)*: EA lost 10,534 removed checks in this step, more than any other analysis.
+
+**4. The rest before shipping (step C→D).** 3-4 % of SQLite's loss; memcached ×1.01-1.02 → ×1.00. By static counts
+this step is almost all STC's rule that an unknown call may start a thread (`main(){ start_worker(); g = 1; }`).
+Which fix costs SQLite's part is not known.
+
+**After shipping** (the fixes for shapes 24-59 and exact DE; 60-62 are still open): each fix costs at most
+1 percentage point of executed checks and no time that can be resolved, except possibly 2-3 % on Redis from exact
+DE (unresolved).
 
 ## 1. Summary
 
-The March 2026 compiler (checkpoint A, `9f5d402cb36b`, 6 Mar) built the March binaries behind the submitted paper's
-measurements; memcached without DE was built by `c35c3bd998f1`. It removed ThreadSanitizer (TSan) checks with five
-static analyses: DE (dominance elimination), EA (escape analysis), STC (single-threaded context), SWMR (single
-writer, multiple readers) and LO (lock ownership). Section 2 explains what each one does. Since then, reviews,
-independent audits and end-to-end runs have shown that it could **lose races**: stock (unmodified) TSan reports a
-race and the optimized build does not.
+This file brings together the fix inventory, the two lost-race ledgers, the results file and the checkpoint
+timings listed under Sources (section 8). Every fact comes from those sources.
+
+The March 2026 compiler (checkpoint A, 6 Mar) built the March binaries behind the submitted paper's measurements;
+memcached without DE was built by a compiler of 3 Mar. It removed TSan checks with five static analyses: DE, EA,
+STC, SWMR and LO (lock ownership). Section 2 explains what each one does. Since then, reviews, independent audits
+and end-to-end runs have shown that it could **lose races**: stock (unmodified) TSan reports a race and the optimized
+build does not.
 
 Every lost race reproduced end to end is recorded as a numbered **shape**. There are 62 so far:
-- **Shapes 1-23** were found before the paper compiler shipped (D, `f3deebfbab60`), and all are fixed in it.
+- **Shapes 1-23** were found before the paper compiler shipped (D), and all are fixed in it.
 - **Shapes 24-62** were found after. 34 are fixed, 2 are excluded by stated premises (32 and 41), and 3 are open
   (60-62, all EA).
 - **LG-2**, a runtime case with no number, is fixed by exact DE.
@@ -73,17 +129,17 @@ check, fixed on 9 Mar.
   - **DynSTC**, run-time single-thread mode. The runtime counts live threads, and checks are skipped while the count
     is 1. It comes in two forms: a compiler-emitted guard, and a runtime form (`dynstc_rt=1`).
 - **Checkpoints on the artifact line** (branch `artifact/atc26`):
-  - **A** `9f5d402cb36b` (6 Mar): the March compiler.
-  - **B** `178206e5cee6`: after the first review. It includes the path-check fix `d585de68fa20` (9 Mar).
-  - **C** `c6cf6df69034`: after reviews 2 (`1d8d7474dd1c`) and 3 (`7290f3c39998`) and per-unit STC/SWMR
-    (`39a3ce9ccedb`). C's own commit is EA's six-shape fix.
-  - **D** `f3deebfbab60`: the shipped compiler, also called the paper compiler. It sits 28 commits after
-    `e90a3fc41004` (10 Mar).
+  - **A** (6 Mar): the March compiler.
+  - **B**: after the first review. It includes the path-check fix of 9 Mar.
+  - **C**: after reviews 2 and 3 and the per-unit STC/SWMR change. C is itself EA's six-shape fix, the last commit
+    of that step.
+  - **D**: the shipped compiler, also called the paper compiler. It sits 28 commits after the last March commit
+    (10 Mar).
 - **After D.** The fixes were integrated in stages, ending in P1-v3:
   - fixes collected on local branches;
-  - P1, `2129c2640946` (25 Sep);
-  - P1-v2, `2ae4e920f4ca` (26 Sep);
-  - **P1-v3**, `3da0e56a1b3f`, which landed on 26 Sep as `integrate/p1-0926`. It is the shipped configuration (EA,
+  - P1 (25 Sep);
+  - P1-v2 (26 Sep);
+  - **P1-v3**, which landed on 26 Sep as `integrate/p1-0926`. It is the shipped configuration (EA,
     LO, STC, SWMR and DE with loop peeling) with DE made exact and with the soundness fixes found after shipping,
     up to shape 59. It is the reference for all new measurements.
 - **Speedup.** The speed of the full configuration, "AllOpt with loop peeling" (the five static analyses together,
@@ -126,8 +182,8 @@ Key to table 1:
   FFmpeg +57 % and MySQL +16 % (Select) / +11 % (Write-only) (`optimization-results.md`, table 3).
   - Column A is the March compiler re-timed on today's bench.
   - Its gap from the paper's figures reflects the measurement setup, not the fixes *(inference: same compiler)*.
-- **Raw cells** are in `fixcost-2026-09-24/`, and for A in `march-9f5d402cb36b/`, both in the lab host's `/extra`
-  data area.
+- **Raw cells** are in `fixcost-2026-09-24/`, and for A in the directory named after the March compiler, both in
+  the lab host's `/extra` data area.
 
 **Table 1b. Static reach on the corpus: removed sites per analysis, and the change at each step**
 
@@ -150,7 +206,7 @@ Key to table 1b:
   - the path check, −14,324: 53.8 % → 32.5 %;
   - the first review, −20,680.
 
-  On `e90a3fc` the same-location rule alone takes DE from 32.5 % to 2.9 %.
+  On the compiler of 10 Mar (after the path check), the same-location rule alone takes DE from 32.5 % to 2.9 %.
 - **With loop peeling**, the corpus share is 61.5 % at A and −7.2 % at D. Peeling duplicates code, so once little is
   removed the peeled build has more checks than stock.
 - **Static loss and time do not track each other.** EA's B→C loss of 10,534 sites cost little time outside SQLite.
@@ -174,23 +230,23 @@ Key to every table in this section:
 
 | fix | what was wrong | what the fix does | shapes | step | cost |
 |---|---|---|---|---|---|
-| Path check (`d585de68fa20`, 9 Mar) | Only blocks on the chain of immediate dominators were scanned for synchronisation, so a side branch taking `mutex_lock` between the two accesses was missed. | Scan every block on every path between the cover and the removed access. | — | A→B | DE removals: 53.8 % → 32.5 % of sites (−14,324) |
-| Same location (`178206e5cee6`) | "Same location" meant the same base object or must-alias, with no size or offset check. A check on `p->a` covered `p->b`, `a[i]` covered `a[j]`, and a 1-byte check covered an 8-byte access. | `locationCovers`: must-alias with a covering size, or the same pointer value plus the same constant offset. | — | A→B | Alone, 32.5 % → 2.9 % (30 of DE's 32.5 points). That reach was unsound and cannot be recovered. The sound remainder, byte-range containment, was closed on 24 Sep at 2 accesses. |
-| All effects on all paths (`178206e5cee6`) | The scan stopped at the first dangerous instruction. The lock kind was reset at each call, so acquire-then-release counted as a pure acquire. | `scanPaths` unions every effect on every path. | — | A→B | not separated |
-| Loop back edge (`178206e5cee6`) | For a removed access inside a loop, the path around the back edge was not scanned, so a release later in the body was missed. | Re-scan the whole loop body. | — | A→B | not separated |
-| Bodiless and `invoke` callees (DE-1; `178206e5cee6`, `111376942df5`) | A function without a body counted as non-synchronising. Callees of `invoke` (a call with an exception edge) were not scanned. | A bodiless function synchronises, and `invoke` is scanned like `call`. | — | A→B, C→D\* | not separated |
-| Post-dominance termination (DE-3; `1d8d7474dd1c`, `111376942df5`) | Post-dominance assumed that library calls return, so the later cover it relied on might never run. A helper's loop test was inverted (`isContainsLoops`). | Every call on the path must be `willreturn` or loop-free by summary. A loop is allowed only with a computed trip count. | — | B→C, C→D\* | DE corpus count unchanged at `1d8d7474dd1c` |
-| Intrinsics (`1d8d7474dd1c`) | Every compiler intrinsic was treated as safe to cross. | Only `nosync` intrinsics that touch no memory, or only their arguments' memory. | — | B→C | as above |
-| Library table fails closed (DE-5, DE-6; `111376942df5`, `46b7fd85624b`) | A library function not on a short blocklist counted as non-synchronising. That covered `write(2)`/`read(2)` (TSan treats them as release/acquire on the file), every file, directory and time call, and `qsort` whose comparator unlocks. | The default becomes "synchronises", with an explicit list of 273 sync-free names. `read`/`write`/`pread`/`pwrite`/`open` are barriers. | 11, 12, 16 | C→D\* | shell.c +10 sites (DE 6,302 → 6,312); memcached, sqlite3.c 0 |
+| Path check (9 Mar) | Only blocks on the chain of immediate dominators were scanned for synchronisation, so a side branch taking `mutex_lock` between the two accesses was missed. | Scan every block on every path between the cover and the removed access. | — | A→B | DE removals: 53.8 % → 32.5 % of sites (−14,324) |
+| Same location | "Same location" meant the same base object or must-alias, with no size or offset check. A check on `p->a` covered `p->b`, `a[i]` covered `a[j]`, and a 1-byte check covered an 8-byte access. | `locationCovers`: must-alias with a covering size, or the same pointer value plus the same constant offset. | — | A→B | Alone, 32.5 % → 2.9 % (30 of DE's 32.5 points). That reach was unsound and cannot be recovered. The sound remainder, byte-range containment, was closed on 24 Sep at 2 accesses. |
+| All effects on all paths | The scan stopped at the first dangerous instruction. The lock kind was reset at each call, so acquire-then-release counted as a pure acquire. | `scanPaths` unions every effect on every path. | — | A→B | not separated |
+| Loop back edge | For a removed access inside a loop, the path around the back edge was not scanned, so a release later in the body was missed. | Re-scan the whole loop body. | — | A→B | not separated |
+| Bodiless and `invoke` callees (DE-1) | A function without a body counted as non-synchronising. Callees of `invoke` (a call with an exception edge) were not scanned. | A bodiless function synchronises, and `invoke` is scanned like `call`. | — | A→B, C→D\* | not separated |
+| Post-dominance termination (DE-3) | Post-dominance assumed that library calls return, so the later cover it relied on might never run. A helper's loop test was inverted (`isContainsLoops`). | Every call on the path must be `willreturn` or loop-free by summary. A loop is allowed only with a computed trip count. | — | B→C, C→D\* | DE corpus count unchanged in review 2 |
+| Intrinsics | Every compiler intrinsic was treated as safe to cross. | Only `nosync` intrinsics that touch no memory, or only their arguments' memory. | — | B→C | as above |
+| Library table fails closed (DE-5, DE-6) | A library function not on a short blocklist counted as non-synchronising. That covered `write(2)`/`read(2)` (TSan treats them as release/acquire on the file), every file, directory and time call, and `qsort` whose comparator unlocks. | The default becomes "synchronises", with an explicit list of 273 sync-free names. `read`/`write`/`pread`/`pwrite`/`open` are barriers. | 11, 12, 16 | C→D\* | shell.c +10 sites (DE 6,302 → 6,312); memcached, sqlite3.c 0 |
 | Summary plumbing, cover chains (DE-2, DE-4) | DE-2: the sync-free summary read its own pointer before it was built. DE-4: in a chain of covers (a covers b, b covers c), each link was not re-checked against the surviving root. | An explicit module analysis; chains are re-scanned against the root. | — | before D | DE-2: reach identical at -O2 |
-| Post-dominance across a back edge (`cc757fd003dc`) | The next iteration's header store, through a pointer that has since advanced, "covered" this iteration's body store after an unlock. | Reject a cover whose path crosses the back edge of a loop containing the access, unless both pointers are loop-invariant. Reject on irreducible control flow. | 25 | after D | 0 |
-| One granule (`97f9fb007d15`) | The runtime's 16-byte and unaligned entry stops after a race in the first granule, so a race at `buf+8` was never reported. | A covered access is at most 8 bytes, aligned, and inside one granule. | 26 | after D | corpus +16, Redis +31, FFmpeg +1,774 sites |
-| Sizes 1/2/4/8 only (`f870eb97056b`) | A 3-, 5-, 6- or 7-byte access was accepted as a cover, although TSan has no entry for that size and makes no call. | Only 1-, 2-, 4- and 8-byte covers. | 27 | after D | 0 |
-| No vptr cover (`5695d6489a71`) | A C++ virtual-table pointer store was a cover, but `__tsan_vptr_update` checks only when the value changes. | vtable stores never cover. | 28 | after D | 0 |
-| Irreducible cycles (`a960acaf8b75`) | Post-dominance's termination test saw only natural loops, so it missed a never-ending cycle with two entries. | Cycles are detected with LLVM's CycleInfo. | 29 | after D | 0 |
-| Callee that never returns (`c802260913c7`) | A sync-free callee with a two-entry `goto` cycle, or in mutual recursion, counted as returning. In `r = x; spin(flag, r); x = 2;` the cover `x = 2` never runs. | A function counts as looping if it has an irreducible cycle or is recursive. | 38 | after D | 0 (DE byte-identical) |
-| Names only for declarations (`187eae1fa4fd`, `c6115570c710`) | Calls were classified by name before their body was examined. A program's own `lock()` built on a condition variable (acquire plus release) was taken for a pure acquire (37). A program's own `strlen` that locks was read off the library table (40). Weak definitions were trusted. | A name counts only for a declaration, and the tables keep only names a program cannot redefine (POSIX, C11, reserved, mangled `std::`). A replaceable definition synchronises and may not return. | 37, 40 | after D | 0 |
-| Weak members of recursive cycles (`a8c402821d08`, `b524e4dbc28f`) | This is shape 40 through recursion: members of a recursive cycle were skipped before classification, so a weak one, replaced at link time by a version that unlocks, went unseen. | Weak members are not skipped, and attributes inferred over a replaceable body are not trusted. | 44 | after D | 0 (DE byte-identical) |
+| Post-dominance across a back edge | The next iteration's header store, through a pointer that has since advanced, "covered" this iteration's body store after an unlock. | Reject a cover whose path crosses the back edge of a loop containing the access, unless both pointers are loop-invariant. Reject on irreducible control flow. | 25 | after D | 0 |
+| One granule | The runtime's 16-byte and unaligned entry stops after a race in the first granule, so a race at `buf+8` was never reported. | A covered access is at most 8 bytes, aligned, and inside one granule. | 26 | after D | corpus +16, Redis +31, FFmpeg +1,774 sites |
+| Sizes 1/2/4/8 only | A 3-, 5-, 6- or 7-byte access was accepted as a cover, although TSan has no entry for that size and makes no call. | Only 1-, 2-, 4- and 8-byte covers. | 27 | after D | 0 |
+| No vptr cover | A C++ virtual-table pointer store was a cover, but `__tsan_vptr_update` checks only when the value changes. | vtable stores never cover. | 28 | after D | 0 |
+| Irreducible cycles | Post-dominance's termination test saw only natural loops, so it missed a never-ending cycle with two entries. | Cycles are detected with LLVM's CycleInfo. | 29 | after D | 0 |
+| Callee that never returns | A sync-free callee with a two-entry `goto` cycle, or in mutual recursion, counted as returning. In `r = x; spin(flag, r); x = 2;` the cover `x = 2` never runs. | A function counts as looping if it has an irreducible cycle or is recursive. | 38 | after D | 0 (DE byte-identical) |
+| Names only for declarations | Calls were classified by name before their body was examined. A program's own `lock()` built on a condition variable (acquire plus release) was taken for a pure acquire (37). A program's own `strlen` that locks was read off the library table (40). Weak definitions were trusted. | A name counts only for a declaration, and the tables keep only names a program cannot redefine (POSIX, C11, reserved, mangled `std::`). A replaceable definition synchronises and may not return. | 37, 40 | after D | 0 |
+| Weak members of recursive cycles | This is shape 40 through recursion: members of a recursive cycle were skipped before classification, so a weak one, replaced at link time by a version that unlocks, went unseen. | Weak members are not skipped, and attributes inferred over a replaceable body are not trusted. | 44 | after D | 0 (DE byte-identical) |
 | Exact DE, "verified removal" (`-tsan-de-verified`; in P1-v3) | A removal relied on the cover's shadow record surviving until the removed access, but the runtime drops records. LG-2: a global shadow reset after about 4.2 M releases. F2: ordinary eviction by the thread's own writes to the same granule. Stock re-records at the removed access and reports; DE did not (10/10 vs 0/10). | The covered access keeps TSan's own hit test inline, identical to stock's check up to its first branch, and calls the runtime on a miss. Post-dominance, merging and exit ranges are off. | LG-2 | after D | section 5 |
 | Signal delivery | TSan runs a pending signal handler inside intercepted calls. A handler that posts a semaphore is a release inside a call DE treats as sync-free. | No fix: premise A3. | 41 | — | — |
 
@@ -211,30 +267,30 @@ Key to table 4a:
 | fix | what was wrong | what the fix does | shapes | step | cost |
 |---|---|---|---|---|---|
 | Gaps against the escape definition (EA-1, EA-2, EA-3, EA-4, EA-9) | (1) `foo(&s); s.f1 = 1;`: the escape of `s` as a whole did not cover its field. (2) `&x` stored into a container that had already escaped. (3) `&x` published by compare-and-swap, with its reason bits truncated (with EA-4). (6) In an access through a loaded pointer whose object is published later, the rule walked the wrong object. | Lookups cover prefixes; the container's state is consulted; reason bits are widened; the later-escape walk follows the right object. | 1, 2, 3, 6 | B→C *(inference from C's commit title, "six shapes")* | inside C's −8,559 |
-| Unresolved operands fail closed (EA-5; `178206e5cee6`, `c6cf6df69034`) | `&x` stored through a pointer the object walk could not resolve: the operand was simply dropped. | If an unresolved operand is stored, passed or returned, every object escapes. | 4 | A→B, B→C | not separated |
-| Slot with no known target (EA-6; `c6cf6df69034`) | For a pointer loaded from a struct filled by `memcpy`, a slot with no recorded target answered "local". | It answers "escaped". | 5 | B→C | inside C's −8,559 |
-| Address-taken and exported functions (EA-7; `c6cf6df69034`) | Arguments of a function called through a pointer, or from another unit, were judged from the visible call sites only. | All their pointer arguments escape. | — | B→C | Alone +926 corpus sites. With the three fail-closed switches (unresolved operand, unseen target, sound flow-sensitive rule) +5,509. The commit as a whole is −8,559 EA removals, mostly in `EscapeAnalysis.cpp`. |
-| Allocator and retention tables (EA-8; `c6cf6df69034`) | An allocator was recognised by its name alone, and `setbuf`/`setvbuf` were not known to keep the buffer. | The prototype is checked, and setbuf/setvbuf retain the buffer. | — | B→C | inside C's −8,559 |
-| Upstream fix (in `c6cf6df69034`) | Upstream TSan's "local not captured" test asked about a field's address rather than the variable's, so fields of a published struct went unchecked even in stock. Upstream fixed this in `bf6986f9f09f` (Apr 2025). | Ask about the variable. | — | B→C | stock +2,559 corpus sites |
-| Flow-sensitive rule (`7290f3c39998`) | Elision was decided per program point, so an access before the object's publication was elided whatever came later. | Such an access is elided only if every later escape is release-like (a thread creation, for example), and never for arguments. | — | B→C | EA −1,975 |
-| Unknown library functions (`7290f3c39998`) | An unknown library function was assumed not to let its argument escape. | It is assumed to let it escape. | — | B→C | 0 (the table names every function) |
-| Out-parameter (EA-10; `ec9ce65eff53`) | In `f(&local, &slot)`, where `f` stores its first argument through its second, the escape carried only a bit that callers mask as "merely an argument". | A flag that survives the mask. | 18 | C→D\* | not measured separately |
-| Arguments of a call whose result escapes (EA-11; `5d17119ed56e`) | In `r = f(&local)`, where `f` publishes its argument and returns an escaped pointer, the arguments were never classified. | Only the callee operand answers "escaped"; the arguments are classified. | 19 | C→D\* | Redis +485, MySQL +9,673, FFmpeg +626 sites |
-| Result points into an argument (EA-12; `cc53abf84043`) | In `r = strchr(b, c); g = r;` the result was treated as a new object, so publishing it did not publish `b`. The same held for strstr, memchr, strcpy, fgets and realloc. | The result points into the argument. | 21 | C→D\* | memcached, sqlite3.c 0; shell.c 10 fewer checks (a gain) |
-| End pointer (EA-13; `c2166fb0ae0f`) | `strtol(buf, &end, 10); g = end;` published `buf` unseen. | The call is modelled as the store `*end = buf`. | 22 | C→D\* | 0 |
-| realpath, ctermid (`aa8a6dd8a2e8`) | In `g = realpath(p, b); b[0] = 'x';`, both functions were on the "does not escape" list. | The buffer escapes at the call. | 23 | C→D\* | 0 (neither name occurs in the corpus) |
-| Copy from a non-local source (`796a367ed04f`) | In a callee doing `memcpy(&g, c, n)`, where `c` is an argument or a heap pointer, whatever `c` points to was published unseen. | Every copy source is modelled. | 24 | after D | corpus +18 (sqlite3.c) |
-| Caller context (`bbf2a497b8e9`, `32473d76ed54`, `0e8e41e0109b`) | The caller's escape state was consulted wrongly in three ways. (33) It was taken only at the block of the call: `helper(&x)`, then `g = &x` in a later block. (34) It was taken for `&s.b` rather than `s`. (55) It was taken from `nocapture`, which says nothing about what the argument's memory holds: `make_thing(&t)` stores a fresh object into `*out`, and `t` is then published. | Ask about the object anywhere in the caller; ask about the variable; use capture tracking only for an argument the call only reads. | 33, 34, 55 | after D | not measured separately |
-| Stores through unseen pointers (`dd440a71f5e2`, `d03252f4f221`) | (35) A callee stores `&local` through a pointer loaded from a pointer-array argument. (39) `set(&p)` repoints `p`, but the analysis kept the old target. | A stored object escapes when the slot's targets are unknown. At a call that may write through a pointer argument, the recorded targets escape. | 35, 39 | after D | not measured separately |
-| Stop modelling memory contents (`f6459b53eb97`, `9889c59f71d1`, `f7abd1b8b984`, `c23a23db2076`) | EA's model of what memory holds was unsound. (45) "Loaded" was lost through select, phi or integer casts. (46) `memcpy(d, s)` was modelled as `d` pointing to `s`; this was introduced by shape 24's fix and is not in D. (48) `nocapture` was taken to mean "contents do not escape". (49) One field's target vouched for another field. (50) A stored loaded value published nothing. (51) Two loads counted as one. | An access through a loaded pointer escapes, and a store through one publishes. A stored loaded value publishes its source slot when the destination is shared. Every copy source escapes. Library names apply to declarations only. | 45, 46, 48-51 | after D | All EA fixes of shapes 33-51 together, at the A2 gate: corpus EA +356 sites (shape 48 +86; the loaded-contents commit +62); executed +0.00 pp on SQLite and memcached |
-| Weak callee result (`947933384940`) | A weak `pool_get` returning `malloc(16)` made its result local, but the strong `pool_get` actually linked returns a shared buffer. | A callee without an exact definition has an unknown result. | 47 | after D | not measured separately |
-| Integer-copy closure (`-tsan-ea-integer-copies-escape`, on by default from `073b1974c37f`) | A pointer's bytes copied as a 64-bit integer were not followed. | Such copies make their targets escape. This replaces premise A7, which was not adopted. | — | after D | section 5 |
-| First receiver only (E1; `ca6d5bef42fc`, in P1) | The flow-sensitive rule elided an access before publication when every later escape was release-like, but the receiver then passed the object on, by a relaxed store, to a third thread. | Elide only when no escape is reachable after the access. The old rule stays behind `-tsan-ea-trust-first-receiver`, off by default. | 52 | after D | SQLite 0 static |
-| Linkage of acquire-only globals (E2; `71ce6709a64b`) | An external global read here only by acquire loads could be read relaxed in another unit. | Local linkage is required. | — (did not reproduce) | after D | not measured separately |
-| Self-store published later (`999440534f18`) | `init_self(&x)` stores `&x` into `x.self`, and a later block publishes `x.self`. | A self-store through memory other code sees publishes the object. | 56 | after D | not measured separately |
-| setjmp's second return (`209500c83fd1`) | Block states follow control-flow edges, and setjmp's second return has none. | EA gives up (everything escapes) in a function that calls a returns-twice function. | 57 | after D | not measured separately |
-| Pointer vectors, unresolved callee operands (`adc52b5be470`, `ea42ab24c660`, `991dbd4cc10f`) | A vector of pointers stored by a masked store published nothing (EA-P3: IR level only, needs AVX2 vector code). In a callee, an operand the walk could not resolve never reached the callee's argument summary (58). | Operands whose type holds a pointer are examined. An unresolved operand anywhere makes every argument escape. | 58 | after D | 0 sites, 0.000 % executed (SQLite, memcached) |
-| `main` in whole-program mode (`fee7e187f74d`, `b98e80beb9b7`) | Under `-tsan-whole-program`, `main` had no callers, so `envp` stayed local, although it is the same array as `environ`. | `main` counts as called from outside the program. | 59 | after D | whole-program mode only |
+| Unresolved operands fail closed (EA-5) | `&x` stored through a pointer the object walk could not resolve: the operand was simply dropped. | If an unresolved operand is stored, passed or returned, every object escapes. | 4 | A→B, B→C | not separated |
+| Slot with no known target (EA-6) | For a pointer loaded from a struct filled by `memcpy`, a slot with no recorded target answered "local". | It answers "escaped". | 5 | B→C | inside C's −8,559 |
+| Address-taken and exported functions (EA-7) | Arguments of a function called through a pointer, or from another unit, were judged from the visible call sites only. | All their pointer arguments escape. | — | B→C | Alone +926 corpus sites. With the three fail-closed switches (unresolved operand, unseen target, sound flow-sensitive rule) +5,509. The commit as a whole is −8,559 EA removals, mostly in `EscapeAnalysis.cpp`. |
+| Allocator and retention tables (EA-8) | An allocator was recognised by its name alone, and `setbuf`/`setvbuf` were not known to keep the buffer. | The prototype is checked, and setbuf/setvbuf retain the buffer. | — | B→C | inside C's −8,559 |
+| Upstream fix (in C's EA commit) | Upstream TSan's "local not captured" test asked about a field's address rather than the variable's, so fields of a published struct went unchecked even in stock. Upstream fixed this in April 2025. | Ask about the variable. | — | B→C | stock +2,559 corpus sites |
+| Flow-sensitive rule | Elision was decided per program point, so an access before the object's publication was elided whatever came later. | Such an access is elided only if every later escape is release-like (a thread creation, for example), and never for arguments. | — | B→C | EA −1,975 |
+| Unknown library functions | An unknown library function was assumed not to let its argument escape. | It is assumed to let it escape. | — | B→C | 0 (the table names every function) |
+| Out-parameter (EA-10) | In `f(&local, &slot)`, where `f` stores its first argument through its second, the escape carried only a bit that callers mask as "merely an argument". | A flag that survives the mask. | 18 | C→D\* | not measured separately |
+| Arguments of a call whose result escapes (EA-11) | In `r = f(&local)`, where `f` publishes its argument and returns an escaped pointer, the arguments were never classified. | Only the callee operand answers "escaped"; the arguments are classified. | 19 | C→D\* | Redis +485, MySQL +9,673, FFmpeg +626 sites |
+| Result points into an argument (EA-12) | In `r = strchr(b, c); g = r;` the result was treated as a new object, so publishing it did not publish `b`. The same held for strstr, memchr, strcpy, fgets and realloc. | The result points into the argument. | 21 | C→D\* | memcached, sqlite3.c 0; shell.c 10 fewer checks (a gain) |
+| End pointer (EA-13) | `strtol(buf, &end, 10); g = end;` published `buf` unseen. | The call is modelled as the store `*end = buf`. | 22 | C→D\* | 0 |
+| realpath, ctermid | In `g = realpath(p, b); b[0] = 'x';`, both functions were on the "does not escape" list. | The buffer escapes at the call. | 23 | C→D\* | 0 (neither name occurs in the corpus) |
+| Copy from a non-local source | In a callee doing `memcpy(&g, c, n)`, where `c` is an argument or a heap pointer, whatever `c` points to was published unseen. | Every copy source is modelled. | 24 | after D | corpus +18 (sqlite3.c) |
+| Caller context | The caller's escape state was consulted wrongly in three ways. (33) It was taken only at the block of the call: `helper(&x)`, then `g = &x` in a later block. (34) It was taken for `&s.b` rather than `s`. (55) It was taken from `nocapture`, which says nothing about what the argument's memory holds: `make_thing(&t)` stores a fresh object into `*out`, and `t` is then published. | Ask about the object anywhere in the caller; ask about the variable; use capture tracking only for an argument the call only reads. | 33, 34, 55 | after D | not measured separately |
+| Stores through unseen pointers | (35) A callee stores `&local` through a pointer loaded from a pointer-array argument. (39) `set(&p)` repoints `p`, but the analysis kept the old target. | A stored object escapes when the slot's targets are unknown. At a call that may write through a pointer argument, the recorded targets escape. | 35, 39 | after D | not measured separately |
+| Stop modelling memory contents | EA's model of what memory holds was unsound. (45) "Loaded" was lost through select, phi or integer casts. (46) `memcpy(d, s)` was modelled as `d` pointing to `s`; this was introduced by shape 24's fix and is not in D. (48) `nocapture` was taken to mean "contents do not escape". (49) One field's target vouched for another field. (50) A stored loaded value published nothing. (51) Two loads counted as one. | An access through a loaded pointer escapes, and a store through one publishes. A stored loaded value publishes its source slot when the destination is shared. Every copy source escapes. Library names apply to declarations only. | 45, 46, 48-51 | after D | All EA fixes of shapes 33-51 together, at the A2 gate: corpus EA +356 sites (shape 48 +86; the loaded-contents commit +62); executed +0.00 pp on SQLite and memcached |
+| Weak callee result | A weak `pool_get` returning `malloc(16)` made its result local, but the strong `pool_get` actually linked returns a shared buffer. | A callee without an exact definition has an unknown result. | 47 | after D | not measured separately |
+| Integer-copy closure (`-tsan-ea-integer-copies-escape`, on by default since 25 Sep) | A pointer's bytes copied as a 64-bit integer were not followed. | Such copies make their targets escape. This replaces premise A7, which was not adopted. | — | after D | section 5 |
+| First receiver only (E1, in P1) | The flow-sensitive rule elided an access before publication when every later escape was release-like, but the receiver then passed the object on, by a relaxed store, to a third thread. | Elide only when no escape is reachable after the access. The old rule stays behind `-tsan-ea-trust-first-receiver`, off by default. | 52 | after D | SQLite 0 static |
+| Linkage of acquire-only globals (E2) | An external global read here only by acquire loads could be read relaxed in another unit. | Local linkage is required. | — (did not reproduce) | after D | not measured separately |
+| Self-store published later | `init_self(&x)` stores `&x` into `x.self`, and a later block publishes `x.self`. | A self-store through memory other code sees publishes the object. | 56 | after D | not measured separately |
+| setjmp's second return | Block states follow control-flow edges, and setjmp's second return has none. | EA gives up (everything escapes) in a function that calls a returns-twice function. | 57 | after D | not measured separately |
+| Pointer vectors, unresolved callee operands | A vector of pointers stored by a masked store published nothing (EA-P3: IR level only, needs AVX2 vector code). In a callee, an operand the walk could not resolve never reached the callee's argument summary (58). | Operands whose type holds a pointer are examined. An unresolved operand anywhere makes every argument escape. | 58 | after D | 0 sites, 0.000 % executed (SQLite, memcached) |
+| `main` in whole-program mode | Under `-tsan-whole-program`, `main` had no callers, so `envp` stayed local, although it is the same array as `environ`. | `main` counts as called from outside the program. | 59 | after D | whole-program mode only |
 | Pipe, `%p` text, generic atomics (EA-P5, EA-P6, EA-P7) | A slot holding `&l` is written to a pipe (60), formatted as `%p` text (61), or copied by `__atomic_load` (62), and another thread writes `l` through the pointer. | Designed, not built: a library call that reads a caller's buffer publishes its contents (except an allow-list of pure readers); variadic pointer operands escape; generic `__atomic_*` calls are modelled as copies. Paused on 28 Sep pending a decision. | 60-62 | open | unknown |
 | Use after free | A thread writes through a stale pointer into memory that has been freed and reallocated. | No fix: the no-use-after-free premise. | 32 | — | — |
 
@@ -250,7 +306,7 @@ Key to table 4b:
   release-like, because a release orders the access before any thread that receives the object.
 - **The three fail-closed switches** in the EA-7 row are `-tsan-ea-unknown-operand-is-top`,
   `-tsan-ea-unseen-pointee-escapes` and `-tsan-ea-sound-flow-sensitive`.
-- **A2 gate.** The gate of the series tip `f7abd1b8b984` (24-25 Sep).
+- **A2 gate.** The second gate of the post-shipping fix series (24-25 Sep).
 - **Audit labels.** E1 and E2 are items of audit A1. EA-P1…EA-P7 are holes found by audits A8 and A17; each got a
   shape number once it was reproduced. Audits A1, A8, A17 and so on are numbered independent audits.
 - **Whole-program mode** (`-tsan-whole-program`): the analyses run once over the whole linked program instead of
@@ -260,27 +316,27 @@ Key to table 4b:
 
 | fix | what was wrong | what the fix does | shapes | step | cost |
 |---|---|---|---|---|---|
-| Creator's callees (STC-1; `39a3ce9ccedb`) | In `helper()` after `pthread_create()` in a function other than `main`, the thread creator's callees were not marked multi-threaded. | They are marked. | 7 | B→C | the commit: STC −840, SWMR −631 |
-| Per-unit visibility (STC-2; `39a3ce9ccedb`) | A function this unit never calls defaulted to single-threaded, which is valid only when the whole program is visible. | In per-unit mode, external and address-taken functions are multi-threaded. | — | B→C | as above |
-| Unknown calls may create threads (STC-3, STC-3b; `7337dcb16aa6`) | `main(){ start_worker(); g = 1; }`, where the thread is started inside a call this unit has no body for (another unit, a library) or by an indirect call. A static constructor could also start a thread. | Any unknown external or indirect call may create a thread, except known library functions. A constructor that may create a thread makes `main` multi-threaded from its entry. | 15 | C→D | STC −2,506 corpus. memcached sites under STC 6,515 → 6,910, of stock's 6,911, so almost nothing is removed: the prefix now ends at libevent's first call. shell.c 4,336 → 6,447 (stock 6,452); 91 % of shell.c's former reach was in functions that really reach `pthread_create`. |
-| setjmp/longjmp (`69ffbd730880` → `e2b4c2b49b4a`; `bfa7b1aeb09e`) | A `longjmp` returns into `main`'s single-threaded prefix after `pthread_create` (30). `__builtin_setjmp` lowers to an intrinsic without the returns-twice attribute (43; shape 30's fix was incomplete). | Every setjmp-like call is a second return point. | 30, 43 | after D | 0 (corpus identical) |
-| Reach outside the IR (`ebd910c9e8c9`; also SWMR and LO) | A symbol with local linkage can still be reached in ways the unit's IR does not show: the linker's `__start_`/`__stop_` section bounds, an alias with external linkage, or assembler text. STC, SWMR and LO took "no other use in this IR" to mean "private". (LO case: a static mutex another unit releases inside an opaque call.) | One test, `isReachableOutsideIR`, used by all three. | 31 | after D | 0 everywhere (corpus, Redis, FFmpeg identical) |
-| Thread created under ignore-sync (`27a15fb46395`; also SWMR, DynSTC guard) | `g = 1` in main's prefix, then `AnnotateIgnoreSyncBegin`, then `pthread_create` of a thread that reads `g`. TSan's thread creation releases nothing inside such a region, so stock reports a race. | No conclusion in a unit that opens such a region. | 54 | after D | not measured separately |
+| Creator's callees (STC-1) | In `helper()` after `pthread_create()` in a function other than `main`, the thread creator's callees were not marked multi-threaded. | They are marked. | 7 | B→C | the commit: STC −840, SWMR −631 |
+| Per-unit visibility (STC-2) | A function this unit never calls defaulted to single-threaded, which is valid only when the whole program is visible. | In per-unit mode, external and address-taken functions are multi-threaded. | — | B→C | as above |
+| Unknown calls may create threads (STC-3, STC-3b) | `main(){ start_worker(); g = 1; }`, where the thread is started inside a call this unit has no body for (another unit, a library) or by an indirect call. A static constructor could also start a thread. | Any unknown external or indirect call may create a thread, except known library functions. A constructor that may create a thread makes `main` multi-threaded from its entry. | 15 | C→D | STC −2,506 corpus. memcached sites under STC 6,515 → 6,910, of stock's 6,911, so almost nothing is removed: the prefix now ends at libevent's first call. shell.c 4,336 → 6,447 (stock 6,452); 91 % of shell.c's former reach was in functions that really reach `pthread_create`. |
+| setjmp/longjmp | A `longjmp` returns into `main`'s single-threaded prefix after `pthread_create` (30). `__builtin_setjmp` lowers to an intrinsic without the returns-twice attribute (43; shape 30's fix was incomplete). | Every setjmp-like call is a second return point. | 30, 43 | after D | 0 (corpus identical) |
+| Reach outside the IR (also SWMR and LO) | A symbol with local linkage can still be reached in ways the unit's IR does not show: the linker's `__start_`/`__stop_` section bounds, an alias with external linkage, or assembler text. STC, SWMR and LO took "no other use in this IR" to mean "private". (LO case: a static mutex another unit releases inside an opaque call.) | One test, `isReachableOutsideIR`, used by all three. | 31 | after D | 0 everywhere (corpus, Redis, FFmpeg identical) |
+| Thread created under ignore-sync (also SWMR, DynSTC guard) | `g = 1` in main's prefix, then `AnnotateIgnoreSyncBegin`, then `pthread_create` of a thread that reads `g`. TSan's thread creation releases nothing inside such a region, so stock reports a race. | No conclusion in a unit that opens such a region. | 54 | after D | not measured separately |
 
 Key to table 4c:
 - **Prefix.** The part of `main` before any thread can exist.
 - **ignore-sync region.** Code between the annotations that tell TSan to ignore synchronisation.
-- **First-review cost.** The first review (`178206e5cee6`) also cost STC 174 removals; the inventory does not say
+- **First-review cost.** The first review also cost STC 174 removals; the inventory does not say
   why.
 
 ### 4d. SWMR: single writer, multiple readers (SWMR-1, SWMR-2; shapes 8, 20; after D 31, 42, 54)
 
 | fix | what was wrong | what the fix does | shapes | step | cost |
 |---|---|---|---|---|---|
-| Other uses count (`178206e5cee6`) | Uses other than load and store were skipped, so `strlen(g)`, `printf("%s", g)` and `memcpy` could hide a write or a publication. | Any other use counts as an escape. | — | A→B | SWMR −1,676 in that commit |
-| Local linkage only (SWMR-1; `39a3ce9ccedb`) | An `extern` global was read here and written in another unit (memcached's `current_time`). | Only globals with local linkage qualify, so memcached's `settings` and `current_time` drop out. | 8 | B→C | in the commit's −631 |
-| Address in an initializer (SWMR-2; `cc53abf84043`) | In `@slot = global ptr @g`, a thread loads the pointer and writes `g`, yet `g` counted as read-only. | This counts as an escape. | 20 | C→D\* | 0 |
-| Self-address store (`b55b27e65209`; also LO) | `head.next = &head` writes the global and publishes its address in one store, but only the store's pointer operand was examined. | A store whose value is the global's own address is an escape. | 42 | after D | not measured separately |
+| Other uses count | Uses other than load and store were skipped, so `strlen(g)`, `printf("%s", g)` and `memcpy` could hide a write or a publication. | Any other use counts as an escape. | — | A→B | SWMR −1,676 in that commit |
+| Local linkage only (SWMR-1) | An `extern` global was read here and written in another unit (memcached's `current_time`). | Only globals with local linkage qualify, so memcached's `settings` and `current_time` drop out. | 8 | B→C | in the commit's −631 |
+| Address in an initializer (SWMR-2) | In `@slot = global ptr @g`, a thread loads the pointer and writes `g`, yet `g` counted as read-only. | This counts as an escape. | 20 | C→D\* | 0 |
+| Self-address store (also LO) | `head.next = &head` writes the global and publishes its address in one store, but only the store's pointer operand was examined. | A store whose value is the global's own address is an escape. | 42 | after D | not measured separately |
 | Reach outside the IR; thread under ignore-sync | See table 4c. | | 31, 54 | after D | 0; not measured separately |
 
 Key to table 4d: **local linkage** means that no other unit can name the global.
@@ -289,21 +345,21 @@ Key to table 4d: **local linkage** means that no other unit can name the global.
 
 | fix | what was wrong | what the fix does | shapes | step | cost |
 |---|---|---|---|---|---|
-| Lock identity (`7290f3c39998`) | Locks were identified by name. | A lock is identified as a global plus a constant offset. | — | B→C | LO −417 |
-| Exact lock names (LO-1; `177ce2efc38d`) | Any name containing "lock" was an acquisition ("block" contains "lock"). | Exact tables of lock functions. | 10 | C→D | the commit (LO-1, LO-4/4b, LO-2): corpus LO −37 |
-| Private, unescaped globals only (LO-4/4b; `177ce2efc38d`) | Any global counted, including extern ones that other units access. | Only globals with local linkage whose address never escapes. | — | C→D | memcached, LO alone: 46 → 9 elisions (its mutexes are external globals) |
-| Callee and opaque-call releases (LO-2; `177ce2efc38d`) | A callee that releases the caller's lock was not modelled, and an opaque call was assumed to release nothing. | Release summaries over the call graph. An opaque call releases every non-private mutex. | 9 | C→D | in the commit's −37 |
+| Lock identity | Locks were identified by name. | A lock is identified as a global plus a constant offset. | — | B→C | LO −417 |
+| Exact lock names (LO-1) | Any name containing "lock" was an acquisition ("block" contains "lock"). | Exact tables of lock functions. | 10 | C→D | the commit (LO-1, LO-4/4b, LO-2): corpus LO −37 |
+| Private, unescaped globals only (LO-4/4b) | Any global counted, including extern ones that other units access. | Only globals with local linkage whose address never escapes. | — | C→D | memcached, LO alone: 46 → 9 elisions (its mutexes are external globals) |
+| Callee and opaque-call releases (LO-2) | A callee that releases the caller's lock was not modelled, and an opaque call was assumed to release nothing. | Release summaries over the call graph. An opaque call releases every non-private mutex. | 9 | C→D | in the commit's −37 |
 | Held set from an intermediate visit (LO-3/5) | A store reached from a lock-free path counted as protected, because the held-lock record came from an intermediate fixpoint visit. | Blocks are seeded in reverse post-order, and the record is replaced on every visit. | 13 | before D | not measured separately |
-| Timed and try locks (LO-6; `02b7e20aa73d`) | `pthread_mutex_timedlock`/`trylock` counted as an acquisition on both branches, although the timeout path holds nothing. | Held on neither branch. | 14 | C→D\* | 0 (no timed locks in the corpus) |
-| OpenMP fork (LO-7; `d1da083278d2`) | The fork's microtask also runs on the calling thread and may release the caller's lock. | Such routines count as possible releasers. | 17 | C→D\* | 0 |
-| Address in an initializer (LO-8; `cc53abf84043`) | As SWMR-2. | As SWMR-2. | 20 | C→D\* | 0 |
-| Locks TSan does not intercept (`7c6dff9d2f96`, in P1) | LO counted C11 `mtx_lock` and OpenMP `omp_set_lock` as locks, but TSan intercepts neither. Stock therefore orders nothing and reports the race, while LO silenced it. The exact tables of LO-1 had included them. | Only pthread mutex, spin and rwlock names. | 53 | after D | not measured separately |
+| Timed and try locks (LO-6) | `pthread_mutex_timedlock`/`trylock` counted as an acquisition on both branches, although the timeout path holds nothing. | Held on neither branch. | 14 | C→D\* | 0 (no timed locks in the corpus) |
+| OpenMP fork (LO-7) | The fork's microtask also runs on the calling thread and may release the caller's lock. | Such routines count as possible releasers. | 17 | C→D\* | 0 |
+| Address in an initializer (LO-8) | As SWMR-2. | As SWMR-2. | 20 | C→D\* | 0 |
+| Locks TSan does not intercept (in P1) | LO counted C11 `mtx_lock` and OpenMP `omp_set_lock` as locks, but TSan intercepts neither. Stock therefore orders nothing and reports the race, while LO silenced it. The exact tables of LO-1 had included them. | Only pthread mutex, spin and rwlock names. | 53 | after D | not measured separately |
 | Reach outside the IR; self-address store | See tables 4c and 4d. | | 31, 42 | after D | 0; not measured separately |
 
 Key to table 4e:
 - **Terms.** An **opaque call** is one whose callee is unknown. A mutex is **private** if it has local linkage and is
   used only as a mutex operand.
-- **Review 2.** The second review (`1d8d7474dd1c`) *added* 369 LO removals, and the first review removed 639. The
+- **Review 2.** The second review *added* 369 LO removals, and the first review removed 639. The
   inventory does not describe either change.
 - **Rejected precision switches.** Three switches on `experiment/lo-precision` were never shipped. LO-B1 and LO-B2
   were found unsound (they lost races) and LO-C gained nothing.
@@ -312,8 +368,8 @@ Key to table 4e:
 
 | fix | what was wrong | what the fix does | shapes | step | cost |
 |---|---|---|---|---|---|
-| Join without acquire (`d54a22baed6a`) | A `pthread_join` inside an ignore-sync region acquires nothing, yet the runtime decremented the live-thread count, so main's later write was skipped. | Decrement only when the acquire ran. | 36 | after D | not measured separately |
-| Guard under ignore-sync (`27a15fb46395`) | See table 4c. The compiler guard is not emitted in such a unit. | | 54 | after D | not measured separately |
+| Join without acquire | A `pthread_join` inside an ignore-sync region acquires nothing, yet the runtime decremented the live-thread count, so main's later write was skipped. | Decrement only when the acquire ran. | 36 | after D | not measured separately |
+| Guard under ignore-sync | See table 4c. The compiler guard is not emitted in such a unit. | | 54 | after D | not measured separately |
 | Interceptor toggles (PASS-3, RT-1) | Skipping a string or memory interceptor for local operands was allowed for calls that can unwind, and without the flow-sensitive escape rule. | Allowed only for calls that do not throw, under the sound rule. | — | before D | not measured separately |
 | Function entry/exit kept | Fully single-threaded functions dropped `__tsan_func_entry/exit`, which maintain the call stack shown in reports *(inference)*. | They keep them. | — | before D | the only item in this group the inventory calls noticeable in time; not quantified |
 | Summaries only on request | Not described. The fix implies that whole-program summaries were read without the flag. | Read only under `-tsan-use-analysis-summaries`. | — | before D | not measured separately |
@@ -429,10 +485,11 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   or C→D is unknown.
   - That DE's same-location rule and path check account for most of A→B is inferred from static counts.
 - **Missing checkpoint values.** SQLite and Redis at D; MySQL at every checkpoint.
-- **Placement of five commits.** The inventory lists `111376942df5`, `46b7fd85624b`, `ec9ce65eff53`, `5d17119ed56e`
-  and `cc53abf84043` together as "others". Placing them in C→D is an inference.
+- **Placement of five commits.** The inventory lists five commits together as "others": the two commits of the
+  library-table fix (the first also completes DE-1 and DE-3), and the commits of EA-10, EA-11 and EA-12 (the last
+  also carries SWMR-2 and LO-8). Placing them in C→D is an inference.
   - The artifact commits of LO-3/5 (shape 13), DE-2 and DE-4 are not named.
-  - `02b7e20aa73d` (LO-6) and `d1da083278d2` (LO-7) changed no counts, so their position is not recorded either.
+  - The commits of LO-6 and LO-7 changed no counts, so their position is not recorded either.
 - **The time cost of shapes 52-62's fixes.** 52-59 are timed only as a bundle, in "P1-v3 over D". 60-62 are not built.
 - **Whether D has shapes 52-62.** Shapes 52-59 were not run on D, and 60-62 were not checked.
 - **Whether A has shapes 1-23.** Their presence in the March compiler is not recorded. Most of the code involved
@@ -450,12 +507,12 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 
 Paths are relative to this repository unless stated otherwise.
 - `archive-2026-09-25/soundness-fixes-and-recovery-plan.md`: the fix inventory by analysis (what was, what became,
-  commit), the per-commit static counts from A to D, the decomposition of `c6cf6df69034`, and the recovery plan.
+  commit), the per-commit static counts from A to D, the decomposition of C's EA commit, and the recovery plan.
 - `shapes-ledger.md`: shapes 24-62 and LG-2, their fixes and costs, whether D has them, the gates, the premises
   (no use-after-free, A2-A12, P-EV) and the rejected designs.
 - `removed-from-artifact/2026-09-23-evening/TSanAnalysesAudit.md`: shapes 1-23, the function-level audit, the fix IDs
   and the static counts after STC-3, DE-6 and LO-7.
 - `optimization-results.md` (state of 28-29 Sep): P1-v3, exact DE, P-EV, P5, R3 and P-OWN, "P1-v3 over the shipped
   artifact", and the paper's printed speedups.
-- The checkpoint timings of 24 Sep: raw cells in `fixcost-2026-09-24/`, and for A in `march-9f5d402cb36b/`, both in
-  the lab host's `/extra` data area.
+- The checkpoint timings of 24 Sep: raw cells in `fixcost-2026-09-24/`, and for A in the directory named after the
+  March compiler, both in the lab host's `/extra` data area.
