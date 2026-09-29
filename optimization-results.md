@@ -167,6 +167,7 @@
 | 🌐 **universal U1** = N1 + N1-ST miss + DynSTC-RT (over P1-v3) | `f` 🔴 −4.6 `?` · `a` 🟡 −1.6 | `f` 🔴 −5.0 | `f` 🟢 **+4.7** | `f` 🔴 −3.5 · `a` 🔴 −4.3 | `f` 🟢 **+25.1** |
 | 🌐 **universal U2** = U1 + FE (over P1-v3) | `f` 🔴 −4.4 `?` · `a` 🟡 −1.1 | `f` 🔴 −4.7 | `f` 🟢 **+7.5** | `f` 🔴 −9.1 · `a` 🟡 +1.9 | `f` 🟢 **+25.3** |
 | 📄 **the submitted paper**: TSan+AllOpt over *stock TSan* | +71 | +7 | +45 | +16 (Select) · +11 (Write-only) | +57 |
+| 📦 **MySQL release build** (RelWithDebInfo), over *stock TSan* | — | — | — | `a` P1-v3 ⚪ 0.0 · FE + VWIDE-loops 🟢 **+6.2** (+5.0…+7.3 across offsets) | — |
 | 🔭 ceiling O1-all / O2-eraser (oracles, not optimizations) | +15 / +52 | +4 / +9 | +18 / +28 | −1 / +3 | +31 / +41 |
 
 **🔎 Key to table 3**
@@ -176,6 +177,7 @@
   - They come from earlier compilers, including DE by coverage and the post-dominance heuristic.
   - They use a different reference: *stock* TSan, not P1-v3.
   - For comparison, our best combinations over stock TSan reach about +1 % (SQLite), +4 % (memcached), +4…+11 % (Redis), +8…+13 % (MySQL on AMD) and +33 % (FFmpeg).
+- 📦 **MySQL release build**: MySQL built RelWithDebInfo (no debug mutex), apollo, layout randomised over 4 offsets. Stock TSan costs 16.1× there (8.5× on write_only to 27× on read_only), against ≈ 11.5× on the debug build, whose native run is slow in its own right. The paper's analyses (P1-v3) gain nothing over stock on it; FE + VWIDE-loops gains 6.2 %.
 - 🔭 **Ceilings**: profile oracles. O1-all skips every check on memory touched by one thread; O2-eraser also skips memory Eraser would exempt by a common lock. They are unsound upper bounds on what an analysis of that kind could reach, not optimizations.
 - ⏳ **Batch 11, tonight**: the **optimistic** configuration and the **realistic** one.
   - Where and when: on focs for all apps from ~19:30, and on apollo for SQLite, memcached and MySQL from ~19:05.
