@@ -9,7 +9,7 @@
   (unmodified) TSan's. Only four compilers were timed, never a single fix: **A** the March compiler, **B** after the
   first review, **C** after reviews 2-3, **D** the shipped compiler.
 - **What a shape is.** A shape is a small program on which stock TSan reports a race and the optimized compiler does
-  not. Shapes are numbered 1-62 in the order found. The two fixes that cost the most carry no shape number.
+  not. Shapes are numbered 1-62 in the order found. The fix that cost the most (item 1) carries no shape number.
 
 **1. DE counted a check on one field as covering another (first review, step A→B).** DE (dominance elimination)
 drops a check when an earlier check on the same location always runs before it, with no synchronisation in between.
@@ -19,14 +19,7 @@ drops a check when an earlier check on the same location always runs before it, 
 - *Static effect of this fix alone:* DE's share of removed checks fell from 32.5 % to 2.9 %. That reach was unsound
   and cannot come back.
 
-**2. DE's path check missed side branches (9 Mar, step A→B).**
-- *Wrong:* between the two checks, only blocks on the main dominator chain were scanned for synchronisation. In
-  `x = 1; if (c) { lock(m); ...; unlock(m); } x = 2;` the lock in the side branch was missed, and `x = 2` lost its
-  check.
-- *Fix:* every block on every path between the two checks is scanned.
-- *Static effect of this fix alone:* DE's share of removed checks fell from 53.8 % to 32.5 %.
-
-**What step A→B cost.** It holds fixes 1 and 2 plus the first review's smaller fixes, and was timed only as a whole:
+**What step A→B cost.** It holds fix 1 plus the first review's smaller fixes, and was timed only as a whole:
 
 | app | speedup A → B | share of the app's total loss |
 |---|---|---|
@@ -35,10 +28,10 @@ drops a check when an earlier check on the same location always runs before it, 
 | memcached | ×1.11 → ×1.02 | most (later steps: ×1.02 → ×1.00) |
 | FFmpeg | ×1.356 → ×1.018 | all (D is back at ×1.018) |
 
-Across the four apps, A→B is 75-100 % of the total loss. That fixes 1 and 2 carry most of it is *(inference)* from
+Across the four apps, A→B is 75-100 % of the total loss. That fix 1 carries most of it is *(inference)* from
 static counts: DE lost 35,004 of its 36,265 removed checks in this step.
 
-**3. Escape analysis made fail-closed (reviews 2-3, step B→C).** EA (escape analysis) drops checks on memory that no
+**2. Escape analysis made fail-closed (reviews 2-3, step B→C).** EA (escape analysis) drops checks on memory that no
 other thread can reach.
 - *Wrong, for example:* the arguments of a function reachable through a pointer or from another unit were judged
   from the visible calls only. In `void put(int *p) { *p = 1; }` the write lost its check even when another unit
@@ -55,7 +48,7 @@ other thread can reach.
   ×1.10 → ×1.09, memcached ×1.02 → ≈×1.01-1.02, FFmpeg ×1.018 → ×0.996). That EA carries SQLite's part is
   *(inference)*: EA lost 10,534 removed checks in this step, more than any other analysis.
 
-**4. The rest before shipping (step C→D).** 3-4 % of SQLite's loss; memcached ×1.01-1.02 → ×1.00. By static counts
+**3. The rest before shipping (step C→D).** 3-4 % of SQLite's loss; memcached ×1.01-1.02 → ×1.00. By static counts
 this step is almost all STC's rule that an unknown call may start a thread (`main(){ start_worker(); g = 1; }`).
 Which fix costs SQLite's part is not known.
 
@@ -80,18 +73,17 @@ Every lost race reproduced end to end is recorded as a numbered **shape**. There
   (60-62, all EA).
 - **LG-2**, a runtime case with no number, is fixed by exact DE.
 
-The two largest defects have no shape number: DE's "same location" test, fixed in the first review, and its path
-check, fixed on 9 Mar.
+The largest defect, DE's "same location" test, fixed in the first review, has no shape number.
 
 **Cost.**
-- **A→B took almost all of the speedup.** This first step is the path check plus the first review:
+- **A→B took almost all of the speedup.** This first step is the first review:
   - SQLite ×1.48-1.51 → ×1.09-1.10;
   - Redis ×1.41 → ×1.10;
   - memcached ×1.11 → ×1.02;
   - FFmpeg ×1.356 → ×1.018.
 
-  That step is 75-100 % of each app's total loss. By static counts, most of it is DE's same-location rule and path
-  check. That split is an *(inference)*: no single fix was timed on its own.
+  That step is 75-100 % of each app's total loss. By static counts, most of it is DE's same-location rule. That
+  split is an *(inference)*: no single fix was timed on its own.
 - **B→C and C→D cost noticeably only on SQLite.** B→C covers reviews 2-3, per-unit STC/SWMR and EA's six-shape
   commit; it is 18-22 % of SQLite's loss. C→D is 3-4 % of SQLite's loss.
 - **At D the full configuration is at ×1.00-1.02 over stock** where D was timed (memcached, FFmpeg). SQLite is at
@@ -135,7 +127,7 @@ check, fixed on 9 Mar.
     is 1. It comes in two forms: a compiler-emitted guard, and a runtime form (`dynstc_rt=1`).
 - **Checkpoints on the artifact line** (branch `artifact/atc26`):
   - **A** (6 Mar): the March compiler.
-  - **B**: after the first review. It includes the path-check fix of 9 Mar.
+  - **B**: after the first review.
   - **C**: after reviews 2 and 3 and the per-unit STC/SWMR change. C is itself EA's six-shape fix, the last commit
     of that step.
   - **D**: the shipped compiler, also called the paper compiler. It sits 28 commits after the last March commit
@@ -207,11 +199,8 @@ Key to table 1b:
   its step. The C→D column includes five commits the inventory lists together as "others". Placing them in C→D is an
   *(inference)* from their order and dates.
 - **Percentages** are the removed share of stock sites.
-- **DE's A→B** splits into two parts:
-  - the path check, −14,324: 53.8 % → 32.5 %;
-  - the first review, −20,680.
-
-  On the compiler of 10 Mar (after the path check), the same-location rule alone takes DE from 32.5 % to 2.9 %.
+- **DE's A→B** includes the first review's −20,680. The same-location rule alone takes DE from 32.5 % to 2.9 %
+  (measured on a compiler of 10 Mar).
 - **With loop peeling**, the corpus share is 61.5 % at A and −7.2 % at D. Peeling duplicates code, so once little is
   removed the peeled build has more checks than stock.
 - **Static loss and time do not track each other.** EA's B→C loss of 10,534 sites cost little time outside SQLite.
@@ -235,7 +224,6 @@ Key to every table in this section:
 
 | fix | what was wrong | what the fix does | shapes | step | cost |
 |---|---|---|---|---|---|
-| Path check (9 Mar) | Only blocks on the chain of immediate dominators were scanned for synchronisation, so a side branch taking `mutex_lock` between the two accesses was missed. | Scan every block on every path between the cover and the removed access. | — | A→B | DE removals: 53.8 % → 32.5 % of sites (−14,324) |
 | Same location | "Same location" meant the same base object or must-alias, with no size or offset check. A check on `p->a` covered `p->b`, `a[i]` covered `a[j]`, and a 1-byte check covered an 8-byte access. | `locationCovers`: must-alias with a covering size, or the same pointer value plus the same constant offset. | — | A→B | Alone, 32.5 % → 2.9 % (30 of DE's 32.5 points). That reach was unsound and cannot be recovered. The sound remainder, byte-range containment, was closed on 24 Sep at 2 accesses. |
 | All effects on all paths | The scan stopped at the first dangerous instruction. The lock kind was reset at each call, so acquire-then-release counted as a pure acquire. | `scanPaths` unions every effect on every path. | — | A→B | not separated |
 | Loop back edge | For a removed access inside a loop, the path around the back edge was not scanned, so a release later in the body was missed. | Re-scan the whole loop body. | — | A→B | not separated |
@@ -256,8 +244,7 @@ Key to every table in this section:
 | Signal delivery | TSan runs a pending signal handler inside intercepted calls. A handler that posts a semaphore is a release inside a call DE treats as sync-free. | No fix: premise A3. | 41 | — | — |
 
 Key to table 4a:
-- **Dominance terms.** A block's **immediate dominator** is the nearest block through which every path to it passes.
-  **Must-alias**: the compiler proves that two pointers are equal.
+- **Must-alias**: the compiler proves that two pointers are equal.
 - **LLVM attributes.** **`willreturn`** means the function always returns, and **`nosync`** means it does not
   synchronise.
 - **Control flow.** A **back edge** is the jump from a loop's end to its start. **Irreducible** control flow is a
@@ -488,7 +475,7 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 
 - **Time per fix within a step.** Only checkpoints were timed, so the time cost of any single fix inside A→B, B→C
   or C→D is unknown.
-  - That DE's same-location rule and path check account for most of A→B is inferred from static counts.
+  - That DE's same-location rule accounts for most of A→B is inferred from static counts.
 - **Missing checkpoint values.** SQLite and Redis at D; MySQL at every checkpoint.
 - **Placement of five commits.** The inventory lists five commits together as "others": the two commits of the
   library-table fix (the first also completes DE-1 and DE-3), and the commits of EA-10, EA-11 and EA-12 (the last
