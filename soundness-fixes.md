@@ -445,6 +445,16 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   control-flow integrity enforces. The memcached event-loop confinement, the thread-root SWMR rule and the
   whole-program summaries rely on it. A program that calls a function through an incompatible pointer type, which
   works on common ABIs, is outside the model.
+- **A2-LIB** (adopted 1 Oct). The program does not call a function pointer that only a library produced (returned
+  from a library call or loaded from library-owned data), other than pointers the program stored there itself.
+  Address-taken library declarations are ordinary indirect-call targets and are handled. The thread-root SWMR rule
+  needs it to bound what an indirect call can reach.
+- **FWD-PROGRESS** (adopted 1 Oct). A loop that the language lets the compiler assume to terminate (C11 6.8.5p6,
+  C++ forward progress: no input/output, volatile access, atomic or synchronisation operation in it) does terminate.
+  The loop-range form of DE and terminating post-dominance take a trip count that LLVM derives under this rule.
+- **P5** (pending since 27 Sep, adopted 1 Oct). A race report lost because the runtime recycled the trace part that
+  held the other thread's history, during a deferred or range check, is a bounded-state loss of the same class as
+  P-EV and P-RESET.
 - **A10**, the parts no unit-local check can see: an ignore-sync region opened in another unit, or by the runtime
   around an ignored library. DynSTC's runtime form sees none of them.
 - **A11**, no thread exists when `main` starts, except one started by this unit's constructors, which are checked.
