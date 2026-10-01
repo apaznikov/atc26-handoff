@@ -429,15 +429,22 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   to 1 Oct it was read strictly (shadow contents equal stock's at every point), which forced DE to verify each
   covered check at run time. Ruled 1 Oct: as in the paper's completeness remark and the ATC rebuttal, a race lost
   only because the covering record was evicted is accepted, so DE may remove covered checks outright.
-- **ASYNC-TERM** (adopted 1 Oct). A race may go unreported if the process is terminated asynchronously (another
-  thread's exit or abort, SIGKILL) between two accesses of one thread. It licenses terminating post-dominance in DE
-  (loops need a computable trip count; calls must be willreturn and nounwind).
+- **ASYNC-TERM** (adopted 1 Oct, widened the same day). A race may go unreported if, between two accesses of one
+  thread, the process or the thread is terminated asynchronously (another thread's exit or abort, SIGKILL,
+  asynchronous cancellation), or a signal handler runs that does not return (exit, _exit, longjmp out of the
+  interrupted code). It licenses terminating post-dominance in DE (loops need a computable trip count; calls must be
+  willreturn and nounwind) and the loop-range form of DE, whose loops contain no call and no synchronisation.
 - **P-RESET** (ruled 1 Oct), next to P-EV. A race lost because a global shadow reset (epoch exhaustion,
   `__tsan_flush_memory`, `memory_limit_mb`) dropped the record a removal rested on is accepted in the same class as
   eviction: a bounded-shadow state loss. It is LG-2 (`soundness-0924/lg2/lg2b_epoch.c`: stock 10/10, dominance DE
   0/10). Removal-mode DE, merge and loop ranges carry it. memcached resets about once a second (453 resets in a
   489 s stock run, slot census of 1 Oct), so there it is a frequent case, not a corner. The loop guard and verified
   DE re-check after a reset and do not need it.
+- **A2** (provisional 24 Sep, adopted 1 Oct). An indirect call reaches only functions of the same IR function
+  type. Calling through an incompatible function type is undefined behaviour in C, and it is the rule Clang's
+  control-flow integrity enforces. The memcached event-loop confinement, the thread-root SWMR rule and the
+  whole-program summaries rely on it. A program that calls a function through an incompatible pointer type, which
+  works on common ABIs, is outside the model.
 - **A10**, the parts no unit-local check can see: an ignore-sync region opened in another unit, or by the runtime
   around an ignored library. DynSTC's runtime form sees none of them.
 - **A11**, no thread exists when `main` starts, except one started by this unit's constructors, which are checked.
@@ -445,8 +452,6 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 - **Library names.** A libc or libstdc++ name binds to that library.
 
 **Provisional:**
-- **A2** (24 Sep). An indirect call reaches only functions of the same IR type. It is used only by an experimental
-  SWMR rule, off by default.
 - **A4** (24 Sep). No unit defines a reserved C or POSIX library name that another unit calls. Shape 40's fix covers
   only definitions the unit itself can see.
 - **A5** (24 Sep). A default-visibility definition in position-independent (`-fPIC`) code is not replaced at load
