@@ -425,9 +425,19 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   - **P-OWN**: the annotations name the right lock.
 
 **Stated premises, in use:**
-- **P-EV**, the eviction victim is arbitrary. This is the criterion for every removal since 25 Sep: shadow contents
-  equal stock's at every point, with the choice of victim treated as the runtime's randomness. Every analysis relies
-  on it, and the paper must state it. No adoption date is given in the sources.
+- **P-EV**, the eviction victim is arbitrary. Every analysis relies on it, and the paper must state it. From 25 Sep
+  to 1 Oct it was read strictly (shadow contents equal stock's at every point), which forced DE to verify each
+  covered check at run time. Ruled 1 Oct: as in the paper's completeness remark and the ATC rebuttal, a race lost
+  only because the covering record was evicted is accepted, so DE may remove covered checks outright.
+- **ASYNC-TERM** (adopted 1 Oct). A race may go unreported if the process is terminated asynchronously (another
+  thread's exit or abort, SIGKILL) between two accesses of one thread. It licenses terminating post-dominance in DE
+  (loops need a computable trip count; calls must be willreturn and nounwind).
+- **P-RESET** (ruled 1 Oct), next to P-EV. A race lost because a global shadow reset (epoch exhaustion,
+  `__tsan_flush_memory`, `memory_limit_mb`) dropped the record a removal rested on is accepted in the same class as
+  eviction: a bounded-shadow state loss. It is LG-2 (`soundness-0924/lg2/lg2b_epoch.c`: stock 10/10, dominance DE
+  0/10). Removal-mode DE, merge and loop ranges carry it. memcached resets about once a second (453 resets in a
+  489 s stock run, slot census of 1 Oct), so there it is a frequent case, not a corner. The loop guard and verified
+  DE re-check after a reset and do not need it.
 - **A10**, the parts no unit-local check can see: an ignore-sync region opened in another unit, or by the runtime
   around an ignored library. DynSTC's runtime form sees none of them.
 - **A11**, no thread exists when `main` starts, except one started by this unit's constructors, which are checked.
