@@ -446,7 +446,8 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   whole-program summaries rely on it. A program that calls a function through an incompatible pointer type, which
   works on common ABIs, is outside the model.
 - **A2-LIB** (adopted 1 Oct). The program does not call a function pointer that only a library produced (returned
-  from a library call or loaded from library-owned data), other than pointers the program stored there itself.
+  from a library call, loaded from library-owned data, or passed by a library to a callback), other than pointers
+  the program stored there itself.
   Address-taken library declarations are ordinary indirect-call targets and are handled. The thread-root SWMR rule
   needs it to bound what an indirect call can reach.
 - **FWD-PROGRESS** (adopted 1 Oct). A loop that the language lets the compiler assume to terminate (C11 6.8.5p6,
