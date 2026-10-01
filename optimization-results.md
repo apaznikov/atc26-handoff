@@ -7,7 +7,7 @@
 > - 🎬 **FFmpeg: +33.1 %** (1.313-1.358): N1 + N1-ST front + DynSTC-RT. Almost all of it is the single-threaded stream copy (copy 2.90×, mjpeg 1.09×, h264 0.98×).
 > - 🗄️ **Redis: +5.9 %** (1.045-1.077): FE-INL + N1. Per test +9…+11 % on SET, LRANGE_300-600, ZADD, SPOP; ≈ 0 on PING, LPOP, RPOP.
 > - 🪶 **SQLite: +16.9 %** on the shared-cache subtests stress2 + create_drop_index_1 (1.128-1.244, A/A 1.020; set awaiting confirmation); +5.1 % on stable-4: LO-OBJ-G v4, premises R3/P-OWN. It acts only where connections share a cache.
-> - 🐬 **MySQL: +5.0 %** on the pre-registered write set (1.030-1.072; insert +8.1, update_non_index +4.9, delete +2.0; debug build): FE-INL + VWIDE-loops. Release build, 5 scripts: +6.2 %. Reads gain nothing (read_only ≈ 0).
+> - 🐬 **MySQL: +5.0 % on AMD only** (on the Intel host, the paper's machine, the same pair loses 12.4 %) on the pre-registered write set (1.030-1.072; insert +8.1, update_non_index +4.9, delete +2.0; debug build): FE-INL + VWIDE-loops. Release build, 5 scripts: +6.2 %. Reads gain nothing (read_only ≈ 0).
 > - ⚪ **memcached: no static lever resolved.** The paper's analyses alone read 0.982 of stock on every app's leg (never separable). memcached's only gain is a runtime change, DD-EXACT (+21.7 %, table 4).
 
 > [!WARNING]
@@ -180,7 +180,7 @@ its own is in tables 1-2.
 
 | configuration | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|
-| 🏆 **best race-preserving** | `a` 🟢 **+16.9** *direct* on the shared-cache set (stress2 + create_drop_index_1 at 60 s; 1.128-1.244 over 4 offsets × N=4, A/A 1.020; set awaiting confirmation) · +5.1 on stable-4 (1.031-1.068); LO-OBJ-G v4, premises R3/P-OWN | ⚪ nothing resolved: the paper's analyses alone −1.8 *direct* (not separable from stock); no further static lever resolved | 🟢 **+5.9** *direct* (1.045-1.077; FE + N1) | `a` 🟢 **+5.0** *direct* on the pre-registered write set (1.030-1.072; insert +8.1, update_non_index +4.9, delete +2.0; debug build, FE + VWIDE-loops) · +4.0 on the earlier 5-script set · 🟢 **+6.2** *direct* (release build, 5 scripts) | 🟢 **+33.1** *direct* (1.313-1.358; N1 + N1-ST front + DynSTC-RT) |
+| 🏆 **best race-preserving** | `a` 🟢 **+16.9** *direct* on the shared-cache set (stress2 + create_drop_index_1 at 60 s; 1.128-1.244 over 4 offsets × N=4, A/A 1.020; set awaiting confirmation) · +5.1 on stable-4 (1.031-1.068); LO-OBJ-G v4, premises R3/P-OWN | ⚪ nothing resolved: the paper's analyses alone −1.8 *direct* (not separable from stock); no further static lever resolved | 🟢 **+5.9** *direct* (1.045-1.077; FE + N1) | `a` 🟢 **+5.0** *direct* on the pre-registered write set (1.030-1.072; insert +8.1, update_non_index +4.9, delete +2.0; debug build, FE + VWIDE-loops) · `f` 🔴 **−12.4** on Intel, same trees (0.854-0.899, A/A 1.002): the gain is AMD-only · +4.0 on the earlier 5-script set · 🟢 **+6.2** *direct* (release build, 5 scripts) | 🟢 **+33.1** *direct* (1.313-1.358; N1 + N1-ST front + DynSTC-RT) |
 | 🌐 **universal U1** = N1 + N1-ST miss + DynSTC-RT | `f` 🔴 ≈ −3.6 · `a` ⚪ ≈ −0.5 | `f` 🔴 ≈ −6.7 | `f` 🟢 ≈ +6.5 | `f` 🔴 ≈ −3.5 · `a` 🔴 ≈ −2.6 | `f` 🟢 ≈ +24 |
 | 🌐 **universal U2** = U1 + FE | `f` 🔴 ≈ −3.4 · `a` ⚪ ≈ 0.0 | `f` 🔴 ≈ −6.4 · `a` 🟡 ≈ −2.5 | `f` 🟢 ≈ +5.6 | `f` 🔴 ≈ −9.1 · `a` 🟡 ≈ +2.0 | `f` 🟢 ≈ +25 |
 | 📄 **the submitted paper**: TSan+AllOpt | +71 | +7 | +45 | +16 (Select) · +11 (Write-only) | +57 |
