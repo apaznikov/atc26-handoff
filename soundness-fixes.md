@@ -93,7 +93,14 @@ The largest defect, DE's "same location" test, fixed in the first review, has no
 ## 2. How to read
 
 - **Terms.**
-  - **Stock TSan** is unmodified ThreadSanitizer.
+  - **Stock TSan** is unmodified ThreadSanitizer, with one upstream fix that the project's fork point
+    (c609043dd009) predates. Upstream omitted an access when the capture query was false for an address whose
+    underlying object is a stack alloca; the query was asked about the address value, so a field or element of a
+    local aggregate counted as never captured even after the aggregate's address had been passed to a call or
+    stored to a global. Upstream 59b26abbbe89 (24 Apr 2025, #132756; with bf6986f9f09f, #132752, before it) asks
+    about the alloca instead, and the project's tree has had the same rule since 14 Sep. The fork point without
+    the fix checks 3.5 % fewer accesses on memcached (6,382 against 6,604 calls) and is 3 % faster there, by
+    missing those races, so it is not used as a baseline.
   - The compiler puts a **check** (a runtime call such as `__tsan_write4`) before every memory access.
   - The runtime records each access in **shadow memory**. Shadow is kept per 8-byte **granule** and holds a bounded
     number of records per granule. The runtime reports a race when two threads' accesses conflict with nothing
