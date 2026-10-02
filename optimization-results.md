@@ -1,290 +1,114 @@
-# 🧵 TSan instrumentation optimizations — results
+# TSan instrumentation optimizations: results
 
-*State as of 2 Oct 2026, 01:00 (focs time). Table 3 carries direct legs of record over stock TSan (4 offsets, A/A on stock); screenings are marked as such.*
+State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says otherwise. `a` = AMD (2 × EPYC 9115),
+`f` = Intel (Xeon w9-3495X). The long version of this file is in the history (commit 3abcd2c).
 
-> [!TIP]
-> **Headline gains over stock TSan (race-preserving, one binary, direct legs of record: layout randomised over 4 offsets, A/A on stock)**
-> - 🎬 **FFmpeg: +34.0 %** (1.329-1.353; replicated at N=2, first leg +33.1 %): N1 + N1-ST front + DynSTC-RT. Almost all of it is the single-threaded stream copy (copy 2.90×, mjpeg 1.09×, h264 0.98×).
-> - 🗄️ **Redis: +7.6 %** on the pre-registered heavy-command set (1.061-1.094; LRANGE_100 +12.5 %): FE-INL + N1. All 19 tests: +5.9 %.
-> - 🪶 **SQLite: +16.9 %** on the shared-cache subtests stress2 + create_drop_index_1 (1.128-1.244, A/A 1.020); +5.1 % on stable-4: LO-OBJ-G v4, premises R3/P-OWN. It acts only where connections share a cache.
-> - 🐬 **MySQL: +5.4 % on AMD with FE-INL alone** (Release build, the camera-ready build since 1 Oct; pre-registered write set; 1.043-1.060 over 4 offsets, A/A 0.970-0.999; leg of 2 Oct). An earlier leg with FE-INL + VWIDE-loops read +6.9 % (1.063-1.081, A/A 1.007); the two have not been compared within one leg yet, so the difference is not attributed to VWIDE-loops. **On the Intel host FE loses: −6.2 %** on Release (0.925-0.950, A/A 1.019), −12.4 % on Debug, and no variant tried there (profile-hot FE, out-of-line `preserve_most` entry, removal-mode DE) reaches stock. On AMD the gain is not specific to the write set: on the five other sysbench scripts FE-INL alone reads +5.6 % (1.054 / 1.057, A/A 0.990-1.001; read_only +7.0, read_write +7.0, write_only +6.2, select_random_points +3.2, select_random_ranges +4.4), so all eight scripts gain.
-> - 🧊 **memcached: +32.2 % on AMD, +25.4 % on Intel** with server and client on disjoint CPUs (AMD 1.300-1.335, A/A 0.998-1.004; Intel 1.245-1.263, A/A 1.001-1.012; legs of record on the final configuration, 2 Oct); +23.8 % on AMD when server and client share CPUs (1.233-1.250) on a pre-registered request mix with pipelining, 32-key gets and 190-byte keys, where stock TSan costs 6.7× over native: EA-CONTENTS + event-loop confinement + thread-root SWMR (audited; 24.2 % fewer executed checks: 21.4 % from the confinement, 2.7 % from the rule). Server and client share the 16 CPUs of one AMD half. On Intel the server (8 threads) and the client run on disjoint CPUs; a first Intel leg with 48 server threads sharing CPUs with the client was unreadable (A/A 0.941-1.165). On the default memtier input the same build is not resolved on either machine (AMD, full length: 1.006, A/A 0.993; Intel: 1.008, A/A 0.989): the server is kernel-bound there. A half-length screening had read +4.7 %, which did not hold. The paper's analyses alone are never separable from stock on any app.
+🟢 gain resolved above the A/A control · 🟡 unresolved, or 1-2 % · ⚪ within ±1 % · 🔴 loss of 2 % or more · — not measured
 
-> [!WARNING]
-> **Where no static analysis over P1-v3 helps yet: memcached, and MySQL on Intel.**
-> - SQLite now gains through LO-OBJ-G, Redis and MySQL on AMD through FE (above). On MySQL on Intel FE-INL lost 8-9 % in three single-layout sessions; its randomised re-run (batch 11 on focs) is queued. A 30 Sep screening of FE-LAZY on MySQL/AMD read null (both variants inside A/A); the Intel leg is still the one that decides.
-> - On memcached no resolved reading over P1-v3 gains more than about 2 %, and even the oracle ceilings are small (+4 / +9 %, table 3). Its TSan cost sits in the runtime and on truly shared data, not in checks an analysis can remove. A profile of the server's user time under stock TSan: sync 32 %, access checks 30 %, the deadlock detector ~14-18 %, range checks 12 %, slots 6 %, memcached's own code 3 %, function entry/exit 1 %. The access checks go to data that really is shared: genuine hand-off is ≈ 1.3 % of checks, and the rest is read-shared or has unordered cross-thread conflicts (OWN-HANDOFF, table 4). The deadlock detector's cost is real (16-18 % of user cycles) and a larger node table recovers most of it (DD-EXACT B1, +19.4 %, above) — but that is a runtime knob, not a static analysis, and it changes no check.
-> - 30 Sep re-runs and screenings that add nothing new over P1-v3: RT-SYNC-LF on Redis (unresolved, though it fires on 99.99 % of acquires), N1-ST placement (c) on Redis/memcached/SQLite (no resolved difference between front/fs/miss on apollo), STC-TS on memcached (null, both arms inside A/A), WP + allowlists on FFmpeg/SQLite/memcached/Redis (null everywhere), per-element locksets (built and gated, but memcached's mass is only 1.67 % of checks, below timing resolution: parked, not timed), extra LLVM passes before instrumentation (closed as a set; undoes most of P1-v3's own gain on Redis when left on).
-> - The server's user time is 223 s native against 3,857 s under stock TSan (×17), for the same fixed workload. Earlier runtime shares divided by the load client's CPU and were ~10× too high; corrected: missed range cells ≈ 1.5 % of the server's user time, slot chains ≈ 1.7 %, no-op acquires ≈ 0.6 %. Per run, the runtime preempts thread slots ~14 M times and wipes all shadow memory 456 times (the separate runtime track, `runtime/README.md`).
-> - Four levers built for SQLite, memcached and MySQL and timed on 27-28 Sep gain nothing: LIBCALL-INLINE, N1-CSE and N1-ATOMIC stay within ±1 %, and FE-SINK loses 1-2 % there (it gains only on Redis and MySQL, table 1).
+## Table 1a. All applications, without annotation-based optimizations
 
-> [!CAUTION]
-> **Soundness and correctness**
-> - **EA-P5/P6/P7:** three pre-existing holes in the escape analysis (stock 10/10, EA 0/10) are FIXED and landed 30 Sep, after audit A29: a pointer operand escapes when a call may send what it reads through it. Cost ≈ 0 (memcached +19 sites, 0.000 % of executed checks; FFmpeg +42, 0.004 %). Numbers that include EA are race-preserving from that root on.
-> - **Premise P5, waiting for a ruling.** P5 states that four things are arbitrary: the evicted shadow slot, the recycled trace part, which slot an attach takes, and when a thread re-locks its slot. It covers every lever that removes trace events, the paper's analyses included. The slot counts show it matters: memcached has ~14 M preemptions per run, and each opens a window in which stock TSan already loses races.
-> - **Relaxed DE (DE-3R, DE-2R).** They rely on premise P-EV-DEFER and are kept apart from race-preserving numbers. Audit A26 found two losses outside that premise: a loop whose exit is never reached (`_exit`, `abort`, a kill) loses its deferred checks, and after a group of merged checks reports, a later race on a sibling is lost. Fixes are designed and paused, so any timing is labelled "relaxed, pre-A26-fix" (table 4).
-> - **MySQL server deaths.** There were 2 deaths (an InnoDB assertion, a lost connection) in 104 runs of N1-family arms (any arm with N1's inline test), and 0 in the other 342 runs (p ≈ 0.06). Four checks of N1 found nothing:
->   - a source review;
->   - an instruction-level diff of 517 InnoDB functions;
->   - an ABI scan of 334 miss calls;
->   - the LLVM machine verifier.
->
->   The most likely cause is an InnoDB race that TSan's timing exposes. It is monitored in every MySQL run.
-
-> [!NOTE]
-> **Layout randomisation is standard for every timed leg since 29 Sep.**
-> - Why: on MySQL, where the program's code sits within a 64-byte line costs up to 7 % on read_only (3 % on the composite). On apollo two builds whose program code was byte-identical read 0.989 and 0.954 of the base. Moving only the program by 0x6f0 reproduces the full gap; moving only the runtime's hot entries, or the program by a whole page or by 480 B, costs nothing.
-> - Every lever changes the size of instrumented code and so moves later program functions. A fixed alignment cannot remove that, because each lever's own code moves the hot code again.
-> - How: each arm, the base included, is built at four program offsets (0/16/32/48 bytes mod 64) that rotate across the repetitions. The score is the mean of the per-offset ratios, reported with its spread across offsets, and each leg carries an **A/A** control arm (a second copy of the base). Such cells are marked **rand.**
-> - Redis leans the same way: a program shift of 48 mod 64 alone read 0.962 (95 % CI 0.900-1.028, screening, unresolved), and its randomised readings differ from the single-layout ones by up to ~4 points (U1: +4.7 → +8.5).
-> - Cells without rand. are single layout and can carry this term: up to ~7 % (read_only) or ~3 % (composite) on MySQL. Read single-layout MySQL differences below that as unresolved.
-> - The debug build embeds the tree path through `__FILE__`, so every arm gets a tree path of equal length.
-
----
-
-## 🧭 How to read the tables
-
-| marker | meaning |
-|---|---|
-| 🟢 **+x** | clear gain, ≥ +2 % |
-| 🟡 ±x | small effect (1 … 2 %), or unresolved: `?`, or a larger reading inside the layout spread |
-| ⚪ x | noise, within ±1 % |
-| 🔴 −x | loss, ≤ −2 % |
-| `f` / `a` | measured on **focs** (Intel Xeon w9-3495X, 112 threads) / **apollo** (2 × AMD EPYC 9115) |
-| `?` | sessions disagree (unresolved) |
-| rand. | layout-randomised over 4 program offsets (see the note above); cells without it are single layout |
-| screening | measured next to a busy neighbour; a lead, not a reading of record |
-| — | not measured |
-
-- A number is the speed gain in percent, (speed ratio − 1) × 100. Resolution is about 2-4 % (single-layout MySQL about 5 %, see the note above).
-- **The reference.** Unless a row says otherwise, the reference is the base **P1-v3**.
-  - P1-v3 is the shipped configuration (EA, LO, STC, SWMR, and DE with loop peeling), with DE made **exact** plus every soundness fix found after shipping.
-  - Exact means "verified removal": a check is removed only when an inline copy of TSan's hit test proves that the check would hit.
-  - P1-v3 over the shipped artifact: SQLite +0.3, memcached +1.4, Redis −2.9, MySQL 0…+3, FFmpeg −0.3.
-  - Since 29 Sep the analysis summaries are on by default. They are read only with a matching generator id, and a build is labelled "P1-v3 + summaries" only if it ran the generator. What they add weighs < 1 % of executed checks on every app (STC-SUM, table 4).
-- New levers are measured over a control built from the same compiler root with the lever switched off.
-- 🎲 **Randomised legs of 29 Sep** (the rand. cells; 4 offsets × N = 1):
-  - Redis, focs, over P1-v3; A/A 1.006 (1.000-1.011 across offsets). Every FE and N1-ST arm is above the base at every offset; N1 alone is not (0.998-1.056). Arms built from other compiler roots also carry their root's runtime, so a runtime term is not separated.
-  - MySQL debug build, apollo, over P1-v3. No A/A arm (the leg predates that rule), so resolution is judged from stock's spread across offsets, 0.983-1.013. FE + VWIDE-loops and FE-INL are above the base at every offset, N1 and U1 below it at every offset, and U2 straddles it.
-  - MySQL release build, apollo, over stock TSan (table 3).
-- ✅ **Race-preserving.** Everything in tables 1-3 loses no race that stock TSan reports, under the project's stated premises. Each was checked with IR tests, check-tsan, reproducers with controls, and an independent audit.
-- 📖 Each table's key explains every name used in that table. General terms:
-  - **TSan terms.** A **check** is the call inserted before a memory access (`__tsan_read4`, …). A **shadow cell** records recent accesses to an 8-byte granule: a **hit** means the access is already recorded, a **miss** means the runtime must check for races and record it. The **trace** is the per-thread log used to restore stacks in race reports. **Epoch / slot / preemption / DoReset** are TSan v3's per-slot logical clocks, the 256 slots shared by all threads, the taking of a live thread's slot, and the global reset that wipes all shadow. An **interceptor** wraps a libc call; a **range check** covers a byte range.
-  - **The paper's analyses.** **STC**: no checks in code that can only run before threads exist. **SWMR**: if every write to a variable happens in single-threaded context, its reads need no check. **LO**: if every multi-threaded access to a variable holds a common lock, those accesses need no check. **EA**: no checks on memory that never becomes reachable from another thread. **DE**: a check dominated by an identical one with no synchronisation in between is dropped; **loop peeling** copies a loop's first iteration so the body is dominated. **DynSTC**: a run-time thread counter that skips checks while the process is single-threaded. **AllOpt**: all of them together. **stock**: unmodified TSan. **shipped artifact**: the compiler submitted with the paper. **tier A (T0-T11)**: the 25 Sep sweep over the shipped artifact (T0 stock, T1 shipped, T10 all new levers including inexact DE).
-  - **Measurement.** Each machine has two benchmark halves; a timed **leg** owns one. **idle**: the other half is empty. A **session** is one sitting, an **arm** one binary, a **cell** one run of one arm, **N** the runs per arm, and **n = k** means only k runs survived. **ABBA / rotated**: arm order alternates so drift hits all arms alike. **Control / same-root control**: the arm from the same compiler with the lever off. **CV clause tripped**: a subtest's run-to-run spread exceeded its limit, so the leg is re-run. **pend. / re-run queued**: not yet measured, or being repeated. **= base / = FE**: the flag changes no code for that app. **M/s, G**: millions per second, billions.
-  - **Workloads.** SQLite: threadtest3, where **stable-4** is the geomean of walthread1, walthread2, checkpoint_starvation_1 (**cs1**) and stress2 (bimodal stress1 is left out); **all-7** is the geomean of all seven subtests. memcached: memtier_benchmark. Redis: redis-benchmark. MySQL: sysbench OLTP (Select = oltp_read_only, Write-only = oltp_write_only, read-write, point and range selects). FFmpeg: transcodes of one film (copy = single-threaded stream copy; h264, h265, **mjpeg** = encoders).
-  - **Premises and audits.** **P-EV**: which record TSan's bounded shadow evicts is arbitrary. **P5**: P-EV widened to the recycled trace part, the slot an attach takes and the moment of a re-lock (waiting for a ruling). **P-EV-DEFER**: recording a check later, after a sync-free loop, is admissible like an eviction (allowed for DE-3R and DE-2R on 28 Sep); configurations that rely on it are labelled **relaxed**. **A3**: signal handlers do not synchronise. **A3-fiber**: a handler returns on the same fiber (not adopted). **Axx** (A21, A23, …): numbered independent audits; "sound with conditions" means correct if the listed conditions hold. **idea 6-9**: item numbers in the idea list of 27 Sep.
-
----
-
-## 🟢 Table 1 — optimizations that gain somewhere
-
-| optimization | SQLite | memcached | Redis | MySQL | FFmpeg |
+| app | workload | stock TSan over native | configuration | AMD | Intel |
 |---|---|---|---|---|---|
-| **FE-INL** | `a` ⚪ −0.7 | `a` ⚪ +0.8 | `f` 🟢 **+4.8** | `f` 🔴 −8.9 · `a` 🟢 **+3.6** rand. | `f` ⚪ 0.0 |
-| **FE + VWIDE** | `a` ⚪ 0.0 | `a` ⚪ −0.3 | `f` 🟢 **+5.2** | `f` 🔴 −8.6 · `a` 🟢 **+4.5** | `f` 🟢 **+2.0** |
-| **FE + VWIDE-loops** | `a` ⚪ +0.1 | `a` ⚪ +0.6 | `f` 🟢 **+7.2** rand. | `f` 🔴 −7.6 · `a` 🟢 **+4.6** rand. | `f` 🟡 +1.8 |
-| **N1** | `f` 🔴 −2.1 `?` · `a` ⚪ −0.8 | `f` 🟡 −2.7 / +1.4 `?` · `a` ⚪ +0.3 | `f` 🟡 +2.5 rand. | `f` 🟡 −1.4 · `a` 🟡 −1.7 rand. | `f` 🟢 **+5.0** |
-| **N1-L** | `f` ⚪ 0.0 `?` · `a` ⚪ +0.3 | `f` 🟡 `?` · `a` ⚪ −0.9 | `f` 🔴 −2.5 | `a` ⚪ −0.1 | `f` 🟢 **+3.0** |
-| **DynSTC-RT** | `f` 🟡 +0.8 `?` · `a` ⚪ +0.4 | `f` 🟡 +2.6 `?` · `a` ⚪ −0.3 | `f` 🔴 −2.2 | `a` ⚪ +0.1 | `f` 🟢 **+12.0** |
-| **N1-ST front** ¹ | `f` ⚪ 0.0 `?` · `a` ⚪ +0.2 | `f` ⚪ −0.8 · `a` ⚪ −0.2 | `f` 🟡 −1.4; N1 + N1-ST front + DynSTC-RT over P1-v3 🟢 **+5.7** rand. | `f` 🟡 −1.5 · `a` 🟡 −1.8 | `f` 🟢 **+16.9** |
-| **N1-ST miss** ¹ | `f` 🔴 −4.3 `?` · `a` 🟢 **+2.0** | `f` 🔴 −2.8 · `a` ⚪ +0.1 | `f` 🟢 **+2.1** | `f` ⚪ −0.4 · `a` 🔴 −2.6 | `f` 🟢 **+9.8** |
-| **MEMINTR** | `a` 🟡 +0.7…+2.5 (2 sessions; cs1 +3.8 in both) · `f` screening | `a` ⚪ +0.9 · `f` ⚪ −0.4 (screening) | `f` 🔴 −2.5 (idle; perf: no cycle change, likely noise or layout) | `a` ⚪ +0.3 · `f` 🟡 +1.6 (screening) | `f` ⚪ 0.0 |
-| **FE-SINK v2** ³ | `a` ⚪ +1.1 (stress2 alone); with FE-INL 🟡 −1.0 | `a` 🟡 −1.7; with FE-INL 🔴 −2.2 | `f` 🟢 **+4.1** (call entries; FE-INL alone +6.4); with FE-INL 🟡 −1.3 | `a` 🟢 **+2.8** (call entries; FE-INL alone +5.6); with FE-INL ⚪ +0.4 | `f` 🟡 −1.2; with FE-INL 🟡 −1.0 |
-| **exact DE package** ² | `a` ⚪ +0.8 | `f` 🟢 **+3.6** | `f` 🔴 −2.6 | `f` 🟢 **+3…+6** | `f` ⚪ +0.5 |
-| **LO-OBJ-G** ⁴ | `a` 🟢 **+7.1** stable-4 rand. (spec v4; stress2 **+26.3**; the other three +1.4); earlier v2 single-layout +4.6, rand. +3.7; all-7 🟡 −2.0 (from the noisy dynamic_triggers and stress1; dynamic_triggers alone, 10 pairs: −1.3, 95 % CI −17…+17, unresolved) | ≤ +0.2 (census; dropped 29 Sep) | — | ≈ 0 (census) | — |
-| **EVCONF** (event-loop confinement; 2 Oct) ⁵ | — | `a` 🟢 **+22.7** on pipelined 32-key gets with long keys (1.216-1.251 over stock, of record); in the disjoint layout every variant resolves: default input 🟢 +4.9, pipelining 🟢 +5.1, 32-key gets 🟢 +8.3, long keys 🟢 +18.0 (table 3 key) | — | — | — |
-| **SWMR thread roots** (2 Oct) ⁵ | — | `a` 🟢 **+0.9** on top of EVCONF (1.006-1.014 across offsets; final configuration 1.238 over stock) | — | — | — |
+| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+34.0 %** (1.329-1.353) |
+| Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | — | 🟢 **+7.6 %** (1.061-1.094) |
+| MySQL | Release build, sysbench insert, update_non_index, delete | 7.5× | FE-INL | 🟢 **+5.4 %** (1.043-1.060) | — |
+| memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS | — | 🟡 +1.9 % (1.004-1.028, A/A 1.001-1.012) |
+| SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −0.5 % on an earlier four-subtest set; this set not measured yet | — |
 
-<sub>¹ Measured on top of N1 with DynSTC-RT; on FFmpeg, on top of DynSTC-RT + FE + N1; on Redis, without DynSTC-RT (the rand. Redis arm is a separate combination over P1-v3). ² Measured over the shipped artifact (tier A), not over P1-v3. ³ Over its same-root control (P1-v3 + N1); all readings of record. ⁴ Over P1-v3 in the same leg (apollo half B, 32 CPUs, ABBA N = 6), root b5e6e8659bd8 (v3 + v2, audits A25/A25b; the later tip differs only in `balance`, with fewer checks). Relies on premises R3 and P-OWN (adopted 29 Sep) and on annotations backed by SQLite's own assertions. ⚠️ Audit A31 (30 Sep): the v2 spec behind this reading also covered BtCursor.curFlags, which SQLite writes without the BtShared mutex on the incremental-blob path; threadtest3 never opens a blob, so no race was lost here, but spec v4 excludes that field (and three Btree fields) and is re-timed; Re-timed on v4 (30 Sep, apollo, rand., A/A 0.997): the cell above. G-EA (the sound escape-analysis extension for private B-trees) fires on 99.9 % of guarded checks but costs more than it saves (+2.9 % stable-4 with it, vs +7.1 % without): closed. ⁵ Over stock TSan, apollo half A, server and client sharing its 16 CPUs; EVCONF is an application specification for memcached checked by the compiler and guarded at run time (table 4), the thread-root rule is automatic under whole-program summaries.</sub>
+## Table 1b. Applications where annotation-based optimizations gain
 
-**🔎 Key to table 1**
-- **FE-INL** (inline function entry/exit; **FE** in combinations). The push and pop of TSan's shadow call stack are inlined instead of calling `__tsan_func_entry/exit`; the trace events are identical.
-  - It gains on Redis and on MySQL on AMD (randomised +3.6 %; single layout +4.2 %).
-  - On MySQL on Intel it lost in every single-layout session. FE executes up to 8 % fewer instructions per transaction there but no fewer cycles, because the +59 % code size raises i-cache and iTLB stalls. The debug-build MySQL is lock-bound, so longer transactions hold locks longer.
-  - *The processor decides the sign, contention the size.* Part of the Intel loss may be layout; the randomised focs leg decides.
-- **VWIDE** (idea 7, "cheap run-time DE checks"). Exact removal also at sites that no covering check dominates but that usually hit in practice; an inline hit test verifies the cover at run time. **VWIDE-loops** does this only inside loops. Alone they gain nothing (table 2); here they appear combined with FE.
-- **N1**. TSan's fast-path hit test ("is this access already recorded in shadow?") is inlined at every access, and the runtime is called only on a miss. **N1-L**: the same, only in loops with at most 20 checks. On Redis the randomised +2.5 % lies inside the layout spread (single layout +3.7 %).
-- **DynSTC-RT**. A run-time single-thread mode: while the process has one live thread, the runtime records nothing, and the create/join edges order everything else. Its whole gain is FFmpeg's single-threaded stream copy.
-  - Against the paper's compile-time DynSTC (an inline thread-count guard before each plain access), one FFmpeg leg over stock, 2 Oct, 2 offsets, A/A 0.994-0.999: guard alone +10.1 % (copy 1.49-1.54×), DynSTC-RT alone +12.2 % (copy 1.55-1.57×), guard and DynSTC-RT together +31.9 % (copy 3.08-3.17×), N1 + N1-ST front + DynSTC-RT +33.2 % (copy 2.92-2.96×). The two are the same idea with different coverage: the guard skips plain accesses inline but not range checks from interceptors and memory intrinsics; the runtime mode skips those too, but pays the call on plain accesses. Each covers about half of the stream copy's cost; N1-ST front is the inline skip expressed through the runtime's per-thread flag.
-- **N1-ST**. N1's inline test is skipped while the thread is in that single-thread mode, where it would always miss.
-  - **front**: the flag is read before the test. This gives the largest gain on single-threaded code and a 1-3 % tax on multi-threaded code.
-  - **miss**: the flag is read only on a miss. There is no tax on hits and about half the gain.
-- **MEMINTR** (idea 8b). A memcpy/memmove whose source is a constant or an uncaptured local has only its destination checked. Small gains on SQLite (checkpoint_starvation_1 +3.8 % in both apollo sessions) and memcached. Redis read −2.5 %, but a perf check found no mechanism: cycles unchanged on the losing commands (PING_MBULK 1.001, ZPOPMIN 0.995), so it is likely noise or layout.
-- **exact DE package**. DE's merging of adjacent checks and its loop ranges, made exact under verified removal.
-- **LO-OBJ-G** ⁴ (lock ownership relative to an object, with a run-time guard). Fields of objects owned by one SQLite BtShared (pages, Pager, WAL) are left unchecked while the thread holds that BtShared's mutex. An inline test checks this at run time: the thread's "any mutex held" flag plus a cached last owner, with the runtime called only on a miss. The owners come from annotations taken from SQLite's own `sqlite3_mutex_held` assertions.
-  - Premises: **R3**, every access to an annotated object that conflicts with another thread's access holds the annotated lock, or happens before the object is published; **P-OWN**, the annotations name the right lock, and an owner's lock does not change while the owner lives. Audits A24 and A24b: sound under both, with listed conditions. Both premises were adopted on 29 Sep; a further premise, P-PAGER, was declined, so v2 stays limited to `pCell`.
-  - The gain sits in the shared-cache subtests: stress2 +23.1 %, where ~97 % of the guarded checks are skipped. Subtests with a private BtShared skip nothing. Since v3 every guarded function has a plain copy chosen once at entry, so they no longer pay for the test (walthread1 −2.9 % in v1, +1.0 % now). v2 adds the `pCell` parameter of the cell parsers. Cost: SQLite's code +14 %, instrumentation 13.9 s vs 10.2 s. dynamic_triggers is unresolved on every version; a 10-pair leg of it alone reads 0.987 (95 % CI 0.83-1.17).
-  - The memcached and MySQL figures are censuses, not timings. Lock ownership over memcached's locks was dropped on 29 Sep (≤ 0.2 %).
-- **FE-SINK v2** ³. The function-entry call is sunk to the first point that needs the frame. It gains only with call entries and only on the two call-heavy servers, Redis (+4.1 %) and MySQL on AMD (+2.8 %), where FE-INL alone gives more (+6.4 %, +5.6 %). On top of FE-INL it adds nothing (MySQL +0.4 %) or costs 1-2 %, so it adds nothing to the best configurations. Audit A23: sound with conditions; premise P5 pending.
-  - Arms in its legs: FB is the control, FI is FE-INL alone, FS is sink with call entries, FIS is sink with FE-INL, FIC is FE-INL-CSE (table 2).
-  - Counting runs: sinking removes ~22 % of executed entries on FFmpeg and Redis, which is < 1 % of cycles against 2-12 % more code.
-- 🧪 **Batch 11** (combinations over P1-v3; their stock-TSan figures are U1/U2 in table 3): an **optimistic** configuration (the best arm per subtest, chosen from earlier sessions, pre-registered in `batch11-preregistration.md` and read in a fresh session) and a **realistic** one (the single arm with the best geomean over all apps). Arms: base, U3 = FE + VWIDE-loops, U4 = FE + N1, U2, and U5 = FE + N1 + N1-ST front.
-  - apollo part, read 29 Sep (single layout, half B, N = 3 rotated), over P1-v3: MySQL U3 +4.1, U4 +3.0, U2 +2.6, U5 +2.5; memcached U3 +1.7, U4 −1.0, U2 −0.7, U5 +1.9 (base n = 2); SQLite per subtest: stress2 U2 +4.8 but U3 −5.5, cs1 every arm −0.5…−7.8, walthread2 within ±1.6. The pre-registered optimistic selection is not read out yet.
-  - focs part: a 30 Sep re-run of the memcached half-B candidates (rb11B) found no resolved gain (all arms within ±2 %, no valid A/A).
+A short per-application description names objects and their owner; the compiler checks it against the code, and a
+run-time guard tests the ownership condition. Workloads as in table 1a.
 
----
-
-## ⚪ Table 2 — optimizations that gain nothing (or lose)
-
-| optimization | SQLite | memcached | Redis | MySQL | FFmpeg | verdict |
-|---|---|---|---|---|---|---|
-| **LIBCALL-INLINE** (light compare entries) | `a` ⚪ 0.0 | `a` ⚪ +0.4 | `f` ⚪ −0.7 (screening) | `a` ⚪ −0.4 | `f` ⚪ +0.3 | **closed** 28 Sep: correct and exact, no effect |
-| **N1-CSE** | `a` ⚪ +0.3 | `a` ⚪ −0.4 · `f` ⚪ −1.0 (screening) | — | `a` ⚪ +0.9 · `f` 🟡 −1.6 (screening) | — | no effect on the three apps it was built for |
-| **N1-ATOMIC** | `a` ⚪ −0.4 (stress2 tripped the CV clause; a third session confirms no effect) | — | — | — | — | no effect on its target (SQLite's relaxed atomics) |
-| **FE-INL-CSE** (evidence only) | — | `a` ⚪ +0.4 | `f` ⚪ +0.8 | `a` ⚪ −0.4 | — | no effect; measured over FE-INL; relies on the unadopted A3-fiber premise |
-| VWIDE (alone) | `a` ⚪ −0.6 | `a` ⚪ +0.6 | `f` ⚪ −0.5 | `f` ⚪ −0.3 · `a` ⚪ −0.3 | `f` ⚪ +0.8 | noise; no effect together with N1 |
-| VWIDE-loops (alone) | `a` ⚪ +0.2 | `a` ⚪ 0.0 | `f` ⚪ −0.9 | `f` 🟡 −1.8 | `f` 🟡 +1.3 | noise |
-| N1-PM (N1 + preserve_most) | `a` 🔴 −2.8 · `f` 🔴 −2.1 (n=1) | `f` ⚪ −1.0 · `a` ⚪ −0.2 | `f` 🟢 +3.8 (idle; N1 alone +3.7) | `f` 🔴 −2.2 (screening) · `a` 🔴 −2.5 | `f` 🟢 +5.2 (mjpeg +14) | its gains on FFmpeg and Redis are N1's own (+5.0, +3.7); loses on SQLite/MySQL |
-| N1-LOOPS-∞ (N1-L without cap) | `a` 🟡 −1.3 · `f` ⚪ −0.4 (n=2) | `f` 🟡 +1.4 (idle; N1 alone also +1.4) · `a` ⚪ −0.8 (2 sessions) | `f` ⚪ +0.4 (idle) | `f` 🟡 −1.8 (screening) · `a` ⚪ −0.1 | `f` 🟢 +3.3 (mjpeg +9) | the FFmpeg gain is N1-L's own (+3.0) |
-| DE-5 (cycle cut) | `a` ⚪ +0.3 · `f` ⚪ +0.2 (2 sessions pooled) | `a` ⚪ −0.1 · `f` ⚪ −0.8 | `f` ⚪ +0.1 | `a` ⚪ +0.6 | `f` ⚪ +0.1 | no effect |
-| DE-6 (SFI judges calls) | `a` 🟡 +1.3 (stress2 +6) · `f` 🟡 +1.4 (2 sessions pooled) | = base (no code change) | `f` ⚪ −0.3 | `a` ⚪ +0.4 | `f` ⚪ 0.0 | no resolvable effect |
-| DE-7 (directional SFI) | = base | = base | = base | `a` ⚪ +0.4 | `f` ⚪ +0.7 | no effect |
-| DE-8 (fence no-sync) | = base | = base | = base | `a` ⚪ +0.5 | `f` ⚪ −0.1 | no effect |
-| DE-5..8 together | `a` ⚪ +0.3 · `f` ⚪ +0.7 (2 sessions pooled) | `a` ⚪ −0.1 (= DE-5) | `f` ⚪ +0.4 | `a` ⚪ +0.6 | `f` ⚪ +0.4 | no effect |
-| FE-INL exit-max=1 | `a` = FE | — | — | `f` 🔴 −5.2 | — | variant, dropped |
-| FE-INL unified exit | = FE | = FE | = FE | = FE | = FE | byte-identical to FE on -O2 code, dropped |
-| N1b | `f` 🔴 −4.3 · `a` ⚪ +0.8 | `f` 🟡 +3.0 `?` · `a` 🔴 −2.7 | `f` 🟡 −1.3 | `a` 🔴 −3.7 | `f` ⚪ −0.8 | dropped |
-| N1-S | `a` ⚪ +0.4 | `a` ⚪ +0.1 | `f` 🔴 −2.2 | `f` 🔴 −2.0 | `f` ⚪ +0.5 | closed |
-| WP | `a` 🟡 −1.5 · `a` ⚪ +0.6 rand. (30 Sep) | `a` ⚪ +0.1 · `f` ⚪ +0.8 rand. (30 Sep) | `f` ⚪ +0.6 · `f` ⚪ −1.0 rand. (30 Sep) | ⚪ ≈ 0 (static) | `f` ⚪ −0.3 · `f` ⚪ −0.2 rand. (30 Sep) | no gain; confirmed randomised 30 Sep on FFmpeg/SQLite/memcached/Redis, every arm inside its A/A |
-| N2 ² | `a` 🟡 −1.9 | `f` ⚪ −0.4 | `f` 🟡 −1.7 | dropped | `f` ⚪ −0.1 | reference only |
-| SUBS | `a` 🔴 −18.2 | `a` 🔴 −10.9 | `f` 🔴 −2.0 | `a` 🔴 −8.0 | `f` 🔴 −14.7 | ❌ closed. **SUBS-SEL** (a selective variant limited to DE's merged groups, no global flag): ❌ closed 30 Sep by a before-timing design audit (A30) — a non-member access can miss where stock hits and evict a record stock keeps, losing a race stock always reports in about 1 run in 4; no premise excuses it, and the repair would touch every stock miss's store path (never built) |
-| loop guard ² ⚠️ not race-preserving | +1.0 | −0.7 | +2.1 | `f` −5.2 | — | 🚫 excluded |
-| all inexact T10 ² ⚠️ not race-preserving | −1.2 | +1.7 | +0.9 | `f` −6.6 | +20.5 | 🚫 excluded |
-
-<sub>² Measured over the shipped artifact (tier A), not over P1-v3.</sub>
-
-**🔎 Key to table 2**
-- **LIBCALL-INLINE**. Calls from instrumented code to strcmp, strncmp, strcasecmp, memcmp, bcmp, memchr and strlen go to light runtime entries. These record the interceptor's read ranges without its frame.
-  - It saves ~3-6 ns per call (microbenchmark, 32 B) against 7-13 ns for the two range checks that both paths pay.
-  - At the observed call rates (up to 2.3 M/s) that is ≤ 0.8 % anywhere.
-  - Audits A21/A21b: sound with conditions (no LTO; suppression patterns).
-- **N1-CSE**. A compact inline hit test: a run of accesses shares the sibling shadow address and the byte mask. It is read over a control built from the same root.
-- **N1-ATOMIC**. N1's inline hit test extended to relaxed atomic loads and stores. SQLite's walFindFrame does 151 M of them per run, and 55.5 % of the loads hit.
-- **FE-INL-CSE**: one thread-state load per function for FE-INL's entry, exits and inline tests (an audit blocker, the state read before its initialisation, was fixed before timing). Timed as an extra arm in the FE-SINK legs.
-- **VWIDE / VWIDE-loops (alone)**: see table 1; here without FE.
-- **N1-PM**: N1 whose miss call goes through `preserve_most` entries with a hand-written hit path, so fewer registers are saved at the call site.
-- **N1-LOOPS-∞**: N1-L without its limit of 20 checks per loop.
-- **SFI** (SyncFreeInfo): DE's per-function summary of whether a call can synchronise, which decides whether a dominating check still covers across the call. **DE-5** (cycle cut): DE's cycle scan only over cycles that avoid the cover. **DE-6**: SFI and the loop-free test judge calls to declarations the way the scan does. **DE-7**: callees that only acquire do not block dominance. **DE-8**: fences count as non-synchronising.
-- **FE-INL exit-max=1**: FE-INL with at most one inlined exit per function, a variant for C++ unwinding. **FE-INL unified exit**: returns merged before the exit is inlined; byte-identical to FE on -O2 code.
-- **N1b**: no inline test; the runtime call itself goes through cheaper `preserve_most` entry points, which save fewer registers.
-- **N1-S** (idea 6): N1 only at statically hot sites, with a budget of 2 per function and no profile. It misses the hot sites of large functions.
-- **WP**: whole-program summaries for the static analyses (closed world, `-tsan-external-symbols`).
-- **N2**: several checks batched into one runtime call.
-- **SUBS**: a same-thread, same-epoch shadow record that covers the access's bytes with an equal or stronger kind counts as a hit, with an absorbing store and exact merging. The extra run-time test on every miss costs more than it saves.
-- **loop guard / T10**: inexact DE variants, which remove checks by coverage without run-time verification. They can lose races under TSan's bounded shadow, so they are excluded. The FFmpeg +20.5 % is shown only to mark what soundness costs.
-
----
-
-## 📊 Table 3 — cumulative results over stock TSan: the best combination per app vs one universal combination
-
-Every cell is a speedup over **stock TSan**, the reference the paper claims. The contribution of each optimization on
-its own is in tables 1-2.
-
-| configuration | SQLite | memcached | Redis | MySQL | FFmpeg |
-|---|---|---|---|---|---|
-| 🏆 **best race-preserving** | `a` 🟢 **+16.9** *direct* on the shared-cache set (stress2 + create_drop_index_1 at 60 s; 1.128-1.244 over 4 offsets × N=4, A/A 1.020; set confirmed 1 Oct) · +5.1 on stable-4 (1.031-1.068); LO-OBJ-G v4, premises R3/P-OWN | `a` 🟢 **+23.8** *direct* (1.233-1.250, A/A 0.998-1.005; pipelined 32-key gets with 190-byte keys; EA-CONTENTS + event-loop confinement + thread-root SWMR; premises A2, A2-LIB, A12, one close/accept ordering edge) · `f` 🟢 **+25.4** *direct* (1.245-1.263, A/A 1.001-1.012; server and client on disjoint CPUs) · default input unresolved on both machines (`a` 1.006, `f` 1.008) | 🟢 **+7.6** *direct* on the pre-registered heavy-command set (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN; 1.061-1.094, A/A 0.990; FE + N1) · +5.9 on all 19 tests (1.045-1.077) | `a` 🟢 **+5.0** *direct* on the pre-registered write set (1.030-1.072; insert +8.1, update_non_index +4.9, delete +2.0; debug build, FE + VWIDE-loops) · `f` 🔴 on Intel the same pair loses: **−6.2** Release (0.925-0.950, A/A 1.019), −12.4 Debug (0.854-0.899): the gain is AMD-only · +4.0 on the earlier 5-script set · `a` 🟢 **+6.9** *direct* release build on the write set (1.063-1.081, N=3, A/A 1.007) · +6.2 release on 5 scripts | 🟢 **+34.0** *direct* (1.329-1.353, 4 offsets × N=2, A/A 0.999; first leg at N=1: +33.1; N1 + N1-ST front + DynSTC-RT) |
-| 🌐 **universal U1** = N1 + N1-ST miss + DynSTC-RT | `f` 🔴 ≈ −3.6 · `a` ⚪ ≈ −0.5 | `f` 🔴 ≈ −6.7 | `f` 🟢 ≈ +6.5 | `f` 🔴 ≈ −3.5 · `a` 🔴 ≈ −2.6 | `f` 🟢 ≈ +24 |
-| 🌐 **universal U2** = U1 + FE | `f` 🔴 ≈ −3.4 · `a` ⚪ ≈ 0.0 | `f` 🔴 ≈ −6.4 · `a` 🟡 ≈ −2.5 | `f` 🟢 ≈ +5.6 | `f` 🔴 ≈ −9.1 · `a` 🟡 ≈ +2.0 | `f` 🟢 ≈ +25 |
-| 📄 **the submitted paper**: TSan+AllOpt | +71 | +7 | +45 | +16 (Select) · +11 (Write-only) | +57 |
-| 📦 **MySQL release build** (RelWithDebInfo) | — | — | — | `a` rand., *direct*: the paper's analyses alone ⚪ 0.0 · FE + VWIDE-loops 🟢 **+6.2** (+5.0…+7.3 across offsets) | — |
-| 🔭 ceiling for *removing checks*, O1-all / O2-eraser (*derived*; they do not bound cheaper checks, the single-thread mode or runtime changes) | ≈ +16 / +53 | ≈ +6 / +11 | ≈ +17 / +27 | ≈ −1 / +3 | +31 / +41 |
-
-**🔎 Key to table 3**
-- **Direct vs derived.** Cells marked *direct* are legs of record against stock TSan in one session: layout randomised over 4 offsets, N = 1 per offset, an A/A arm on stock, 0 cells retired (30 Sep; ranges are min-max over offsets; every combination is above its A/A range at every offset). In the same legs the paper's analyses alone (P1-v3) read 0.982 on Redis, 0.994 on FFmpeg, 0.982 on memcached, 1.000 on MySQL and 0.995 on SQLite: never separable from stock. Cells marked *derived* (U1/U2 everywhere) are a same-session reading over P1-v3 multiplied by P1-v3's ratio to stock: from these 30 Sep legs where they exist, else from a 25 Sep non-randomised session (SQLite ≈ +1.1 %).
-- 🏆 **Best race-preserving**: the best combination for that app that loses no race under the project's premises, with all its optimizations in one binary. It is not a product of single gains. SQLite's is a single lever and carries the label **premises R3/P-OWN** (LO-OBJ-G). On memcached no lever resolved a gain; runtime changes (DD-EXACT) are kept out of this table and reported in table 4.
-- 🌐 **Universal U1/U2**: one configuration applied to every app. On Redis U1 matches the best per app; on FFmpeg it gives up about 9 points. It costs where N1's inline hit test is slower: SQLite and memcached on focs, MySQL on both machines.
-- 📄 **Paper row**: the speedups printed in the submitted paper (TSan+AllOpt over stock TSan; Chromium, not in this table, is 1.39× geomean). They came from earlier compilers, including DE by coverage and the post-dominance heuristic, both unsound and removed by the soundness fixes (`soundness-fixes.md`).
-  - **Where we stand against it.** FFmpeg is the only app that approaches the paper (+34.0 % vs +57 %), because the run-time single-thread mode dominates there (copy 2.90×, mjpeg 1.09×, h264 0.98×); on the multi-threaded subtests we are well short. Redis (+7.6 % on the heavy-command set, +5.9 % on all tests, vs +45 %), SQLite (+16.9 % on the shared-cache set, +5.1 % on stable-4, vs +71 %), memcached (nothing resolved vs +7 %) and MySQL (+5.0 % on the write set, +6.2 % release, vs +16/+11 %) fall far below it. The paper's headline numbers came from the two unsound elisions; the sound replacements in tables 1-2 recover only a fraction of them.
-  - MySQL on AMD, randomised, debug build: write_only gains most (+7-8 %), read_only ≈ 0 for every arm.
-- 🐢 **Stock TSan over native on the sets of record** (2 Oct; same trees as the record legs, 2 offsets): memcached 6.7× (chosen request mix; 2.7× on the default input); Redis 6.0× (7 heavy commands, 4.3-9.8× per command); FFmpeg 2.8× (copy 5.7×, mjpeg 6.1×, h264 1.3×, h265 1.4×); SQLite stress2 4.6×, create_drop_index_1 about 19× (16-21× at one run per offset); MySQL Release write set 7.5× (delete 11.2×, insert 7.9×, update_non_index 4.8×; one offset, the other stock cell was retired).
-- 🔁 **Levers re-timed on the workloads of record** (2 Oct; each lever added to the app's best, 2 offsets, screening):
-  - memcached (AMD, disjoint layout, chosen mix), over the final configuration: FE-INL 1.004, N1 0.972, FE-INL + N1 0.978, N1-L 0.982, VWIDE-loops 1.001, the paper's compile-time DynSTC 0.995; A/A 0.998-1.004. None adds.
-  - Redis (Intel, 7 heavy commands, half length), over FE-INL + N1 (1.073 over stock): N1-L 0.970, VWIDE-loops 0.998, the paper's DynSTC 0.951, N1-ST front 0.966, N1-ST miss 1.014; A/A 1.002-1.014. None adds.
-- 📦 **MySQL release build**: MySQL built RelWithDebInfo (no debug mutex), apollo, layout randomised. Stock TSan costs 16.1× there (8.5× on write_only to 27× on read_only), against ≈ 11.5× on the debug build, whose native run is slow in its own right.
-- 🎯 **Workload sets for the camera-ready (decided 1 Oct, pre-registered before the legs of record; every subtest stays in an appendix table).** Rule: stock TSan's own overhead over native is high (≥ 2×), and the lever's target is present.
-  - MySQL: oltp_insert, oltp_update_non_index, oltp_delete, sysbench's three single-statement write workloads, on the **Release** build (decided 1 Oct: it is the build where the levers act better and it is 25× faster than Debug; the submitted paper measured Debug). Reads gain nothing (read_only −0.8 %, point_select −0.3 %).
-  - SQLite (confirmed 1 Oct): stress2 and create_drop_index_1 at 60 s, shared-cache subtests with high stock overhead (4.6-5.2× and 12-15×). dynamic_triggers was dropped: its A/A swings 0.63-1.40 even at 60 s.
-  - Redis: the heavy commands, whose work grows with the data: LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN (decided 1 Oct; LPUSH runs first, unmeasured, to fill the lists).
-  - memcached (pre-registered 2 Oct): memtier with pipelining 32, 32-key gets and 190-byte keys, small values. Chosen from five screened variants as the one with the highest stock overhead over native (6.7×, against 2.7× on the default input) and the lever's target present (the command tokenizer and response objects). Legs of record on that mix: AMD +32.2 % and Intel +25.4 % with the server (8 threads) and the client on disjoint CPUs; AMD +23.8 % with server and client sharing 16 CPUs.
-    - Every variant, AMD, disjoint layout (server with 8 threads on 4 cores, client on 4 other cores), final configuration over stock, 2 offsets, full length, all resolved: default input **+4.9 %** (1.053 / 1.046, A/A 0.997), pipelining **+5.1 %** (1.037 / 1.065), 32-key gets **+8.3 %** (1.083 / 1.083), long keys **+18.0 %** (1.189 / 1.171); the chosen mix **+32.2 %** (4 offsets, above).
-    - The same variants in the shared layout on AMD: default +0.6 % (not resolved), pipelining +3.1 %, long keys +7.4 %, 32-key gets not readable (A/A 0.94-1.07). The layout changes the size of the effect and not only the noise, so each figure is quoted with its layout. A first Intel leg in the shared layout with 48 server threads was unreadable (A/A 0.941-1.165).
-- 🔭 **Ceilings**: profile oracles. O1-all skips every check on memory that only one thread touches in the run; O2-eraser also skips memory that Eraser would exempt by a common lock or by being written only before publication. They were measured against the shipped configuration and converted to stock TSan by its ratio to stock (SQLite 1.008, memcached 1.02, Redis 0.989, FFmpeg 1.00, MySQL within ±2 %).
-  - They bound only one kind of lever: removing checks on thread-local or lock-protected memory. They do **not** bound levers that make each remaining check cheaper (N1's inline hit test, FE-INL), the run-time single-thread mode (DynSTC-RT skips every check while one thread exists, including checks on memory other threads touch later; this is why FFmpeg's +34 % exceeds its O1-all +31 %), or runtime changes (DD-EXACT on memcached).
-
----
-
-## 🧪 Table 4 — ideas not yet timed, or closed without timing
-
-| idea | what it is | status | ceiling or expected gain |
+| app | configuration | AMD | Intel |
 |---|---|---|---|
-| 🛑 **EA-P5/P6/P7** (soundness) | today's EA loses races when a pointer to a local is published through a pipe (write/read), through `%p` text, or through the generic `__atomic_load` libcall | ✅ fixed and landed 30 Sep (audit A29) | correctness, not speed |
-| 🆕 **OWN-HANDOFF** | an object has one owner thread at a time, and ownership moves only at a synchronisation point; owner-private fields are checked only when a run-time owner guard fails, as in LO-OBJ-G. On Redis the guard is a role test: main while the io threads are idle, or an io thread during its phase | Redis: built and gated; audit A27 passed (no High) under premise P-HAND with conditions C1, C2 and H1-H4; P-HAND is not yet ruled. Reach 38.5 % of executed checks (query buffers, argv objects and reply buffers handed between the io threads and main, every cross-thread pair ordered). ⛔ **Not adopted (29 Sep).** Timed at +13.9 % over P1-v3 (randomised, A/A 1.000), but P-HAND trusts that Redis's implementation follows its own threading protocol. The accepted line is annotations backed by the developers' own assertions (as for LO-OBJ-G), not trust in the implementation. memcached: ❌ closed 29 Sep. Genuine hand-off is ≈ 1.3 % of checks; data read concurrently by many workers with every write ordered adds 10.6 % but has no single owner (SWMR's territory); even together that is ≈ 1.1 % of time. The rest has real unordered conflicts (connections vs the idle-timeout and stats threads) | Redis ≤ +27.7 % (timed oracle, screening) |
-| 🆕 **OWN-CONN** | SQLite: an owner guard on private connections, in the manner of OWN-HANDOFF | census; awaiting a decision on premise P-CONN | reach 21.7 % of stable-4's executed checks; up to ~+21 % on stable-4 by analogy (estimate, not timed) |
-| 🧩 **RT-SYNC / RT-SYNC-LF** (runtime track) | skip the clock join of an acquire that cannot change the thread's clock (a no-op acquire); a last-releaser stamp (RT-SYNC) or a per-object clock token (RT-SYNC-LF) finds them, and the lock event itself is still recorded in full | ❌ RT-SYNC timed 29 Sep, no effect: skip on over off Redis 0.989 (A/A 0.992), SQLite stable-4 1.005 (1.005), FFmpeg 1.006 (1.005), memcached 1.005 (1.009); MySQL running. **RT-SYNC-LF (exact early-out variant) timed 30 Sep on Redis (focs, rand.): NOT RESOLVED** — both the flag-off and the skip arm read inside the single surviving A/A cell (too few clean cells, a co-runner's IDE interfered); a census shows the skip condition fires on 99.99 % of acquires (1,858,993,514 of 1,859,171,231), so a cleaner leg is the next step, not a redesign | census, of the server's user time: Redis ≈ 3.8 % (atomic acquires), memcached ≈ 0.5 %, MySQL negligible |
-| 🧩 **runtime track** (other ideas) | ideas that change only TSan's runtime: RT-RANGE (RANGE-HIT-SKIP/VEC closed, RANGE-UNIFORM open), RT-ALLOC, RT-SLOT (slot chains and the epoch budget) | kept apart from the paper's track (decisions of 25 and 28 Sep); censuses only; overview in `runtime/README.md` | memcached, of the server's user time: missed range cells ≈ 1.5 %, slot chains ≈ 1.7 % (corrected 29 Sep); 14 M slot preemptions and 456 shadow wipes per run |
-| 🧩 **DD-EXACT** (runtime; ⏸️ **parked 1 Oct**: deadlock detector, not race-check cost) | TSan's deadlock (lock-order) detector, on by default; turning it off drops lock-order reports, not race reports | ✅ timed 30 Sep (apollo, memcached, rand., over the stock runtime, A/A 0.987): **B1** (a larger detector node table, so its global spin lock is taken far less) 🟢 **+19.4 %** (+18.2…+21.4 across offsets); **A** (exact early-out) 0.998, nothing. Leg of record over unmodified stock TSan (focs, 30 Sep, rand. 4 offsets, A/A 0.968): the paper's analyses + B1 🟢 **+21.7 %** (1.178-1.271), the analyses alone 0.982. Race detection unchanged. MySQL (apollo, rand., 30 Sep, over its own stock runtime, A/A 0.995): **A** 🟢 +4.1 % (1.031-1.056), **B1** 🟢 +3.8 % (1.026-1.045); the gain sits in read_only (+21 %) and read_write (+5.5 %), points/ranges −2…−3 %; on MySQL the early-out matters, on memcached the table size. ⚠️ **Audit A34 (1 Oct): both variants are UNSOUND as committed.** A loses a race report: a mutex destroy that races with the first lock of a statically initialised mutex, in the window before post-lock (one-line fix proposed). B1 loses a lock-order report that stock makes (a read-lock re-acquired under a mutex; the stock re-check after a table flush never happens). The gate also never ran most of the deadlock stress test under A+B1. The readings above stand as speed data only, not as race-preserving results, until a fixed root passes a delta audit | costs memcached ≈ 16-18 % of the server's user cycles (perf). Screening, detector off: memcached ×1.29, MySQL ×1.09 (unconfirmed), Redis no change |
-| 🆕 **Removal-mode DE, DE-3R / DE-2R** | DE deletes covered checks outright instead of verifying them at run time (eviction and reset losses accepted, 1 Oct); DE-3R replaces the per-iteration checks of a call-free loop by one range check, DE-2R merges adjacent fields into one check of ≤ 8 bytes | fixes for audit A26 done; audits A38/A38b (1-2 Oct): sound with conditions under P-EV, P-RESET, P5, ASYNC-TERM, FWD-PROGRESS; covering writes now keep their record after a report. One residual awaits a ruling: after a report by another thread clears a granule, a covered write is not re-recorded (stock 2 reports, removal 1). **Screenings over stock, 2 offsets:** MySQL (Debug, AMD) removal + ranges + merge +3.2/+6.8 % over best; dom-only −0.7/+6.2 %; Redis removal −3.8 % against verified DE; SQLite (N=2) and memcached (record leg + batch 2): no arm separates from best. Release MySQL on root b7af9723e35b (2 Oct): AMD FE + removal + ranges + merge 1.003 over best (1.005/1.002, A/A 0.997-0.999), not pursued; Intel removal without FE 0.969 over stock, not above the A/A. FFmpeg screening queued | reach, ranges / merge / both: SQLite 0.21 / 0.69 / 0.90 %, memcached 1.20 / 0.22 / 1.42 %, FFmpeg 0.90 / 11.65 / 12.55 % of executed checks; post-dominance adds ≤ 0.27 % |
-| 🆕 **IPA-DE** | interprocedural DE: a check in a callee covers one in its caller, and vice versa | ❌ **closed 30 Sep by the pre-set criterion (under 2 % of executed checks on every app).** Sync-aware census: callee check anywhere in its function, reached with no intervening sync, and a caller check dominating every call site with an exact cover and no sync in between: memcached 0.270 %, SQLite 0.366 %, FFmpeg 0.993 %; the stricter form (callee check in its entry block) 0.000 / 0.103 / 0.242 % | ≤ 1 % everywhere, below the threshold |
-| 🆕 **STC-TS** | a finer thread-start model, so that memcached's globals written before its threads run count as single-threaded writes | ❌ **null, timed 30 Sep** (apollo, memcached, rand., over the P1-v3+summaries base): local-globals arm 0.993, +STC-TS arm 0.993, A/A 0.990 — both arms inside the A/A band; the 3 extra read-only globals it admits (`item_locks`, `item_lock_hashpower`, `threads`; −191 static sites) buy nothing measurable | memcached ≈ 1.5 % of time (estimate; not realised in a timed lever) |
-| **MAIN-ONLY** | prove statically that Redis's reads of data never written while its io threads run happen only on the main thread | ❌ closed 29 Sep: statically impossible; every such read is in a function reachable from the io or background threads, which Redis keeps out of that code only by run-time checks | Redis 22.0 % of checks (dynamic ceiling); timed oracle +7.5 % (screening) |
-| **STC-SUM / STC-WL** | whole-program analysis summaries in STC and SWMR; library allowlists (functions that create no thread) as permissive as soundness allows | ✔️ summaries on by default since 29 Sep (their soundness condition was verified on four apps); not timed (below resolution). **MySQL's narrow external list (A13 H2, the plugin/NSS/OpenSSL closure instead of the full export list): ❌ closed 30 Sep, not replicated** — static reach ≤ 0.011 % of profiled checks, and the counted per-transaction difference (a candidate −1.9 %) did not survive a same-build replicate (same-build noise 1.4-2.6 %, larger than the effect) | what summaries add, of executed checks: SQLite 0.000 %, memcached 0.113 % (0.68-0.79 % with the libevent list), Redis 0.379 %, FFmpeg 0.004 % |
-| **EA-SLOT** (idea 8a) | a value loaded from a stack slot and passed on escapes as the slot's contents, not the slot itself (memcached's `tokens` array) | ❌ closed 28 Sep by census | at the most optimistic, 0.16 % of memcached's checks (139 sites; not the ≈ 3 % first estimated), 0.004 % of SQLite's, one site in MySQL |
-| **CLONE-ESC** (idea 9) | clone functions with hot pointer arguments into escaping and non-escaping versions; choose the clone at run time | ❌ closed 28 Sep on every app. Timed oracle OA0 (unsound upper bound): SQLite ≤ +2.6…+4.3 % (two sessions, both tripped the CV clause), memcached ≤ +3.5 %, Redis ≤ +6.0 %, FFmpeg ≤ +10.4 % (the stream-copy part overlaps DynSTC-RT's gain). The sound part, by publication profile: memcached 0.04 % of checks, Redis 0.57 % (≈ 0.18 % of time); FFmpeg ≤ 1.8 % by OA0 on its multi-threaded codecs. The static form is already covered by existing bounds | ≈ 0 (sound part ≤ 0.2 % of time) |
-| 🆕 **MEMINTR-INLINE** | small constant-size memcpy/memset/memmove kept as intrinsics and checked by range entries or inline tests instead of the interceptor call | census + design | limited by the range checks it keeps (see the runtime track) |
-| 🆕 **N1-SPLIT** | N1/VWIDE miss blocks marked cold and split to .text.unlikely | compile-only check first | front-end loss on MySQL-f, SQLite, memcached |
-| 🆕 **N1-PAIR** | one 32-byte load + movmsk tests two adjacent shadow cells | census | SQLite page/record parsing |
-| 🆕 **SPIN-ACQ** | in a loop of only atomic loads + arithmetic, poll relaxed and acquire only when the value changes (Redis getIOPendingCount: 19.1 G seq_cst acquires) | ⏸️ parked 28 Sep (outside the paper's concept); ceiling only; can only add reports (ABA), never lose one | Redis ≤ +14 % (io-threads bound) |
-| 🆕 **compile time** | compile-time overhead of P1-v3 AllOpt over stock | measured (quiet, one build at a time): CPU user+sys SQLite +20.1 %, memcached +8.4 %, Redis +9.4 %, FFmpeg +15.6 %; worst unit sql_yacc.cc +55 %; N1 inline ×1.8-3.3; MySQL's whole build deferred (28 Sep) | paper says 1-18 % |
-| N1-ST (b), (c) | hoist the single-mode flag read per call-free run; or encode single mode in the fast state TSan already loads | **(c) built and gated 30 Sep** (the single-mode flag lives in FastState bit 30 instead of a separate byte load). **Screened 30 Sep on apollo: no resolved difference between the three placements.** Redis: fs/front 1.037, miss/front 1.058, but A/A 1.003 with the base's own spread 1.10 — inside noise. memcached: fs/front 0.999, miss/front 1.011, A/A 1.016 — no difference on multi-threaded memcached. SQLite: fs and miss both read ≈ +2 % on stable-4, but so does A/A (1.005), and the lead is carried by stress2 alone; screening only, no per-offset intervals (N=1). (b) not built | would halve or remove N1-ST front's 1-3 % multi-threaded tax |
-| 🆕 **FE-LAZY** | lazy function-entry: the entry event is recorded only at the first synchronisation-relevant point in the function, instead of unconditionally at entry (`-tsan-func-lazy`) | Built and gated 30 Sep (root `tsan-felazy-50456473f997`, arms B / FI / L / LFI). **Redis, AMD: unresolved even at N=3** (158g) — the A/A pair itself reads +4 % with a 0.93-1.18 range, as wide as the effect sought; apollo Redis cannot resolve a lever this size at this design. **MySQL, AMD: screening null** — L/B and LFI/FI both sit inside the A/A band (±0.6 %); FI alone reproduces FE-INL's ≈ +4 %, as expected. The Intel MySQL leg (focs, queued) is the one that decides | not yet bounded by a census |
-| 🆕 **PERELEM** (per-element locksets) | a struct with its own mutex (memcached's `thread_stats` under its own `stats.mutex`) gets a lock-ownership guard at the field level, like LO-OBJ-G but per element instead of per owning object | Built and gated 30 Sep (`experiment/per-element`, PELGATE5: 32 `thread_stats` fields protected); premise (an effective-type rule) accepted with conditions. **⏸️ Stopped 30 Sep: reach is only 1.67 % of memcached's checks, below timing resolution.** A screening leg read indicative 0.989 (vs A/A 0.980) but most cells were retired for interference, so it is not a result. Not audited, not timed further; branch kept as a data point that the per-element pattern exists in memcached but its mass is small | ≈ 1.67 % of memcached's checks (built lever's reach) |
-| 🆕 **XPASS / XP2** (extra LLVM passes) | turn on LLVM passes that are off by default before TSan instrumentation (Attributor, partial inlining, GVN hoist/sink, NewGVN, LoopVersioningLICM, extra vectorization, unroll-and-jam, loop flatten) | ❌ **closed as a set, 30 Sep.** The full set crashes memcached (a pre-existing miscompile in the Attributor, present on stock too). XP2 (everything but the Attributor): memcached +0.22 % stock / +0.15 % P1-v3 (noise); Redis +0.36 % stock but **+5.05 % P1-v3 — it undoes most of P1-v3's own gain**; MySQL −0.95 % / −1.64 % per transaction (within a 1.4-2.6 % run-to-run spread); FFmpeg's XP2 arms do not build (a clang crash in swscale.c); SQLite not run. Does not pay | Attributor census done 1 Oct: every full mode breaks some app on LLVM 18, on our tree and on upstream main (miscompiles; an assertion on upstream); only the light modes are clean, on upstream. Attributor-light right before TSan: SQLite −1.3 % executed checks, Redis −1.0 % (noise), memcached and MySQL 0: closed |
-| sound loop ranges | one range check per loop, placed after the loop or per chunk | ❌ closed 27 Sep: no form is sound under P-EV (relaxed form: DE-3R) | FFmpeg −12.7 % executed calls; memcached −0.6 %; SQLite ≈ −1 % |
-| SWMR-H | a location written only before its publication is exempt afterwards | ⏸️ parked (audit: 14 lost-race paths; needs a premise on indirect calls) | U1 ceiling: memcached +0.2, Redis 0, SQLite 0 |
-| LO-F | lock ownership per field | ❌ dropped 29 Sep: lock ownership over memcached's locks is worth ≤ 0.2 % | ≈ 0.5 % of memcached's checks |
-| LO-W | recognise mutexes LO cannot identify today | ❌ closed by ceiling | Eraser ceiling ≤ 1.4 % |
-| EA-7 | refine "arguments of address-taken/external functions escape" | open, static count only | +5.5 k static sites |
-| EA-WP | EA with whole-program summaries | ❌ census: nothing on 3 apps | ≈ 0 |
-| 🆕 **ICALL-A2** | typed indirect-call resolution for EA/DE/LO/STC, so an escape through a function pointer is judged by the pointer's declared targets instead of treated as escaping to everything | ⏸️ **parked 30 Sep.** Built, but the counting gate reads 0.00 % on memcached: the escape analysis already marks the whole call as escaping the operand itself (`sendmsg`'s `msghdr`), so typed resolution needs a further "pointees escape, the operand does not" rule for such calls, not yet modelled | ceiling (oracle, all such calls benign): memcached 1.22 %, FFmpeg 1.89 %, SQLite 0.19 %, Redis 0 |
-| EA-TL / EA-HEAP | thread-local memory / "own heap", statically | ❌ no-go (the objects are reachable from globals) | — |
-| SWMR-G | write-once-then-read-only memory | ❌ no static route | shared read-only memory 4-14 % of checks |
-| DE-2 | merge adjacent same-kind fields into one ≤ 8-byte check | ❌ closed 27 Sep (relaxed form: DE-2R) | ≤ 1.1 % SQLite |
-| DE-1, DE-AA, DE-4, DE-9 | more same-address proofs, stronger alias analysis, cover at an offset, constant-data judgments | ❌ census | 0-0.2 % (DE-9 ≤ 0.08 %) |
-| DE-10 / DE-AV | availability instead of strict dominance / a dynamic loop guard for any repeated address | DE-10 covered by VWIDE; DE-AV idea only | — |
-| N6 | subsumption-aware shadow eviction | soundness note, open | — |
-| STC-1..4, DYN-1 | more single-threaded-context rules; drop DynSTC guards where more threads certainly exist | ❌ oracle bound (O-STC, 28 Sep): single-threaded executions are SQLite 0.09 % and memcached ≈ 0 of executed checks | ≈ 0 |
-| LO-B1/B2 | private mutexes immune to unknown unlocks; callback releases | ❌ unsound, closed | — |
-| 🆕 **MISSED census** (1 Oct) | for every executed check that remains in the default configuration: could it go in principle (profile class), and which analysis refuses it, for what reason | ✅ done (compile-only, `missed-census.md`). Remaining checks that touch memory only one thread reaches, or memory that is consistently ordered: SQLite 72 %, memcached 55 %, Redis 63 %, FFmpeg 70 %. One blocker dominates: escape analysis cannot see that an object reached through a pointer argument is local (53-75 % of that mass). Split by caller origin: nearly all of it is heap memory that escapes statically or is reached through further pointers; cloning would win ≤ 1.2 %, top-down gaps ≤ 8 % | directs the items below |
-| 🆕 **census-driven items, closed** | DE across sync-free calls and sound anticipation; returns-fresh allocators (attribute and named tiers); field-origin chase (p->q->x); per-field SWMR; thread-role exclusivity; FFmpeg heap hand-off | ❌ closed 1 Oct. Under DE-verified a cover only turns a check into N1's inline hit test, so sync-freedom and anticipation change hit rates, not what is checked (counted with the placement census). Returns-fresh: 0.00-0.02 % (fresh objects are published at once). Field chase, per-field SWMR, thread-role: ≤ 0.55 %. The Redis `server` and FFmpeg decoder-context mass rests on the programs' own thread protocols, a premise class not adopted | — |
-| 🆕 **EA-CONTENTS** | escape analysis stops conflating a loaded pointer's escape with its container's (a contents-escape state, also passed top-down to callee parameters) | ✅ **default-on since 1 Oct** (integrate d655bf26ae15), no time gain claimed. Audits A33, A33b, A33c: two High holes and an out-parameter hole found and fixed. Executed checks: memcached −2.9 %, Redis −1.4…−3.3 %, FFmpeg −0.2 %. Timing on memcached: Intel +1.3 % pooled over 4 offsets, not resolved; AMD, disjoint layout, on the chosen request mix, on vs off within one leg: **+1.2 % / +1.6 %** at the two offsets (A/A 0.998-1.004), resolved (2 Oct) | memcached +1.4 % (AMD) |
-| 🆕 **LTO** | full LTO before instrumentation (closed world: everything internalised except main and the exported set), with and without our analyses | ❌ closed 1 Oct. Redis, one client (spread ≤ 0.8 %), checks per operation: stock + LTO −7.4 % against stock, our analyses + LTO **+2.8 % more** than stock + LTO; memcached: our analyses gain 1 point more with LTO than without. Plain `clang -flto` instruments before linking anyway | — |
-| 🆕 **SLOT-CHURN** (runtime) | memcached's releases burn epochs so fast that threads keep taking slots from each other (≈ 9,750 re-slots/s); a thread's own earlier accesses then look foreign | ❌ closed 1 Oct. 60.5 % of memcached's executed checks (23 % of MySQL's, 0.04 % of Redis's) miss against the same thread's record under an older slot, but no cheap exact lever recovers it: last-epoch hits apply to 0.003 %, lazy epoch increment saves 12 % of the burn (0 on MySQL), aliasing old slots ≈ 0.7 % of server cycles at most | — |
-| 🆕 **RANGE-OVERWRITE** (runtime) | a write over a range replaces cells whose slots all happen before it with the write alone (exact) | ❌ closed 1 Oct: the microbenchmark gate read 20-22 % per cell against the required 30 %. Range checks are ≈ 11-12 % of memcached's server user cycles; 79 % of the cells is one `memset` of 1,176 B per response | — |
-| 🆕 **EVCONF** (event-loop confinement, memcached) | per-connection read-buffer bytes and response objects stay unchecked in a confined copy of the code, which runs only while a run-time guard holds: no idle-timeout thread, no external storage, and no connection ever lent to another thread (a sticky latch set at the two lend sites). The argument uses libevent's contract (a callback runs on the thread that runs its event base), premises A2, A12 and one ordering edge through close/accept | audits A35-A35e: sound, cleared. Executed checks −13.6 % (read buffer) and **−20.6…−21.4 %** (with response objects) under whole-program summaries; with the idle timeout on, every check returns. Leg of record on the Intel host, default input: 1.001 / 1.008 over stock, A/A 0.989, **not resolved**; AMD screening +4.7 % | workload variants (pipelining, multi-key gets, long keys) being screened |
-| 🆕 **SWMR thread roots** | a global stored after some threads exist is still read-only for its readers if the store precedes the creation of every thread that can reach a reader, and the earlier threads reach none (memcached's `item_locks`) | audits A37-A37c: sound with conditions, cleared for whole-program builds (premises A2, A2-LIB, A12). memcached read-only globals 7 → 22. Counted **+0.01 %**: the globals are `static`, and the summaries carried only external names; local globals now go into the summary (per-unit `item_lock` checks 2 → 0), gate and recount pending | census 3.2 % of memcached's executed checks |
-| 🆕 **FE-hot / FE-PM** (MySQL on Intel) | FE-INL inlined only in profile-hot functions (training on a different seed); FE-PM: out-of-line `preserve_most` assembly entries, call-sized code with no caller spills | ❌ both closed. FE-hot (1 Oct): Intel Debug 0.922 over stock (FE 0.855), AMD 1.080 (FE 1.100). FE-PM (2 Oct, audit A40 exact): Release Intel FE 0.930, FE-PM 0.916, FE-hot + PM-cold 0.882 over stock (A/A 1.000). Decomposition on Release Intel: the paper's analyses with plain entry calls read 1.005 (inside the A/A), the `preserve_most` entries cost 11 % against plain calls, removal-mode DE without FE 0.969 (not above the A/A). No configuration gains on MySQL on Intel; the gain is AMD-only | — |
-| 🆕 **Hot-list N1, N1-ATOMIC, FE-LAZY** | N1's inline test only at profile-hot sites; the inline test for relaxed atomics; lazy function entries | ❌ closed 1 Oct. Hot-list N1 keeps 92-99 % of N1's avoided runtime entries for 13-20 % of its code growth, yet over stock it reads SQLite 0.982 (best 1.075), memcached 0.954, MySQL 1.040 (best 1.104), Redis and FFmpeg equal to full N1. N1-ATOMIC on Redis +1.1 % inside the A/A (the atomics are I/O-thread spin loops). FE-LAZY: nothing on Redis or MySQL | — |
-| 🆕 **LO-OBJ-G v5 / spec v6** (SQLite) | v5 guards accesses whose base is a merged pointer of the annotated type (net +1.15 % of the shared-cache set's executed checks after v6's exclusions); spec v6 drops `BtShared.btsFlags` and `pageSize`, which two public APIs read without the mutex | audits A39, A39b and A39c (2 Oct): sound with conditions; the confirming leg is queued. A39b found that `sqlite3_serialize` copies page images without the mutex, so under spec versions up to v6, the leg of record included, a race between that copy and a guarded page store on a shared-cache database went unreported (the measured tests never call it). Spec v7 closes it with a run-time latch: the first call of that function switches the guards' elision off, at no cost on the inline path. A test program with a shared-cache writer racing the copy shows stock reporting four store sites, v6 none, v7 all four; A39c confirms the argument, so no exception to R3 is needed | — |
-| 🆕 **Thread ids by creation history** | may-happen-in-parallel facts from abstract thread ids (unique threads, create/join order) | ❌ census 1-2 Oct, no static form built. Share of remaining checks on memory touched by one unique thread: SQLite 0.0 %, memcached 0.1 %, MySQL 3.1 % (start-up threads), Redis 49 % (main thread, but I/O threads statically reach 44 % of it through a run-time phase check). 94-99.9 % of the mass on SQLite, memcached and MySQL involves worker threads created in a loop from one site, which thread ids cannot tell apart | — |
-| 🆕 **TLS-rooted escape analysis** (MySQL) | objects reachable only from a `thread_local` root are thread-private | ⏸️ parked 1 Oct: audits A36/A36b sound with conditions, but its mass is the Debug build's dbug code (≈ 7 % of checks on Debug, ≈ 0.8 % on Release), and the camera-ready uses the Release build | — |
+| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+32.2 %** (1.300-1.335) | 🟢 **+25.4 %** (1.245-1.263) |
+| SQLite | LO-OBJ-G | 🟢 **+16.9 %** (1.128-1.244) | — |
 
-**🔎 Key to table 4**
-- **Ceiling**: an upper bound from a profile oracle or a census of executed checks, not a timed optimization.
-- **Census**: a static or profile count of the checks or runtime events a rule would remove, weighted by how often they run.
-- **Reach**: the share of checks at the sites a built lever transforms; an upper bound on what it removes, not a timing.
-- ⏸️ **Parked**: set aside with its data kept. ❌ **Closed**: measured or argued to have no worthwhile gain, or unsound.
-- **Audit**: an independent read-only review against the zero-lost-races rule, done before anything is timed.
-- **Premises of this table.**
-  - **P-HAND** (OWN-HANDOFF, Redis): owner-private fields are touched only in guarded code, and ownership moves only at the handshake between main and the io threads (release/acquire). Its conditions include **C1**, io threads run covered code only inside their count window, and **C2**, calls return in the phase they started in; **H1-H4** are the further conditions stated with it.
-  - **P-CONN** (OWN-CONN): SQLite's documented rule that a connection is not used by two threads at once.
-- **Name decoding.**
-  - EA-TL / EA-HEAP: thread-local and "own heap" memory. SWMR-H: written only before publication (hand-off). SWMR-G: write-once-then-read-only.
-  - LO-OBJ / LO-F / LO-W: lock ownership per owning object, per field, and for wrapped mutexes. LO-B1/B2: see the row.
-  - OWN-CONN: ownership per SQLite connection. DD: deadlock detector. IPA-DE: interprocedural DE. DE-3R / DE-2R: relaxed loop ranges (DE-3) and relaxed DE-2. STC-TS: thread start. STC-SUM / STC-WL: summaries / allowlists. O-STC: the strong-STC oracle with DynSTC off.
-  - DE-AA: alias analysis. DE-AV: availability guard. DYN-1: DynSTC guards.
-  - N6: the sixth item of the N-series (N1, N2, …).
-  - BtShared, WAL, Pager: SQLite's shared B-tree state, write-ahead log and page manager.
-  - OA0: CLONE-ESC's unsound oracle, which treats every hot pointer argument as non-escaping.
-  - ABA: a value changes and changes back unseen.
-  - RT-*, RANGE-*: runtime-only ideas; see `runtime/README.md`.
+- One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
+  SQLite (−0.5…−3.6 %), memcached (−6.7 %) and MySQL (−2.6 %).
+- The paper's analyses alone (P1-v3, below) are not separable from stock on any app (0.98-1.02).
+- The submitted paper printed, on other workloads and with two elisions later found unsound: SQLite +71 %,
+  memcached +7 %, Redis +45 %, MySQL +16 / +11 %, FFmpeg +57 %.
+- Ceilings for removing checks (profile oracles: memory touched by one thread / also Eraser-consistent): SQLite
+  +16 / +53 %, memcached +6 / +11 %, Redis +17 / +27 %, MySQL −1 / +3 %, FFmpeg +31 / +41 %.
+
+## Table 2. Optimizations that gain
+
+Single-lever columns are over the base P1-v3 (the paper's analyses EA, LO, STC, SWMR and DE with every soundness fix;
+a covered check is verified by an inline hit test instead of being removed). The last four rows are measured
+within the configurations of record in table 1.
+
+| optimization | what it is | SQLite | memcached | Redis | MySQL | FFmpeg |
+|---|---|---|---|---|---|---|
+| **DynSTC-RT** | single-thread mode in the runtime: while one thread is alive nothing is recorded, range checks included | `a` ⚪ +0.4 | `a` ⚪ −0.3 | `f` 🔴 −2.2 | `a` ⚪ +0.1 | `f` 🟢 **+12.0** |
+| **N1** | TSan's "already recorded?" test is inlined; the runtime is called only on a miss | `a` ⚪ −0.8 | `a` ⚪ +0.3 | `f` 🟡 +2.5 | `a` 🟡 −1.7 | `f` 🟢 **+5.0** |
+| **N1-ST** | N1's inline test is skipped while the thread is in single-thread mode (flag read before the test) | `a` ⚪ +0.2 | `a` ⚪ −0.2 | `f` 🟡 −1.4 | `a` 🟡 −1.8 | `f` 🟢 **+16.9** |
+| **FE-INL** | the push and pop of TSan's shadow call stack are inlined instead of calling the runtime | `a` ⚪ −0.7 | `a` ⚪ +0.8 | `f` 🟢 **+4.8** | `a` 🟢 **+3.6** | `f` ⚪ 0.0 |
+| **FE-INL + VWIDE-loops** | plus run-time verified check removal inside loops | `a` ⚪ +0.1 | `a` ⚪ +0.6 | `f` 🟢 **+7.2** | `a` 🟢 **+4.6** | `f` 🟡 +1.8 |
+| **FE-SINK** | the function-entry call is moved to the first point that needs the frame | `a` 🟡 +1.1 | `a` 🟡 −1.7 | `f` 🟢 **+4.1** | `a` 🟢 **+2.8** | `f` 🟡 −1.2 |
+| **N1-L** | N1 only in loops with at most 20 checks | `a` ⚪ +0.3 | `a` ⚪ −0.9 | `f` 🔴 −2.5 | `a` ⚪ −0.1 | `f` 🟢 **+3.0** |
+| **MEMINTR** | a memcpy from a constant or private source has only its destination checked | `a` 🟡 +0.7…+2.5 | `a` ⚪ +0.9 | `f` 🔴 −2.5 | `a` ⚪ +0.3 | `f` ⚪ 0.0 |
+| **EA-CONTENTS** | a pointer read from a container no longer makes the container shared | — | `a` 🟢 **+1.4** (on against off) | — | — | — |
+| **SWMR-ROOTS** | no checks on reads of a global whose only write precedes every reader thread | — | `a` 🟢 **+0.9** on top of EVCONF | — | — | — |
+| **EVCONF** (annotation) | objects annotated as owned by one thread are unchecked while a run-time guard holds (no idle-timeout thread, no external storage, connection never lent) | — | `a` 🟢 **+22.7** over stock on shared CPUs; +32.2 with the two rows above on disjoint CPUs | — | — | — |
+| **LO-OBJ-G** (annotation) | objects annotated as protected by their owner's lock are unchecked while the thread holds that lock | `a` 🟢 **+16.9** over stock | — | — | — | — |
+
+- N1-ST is measured on top of N1 + DynSTC-RT and costs 1-3 % on multi-threaded code. FE-SINK is measured over
+  P1-v3 + N1 and adds nothing on top of FE-INL.
+- FFmpeg, one leg over stock: the paper's compile-time DynSTC +10.1 %, DynSTC-RT +12.2 %, both together +31.9 %,
+  the configuration of record +33.2 %. The inline guard skips plain accesses, the runtime mode skips range checks;
+  each is about half of the single-threaded work.
+- Re-timed on the workloads of record (2 Oct): no other lever adds to memcached's or Redis's configuration.
+
+## Table 3. No gain
+
+| idea | what it is | result |
+|---|---|---|
+| Removal-mode DE, DE-3R, DE-2R | covered checks deleted outright; one range check per loop; adjacent fields merged | ⚪ MySQL +0.3 %, SQLite 0, memcached 0; 🔴 Redis −3.8 %; FFmpeg open (table 4) |
+| DE-5…DE-8 | finer rules for when a call or a cycle breaks a cover | ⚪ −0.8…+1.4 % |
+| IPA-DE | a check in a callee covers one in its caller | ⚪ ≤ 1 % of checks |
+| VWIDE, VWIDE-loops alone | run-time verified removal at sites no check dominates | ⚪ −0.9…+1.3 % |
+| FE-hot, hot-list N1, N1-S, N1-LOOPS-∞ | FE-INL or N1 only at hot sites, by profile or statically | 🔴 none beats the full version |
+| FE-PM, N1-PM, N1b | out-of-line entries that save fewer registers | 🔴 MySQL −2 %, SQLite −2…−4 % |
+| FE-LAZY, FE-INL-CSE | entry recorded only when needed; one thread-state load per function | ⚪ ±1 % |
+| N1-CSE, N1-ATOMIC, LIBCALL-INLINE, N2 | compact, atomic, libc-call and batched variants of the check | ⚪ ±1 % (N2 up to −2 %) |
+| SUBS | a covering record of the same thread counts as a hit | 🔴 −2…−18 %; the selective form is unsound |
+| Whole-program summaries alone, STC-TS, allowlists | closed-world facts for STC and SWMR | ⚪ < 1 % of checks |
+| LTO, Attributor, extra LLVM passes | more optimization before instrumentation | ⚪ LTO adds nothing to our analyses; the Attributor miscompiles; the passes undo most of the analyses' check removal on Redis |
+| CLONE-ESC, EA-SLOT, ICALL-A2, returns-fresh, field chase | finer escape analysis | ⚪ each < 2 % of checks |
+| Per-field and heap SWMR, thread roles, thread ids by creation history | finer may-happen-in-parallel facts | ⚪ each < 3 % of checks |
+| NOALIAS, custom lock wrappers, MySQL sysvars, InnoDB latches, ODR trust | language and library facts | ⚪ each < 3.2 % of checks |
+| RT-SYNC, SLOT-CHURN, RANGE-OVERWRITE | runtime-only changes | ⚪ no effect, or below their gate |
+| LO-F, LO-W, LO-B1/B2, sound loop ranges, DE-1/2/4/9 | further lock-ownership and DE rules | ⚪ ≤ 1.4 % of checks, or unsound |
+
+## Table 4. Open
+
+| item | what it is | app | status |
+|---|---|---|---|
+| Redis phase guard | the main thread, which runs ≥ 99 % of the checks, skips them while the I/O threads are parked | Redis | unsound ceiling +45 % over stock; design under review, in work |
+| MySQL whole-program mode | MySQL never ran with whole-program summaries; 76 % of its checks go through pointer parameters | MySQL | counting; ceiling 19 % of checks |
+| Removal-mode DE on FFmpeg | as in table 3 | FFmpeg | +10.2 % over N1 + DynSTC-RT in a screening (mjpeg +29 %); needs a ruling on the report loss below |
+| DE "checked on every path", cycle cut | a cover need not dominate if every path has one | all | audited; ≤ 1.5 % of checks; timing queued |
+| LO-OBJ-G v5 with the latch | wider coverage, and the unlocked page copy closed | SQLite | audited; confirming leg running |
+| MySQL on Intel | FE-INL and the other levers on the Intel host | MySQL | earlier readings withdrawn; being re-checked |
+| Stock control | each compiler's stock arm against pristine upstream TSan | all | queued |
+| Levers re-timed, loop guard, AMD re-checks | earlier levers on the workloads of record | MySQL, SQLite, Redis | queued |
+| Integration compiler | every lever in one compiler, behind flags | all | gated and audited; identity checks running |
+
+Not adopted or parked: OWN-HANDOFF (Redis +13.9 % over P1-v3, but it trusts the program's own thread protocol),
+OWN-CONN, DD-EXACT (deadlock detector table: memcached +19.4 %, unsound as committed), TLS-rooted escape analysis
+(Debug build only), per-element locksets (1.7 % of memcached's checks), SPIN-ACQ, SWMR-H.
+
+## Notes
+
+- **Method.** Each arm is built at four code offsets (0/16/32/48 bytes mod 64) and scored by the mean of per-offset
+  ratios; each leg has an A/A arm, and a result counts only if it is above the A/A range at every offset. Screenings
+  use two offsets. On memcached the CPU layout changes the size of the effect, so each figure names its layout.
+- **Race preservation.** Every row of tables 1-2 loses no race stock TSan reports under the premises listed in
+  `soundness-fixes.md`, checked by IR tests, check-tsan, reproducers with controls and an independent audit.
+- **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
+  (stock 2 reports, removal 1); a ruling is pending. LO-OBJ-G up to spec v6 missed a race with `sqlite3_serialize`'s
+  unlocked page copy, which the measured tests never call; spec v7's run-time latch closes it.
+- **MySQL server deaths.** 2 in 104 runs of arms with N1, 0 in 342 others; four checks of N1 found nothing.
+- **Compile time** of the paper's analyses over stock (CPU): SQLite +20 %, memcached +8 %, Redis +9 %, FFmpeg +16 %.
