@@ -26,7 +26,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 | app | configuration | AMD | Intel |
 |---|---|---|---|
 | memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+32.2 %** (1.300-1.335) | 🟢 **+25.4 %** (1.245-1.263) |
-| SQLite | LO-OBJ-G | 🟢 **+16.9 %** (1.128-1.244) | — |
+| SQLite | LO-OBJ-G | 🟢 **+18.8 %** (1.140-1.225) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
   SQLite (−0.5…−3.6 %), memcached (−6.7 %) and MySQL (−2.6 %).
@@ -53,7 +53,7 @@ within the configurations of record in table 1.
 | **EA-CONTENTS** | a pointer read from a container no longer makes the container shared | — | `a` 🟢 **+1.4** (on against off) | — | — | — |
 | **SWMR-ROOTS** | no checks on reads of a global whose only write precedes every reader thread | — | `a` 🟢 **+0.9** on top of EVCONF | — | — | — |
 | **EVCONF** (annotation) | objects annotated as owned by one thread are unchecked while a run-time guard holds (no idle-timeout thread, no external storage, connection never lent) | — | `a` 🟢 **+22.7** over stock on shared CPUs; +32.2 with the two rows above on disjoint CPUs | — | — | — |
-| **LO-OBJ-G** (annotation) | objects annotated as protected by their owner's lock are unchecked while the thread holds that lock | `a` 🟢 **+16.9** over stock | — | — | — | — |
+| **LO-OBJ-G** (annotation) | objects annotated as protected by their owner's lock are unchecked while the thread holds that lock | `a` 🟢 **+18.8** over stock | — | — | — | — |
 
 - N1-ST is measured on top of N1 + DynSTC-RT and costs 1-3 % on multi-threaded code. FE-SINK is measured over
   P1-v3 + N1 and adds nothing on top of FE-INL.
@@ -91,7 +91,7 @@ within the configurations of record in table 1.
 | MySQL whole-program mode | MySQL never ran with whole-program summaries; 76 % of its checks go through pointer parameters | MySQL | counting; ceiling 19 % of checks |
 | Removal-mode DE on FFmpeg | as in table 3 | FFmpeg | +10.2 % over N1 + DynSTC-RT in a screening (mjpeg +29 %); needs a ruling on the report loss below |
 | DE "checked on every path", cycle cut | a cover need not dominate if every path has one | all | audited; ≤ 1.5 % of checks; timing queued |
-| LO-OBJ-G v5 with the latch | wider coverage, and the unlocked page copy closed | SQLite | audited; confirming leg running |
+| LO-OBJ-G with the latch (spec v7) | the unlocked page copy closed at run time | SQLite | audited; the figure of record above is v5 with spec v6 (the earlier v4 leg read +16.9 %, and +17.4 % in the same leg); the leg with the latch is queued on the integration compiler |
 | MySQL on Intel | FE-INL and the other levers on the Intel host | MySQL | earlier readings withdrawn; being re-checked |
 | Stock control | each compiler's stock arm against pristine upstream TSan | all | queued |
 | Levers re-timed, loop guard, AMD re-checks | earlier levers on the workloads of record | MySQL, SQLite, Redis | queued |
