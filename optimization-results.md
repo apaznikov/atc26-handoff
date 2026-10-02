@@ -7,13 +7,16 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 
 ## Table 1a. All applications, without annotation-based optimizations
 
-| app | workload | stock TSan over native | configuration | AMD | Intel |
-|---|---|---|---|---|---|
-| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+34.0 %** (1.329-1.353) |
-| Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | — | 🟢 **+7.6 %** (1.061-1.094) |
-| MySQL | Release build, sysbench insert, update_non_index, delete | 7.5× | FE-INL | 🟢 **+5.4 %** (1.043-1.060) | — |
-| memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS | — | 🟡 +1.9 % (1.004-1.028, A/A 1.001-1.012) |
-| SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −0.5 % on an earlier four-subtest set; this set not measured yet | — |
+| app | workload | stock TSan over native | configuration | AMD | Intel | submitted paper |
+|---|---|---|---|---|---|---|
+| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+34.0 %** (1.329-1.353) | +57 % |
+| Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | — | 🟢 **+7.6 %** (1.061-1.094) | +45 % |
+| MySQL | Release build, sysbench insert, update_non_index, delete | 7.5× | FE-INL | 🟢 **+5.4 %** (1.043-1.060) | — | +16 % (select), +11 % (write-only) |
+| memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS | — | 🟡 +1.9 % (1.004-1.028, A/A 1.001-1.012) | +7 % |
+| SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −0.5 % on an earlier four-subtest set; this set not measured yet | — | +71 % |
+
+The last column is what the submitted paper printed for all its analyses together: other workloads, the Intel host,
+and earlier compilers with two elisions later found unsound.
 
 ## Table 1b. Applications where annotation-based optimizations gain
 
@@ -28,8 +31,6 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
   SQLite (−0.5…−3.6 %), memcached (−6.7 %) and MySQL (−2.6 %).
 - The paper's analyses alone (P1-v3, below) are not separable from stock on any app (0.98-1.02).
-- The submitted paper printed, on other workloads and with two elisions later found unsound: SQLite +71 %,
-  memcached +7 %, Redis +45 %, MySQL +16 / +11 %, FFmpeg +57 %.
 - Ceilings for removing checks (profile oracles: memory touched by one thread / also Eraser-consistent): SQLite
   +16 / +53 %, memcached +6 / +11 %, Redis +17 / +27 %, MySQL −1 / +3 %, FFmpeg +31 / +41 %.
 
