@@ -25,7 +25,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 
 | app | configuration | AMD | Intel |
 |---|---|---|---|
-| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+32.2 %** (1.300-1.335) | 🟢 **+25.4 %** (1.245-1.263) |
+| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+28.3 %** over pristine upstream TSan (+32.2 % over the stock arm of our compiler) | 🟢 **+25.4 %** (1.245-1.263; control against pristine pending) |
 | SQLite | LO-OBJ-G | 🟢 **+18.8 %** (1.140-1.225) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
@@ -93,7 +93,7 @@ within the configurations of record in table 1.
 | DE "checked on every path", cycle cut | a cover need not dominate if every path has one | all | audited; ≤ 1.5 % of checks; timing queued |
 | LO-OBJ-G with the latch (spec v7) | the unlocked page copy closed at run time | SQLite | audited; the figure of record above is v5 with spec v6 (the earlier v4 leg read +16.9 %, and +17.4 % in the same leg); the leg with the latch is queued on the integration compiler |
 | MySQL on Intel | FE-INL and the other levers on the Intel host | MySQL | earlier readings withdrawn; being re-checked |
-| Stock control | each compiler's stock arm against pristine upstream TSan | all | queued |
+| Stock control | each compiler's stock arm against pristine upstream TSan | all | memcached on AMD done: pristine is 3.0 % faster (1.036 / 1.025, A/A 0.998-1.004), so that figure is re-based; the other apps are running |
 | Levers re-timed, loop guard, AMD re-checks | earlier levers on the workloads of record | MySQL, SQLite, Redis | queued |
 | Integration compiler | every lever in one compiler, behind flags | all | gated and audited; identity checks running |
 
@@ -106,6 +106,9 @@ OWN-CONN, DD-EXACT (deadlock detector table: memcached +19.4 %, unsound as commi
 - **Method.** Each arm is built at four code offsets (0/16/32/48 bytes mod 64) and scored by the mean of per-offset
   ratios; each leg has an A/A arm, and a result counts only if it is above the A/A range at every offset. Screenings
   use two offsets. On memcached the CPU layout changes the size of the effect, so each figure names its layout.
+- **Stock arm.** Stock arms are built by each project compiler with every pass off and link its runtime, which
+  does a little extra work even then. Each is being timed against pristine upstream TSan; a figure is re-based when
+  pristine is faster beyond the A/A at both offsets.
 - **Race preservation.** Every row of tables 1-2 loses no race stock TSan reports under the premises listed in
   `soundness-fixes.md`, checked by IR tests, check-tsan, reproducers with controls and an independent audit.
 - **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
