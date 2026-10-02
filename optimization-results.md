@@ -12,7 +12,7 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 | FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.7 %** over upstream TSan (derived); +34.0 % (1.329-1.353) over our stock arm | +57 % |
 | Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+10.2 %** (1.096-1.108; 2 offsets, server with 8 I/O threads and client on disjoint CPUs) | 🟢 **+7.6 %** (1.061-1.094; 20 I/O threads) | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete; 24 connections, server and client on disjoint CPUs | 7.5× | FE-INL on AMD; the paper's analyses alone on Intel | 🟢 **+9.4 %** over upstream TSan (direct, 4 offsets); +8.0 % (1.067-1.083) over our stock arm; +5.4 % on shared CPUs | ⚪ −0.2 %; with FE-INL 🔴 −3.0 % (0.968-0.971) | +16 % (select), +11 % (write-only) |
-| memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS + SWMR-ROOTS | 🟡 +1.0 % over our stock arm (1.004-1.015, A/A 0.995-1.002); −1.7 % over upstream TSan (derived) | 🟡 +1.9 % over our stock arm (1.004-1.028, A/A 1.001-1.012), not resolved | +7 % |
+| memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS + SWMR-ROOTS | 🟡 +1.0 % over our stock arm (1.004-1.015, A/A 0.995-1.002); −1.7 % over upstream TSan (derived) | 🟡 +3.2 % over our stock arm (4 offsets); about +1.2 % over upstream TSan | +7 % |
 | SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −0.5 % on an earlier four-subtest set; this set not measured yet | — | +71 % |
 
 The last column is what the submitted paper printed for all its analyses together: other workloads, the Intel host,
@@ -25,7 +25,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 
 | app | configuration | AMD | Intel |
 |---|---|---|---|
-| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+30.4 %** over upstream TSan (direct, 1.300-1.307, 2 offsets); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22.2 %** over upstream TSan (derived); +25.4 % (1.245-1.263) over our stock arm |
+| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+30.4 %** over upstream TSan (direct, 1.300-1.307, 2 offsets); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22 %** over upstream TSan (1.244 over our stock arm in the same leg); +25.4 % (1.245-1.263) in the first leg |
 | SQLite | LO-OBJ-G | 🟢 **+18.8 %** (1.140-1.225) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
@@ -140,6 +140,11 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
   does extra work even then. Each is timed against upstream TSan with the same race-detection behaviour (the fork
   point plus upstream's fix for unchecked fields of escaped locals); where upstream is faster beyond the A/A at both
   offsets, the figure is re-based by that ratio and marked "derived" until a direct leg over upstream stock exists.
+- **memcached's other workloads, AMD, directly over upstream TSan** (disjoint CPUs, 2 offsets): default input
+  +2.8 %, pipelining +3.5 %, 32-key gets +6.3 %, long keys +16.8 %, the chosen mix +30.4 %.
+- **Where the runtime's cost is.** With the same application objects, the project's runtime executes 1-3.5 % more
+  instructions than upstream's on the stock path (FFmpeg copy +1.0 %, mjpeg +3.5 %, memcached +2.9 %), on the miss
+  and eviction paths of the access entries; layout accounts for about 1 % on FFmpeg's stream copy only.
 - **Race preservation.** Every row of tables 1-2 loses no race stock TSan reports under the premises listed in
   `soundness-fixes.md`, checked by IR tests, check-tsan, reproducers with controls and an independent audit.
 - **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
