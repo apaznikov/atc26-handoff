@@ -10,7 +10,7 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 | app | workload | stock TSan over native | configuration | AMD | Intel | submitted paper |
 |---|---|---|---|---|---|---|
 | FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.7 %** over upstream TSan (derived); +34.0 % (1.329-1.353) over our stock arm | +57 % |
-| Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | — | 🟢 **+7.6 %** (1.061-1.094) | +45 % |
+| Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+10.2 %** (1.096-1.108; 2 offsets, server with 8 I/O threads and client on disjoint CPUs) | 🟢 **+7.6 %** (1.061-1.094; 20 I/O threads) | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete | 7.5× | FE-INL | 🟢 **+5.4 %** (1.043-1.060) | — | +16 % (select), +11 % (write-only) |
 | memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS | — | 🟡 +1.9 % (1.004-1.028, A/A 1.001-1.012) | +7 % |
 | SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −0.5 % on an earlier four-subtest set; this set not measured yet | — | +71 % |
@@ -25,7 +25,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 
 | app | configuration | AMD | Intel |
 |---|---|---|---|
-| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+32.2 %** (1.300-1.335) over our stock arm; control pending | 🟢 **+22.2 %** over upstream TSan (derived); +25.4 % (1.245-1.263) over our stock arm |
+| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+28.7 %** over upstream TSan (derived); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22.2 %** over upstream TSan (derived); +25.4 % (1.245-1.263) over our stock arm |
 | SQLite | LO-OBJ-G | 🟢 **+18.8 %** (1.140-1.225) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
@@ -93,8 +93,9 @@ within the configurations of record in table 1.
 | DE "checked on every path", cycle cut | a cover need not dominate if every path has one | all | audited; ≤ 1.5 % of checks; timing queued |
 | LO-OBJ-G with the latch (spec v7) | the unlocked page copy closed at run time | SQLite | audited; the figure of record above is v5 with spec v6 (the earlier v4 leg read +16.9 %, and +17.4 % in the same leg); the leg with the latch is queued on the integration compiler |
 | MySQL on Intel | FE-INL and the other levers on the Intel host | MySQL | earlier readings withdrawn; being re-checked |
-| Stock control | each compiler's stock arm against upstream TSan with the same checks (fork point plus upstream's capture fix), which isolates the cost of our runtime additions | all | Intel: upstream is faster by 2.5 % on FFmpeg (1.026 / 1.025) and 2.6 % on memcached (1.036 / 1.016), both beyond the A/A, so those figures are re-based; Redis 1.5 % (0.993 / 1.038), not resolved, stands. AMD memcached and MySQL are queued. Direct legs of each best configuration over upstream stock will replace the derived figures |
-| Levers re-timed, loop guard, AMD re-checks | earlier levers on the workloads of record | MySQL, SQLite, Redis | queued |
+| Stock control | each compiler's stock arm against upstream TSan with the same checks (fork point plus upstream's capture fix), which isolates the cost of our runtime additions | all | Intel: upstream is faster by 2.5 % on FFmpeg (1.026 / 1.025) and 2.6 % on memcached (1.036 / 1.016), both beyond the A/A, so those figures are re-based; Redis 1.5 % (0.993 / 1.038), not resolved, stands. AMD: memcached 2.7 % (1.031 / 1.023), re-based; MySQL is queued. Direct legs of each best configuration over upstream stock will replace the derived figures |
+| N1-ATOMIC on Redis | the inline hit test for atomic operations, on top of FE-INL + N1 | Redis | AMD screening: +2.8 % over the best (1.011-1.046, A/A 0.995-1.004); the 4-offset leg is queued |
+| Levers re-timed, loop guard | earlier levers on the workloads of record | MySQL, SQLite | queued |
 | Integration compiler | every lever in one compiler, behind flags | all | gated and audited; identity checks running |
 
 Not adopted or parked: OWN-HANDOFF (Redis +13.9 % over P1-v3, but it trusts the program's own thread protocol),
