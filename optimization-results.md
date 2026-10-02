@@ -9,7 +9,7 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 
 | app | workload | stock TSan over native | configuration | AMD | Intel | submitted paper |
 |---|---|---|---|---|---|---|
-| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+34.0 %** (1.329-1.353) | +57 % |
+| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.7 %** over upstream TSan (derived); +34.0 % (1.329-1.353) over our stock arm | +57 % |
 | Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | — | 🟢 **+7.6 %** (1.061-1.094) | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete | 7.5× | FE-INL | 🟢 **+5.4 %** (1.043-1.060) | — | +16 % (select), +11 % (write-only) |
 | memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS | — | 🟡 +1.9 % (1.004-1.028, A/A 1.001-1.012) | +7 % |
@@ -25,7 +25,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 
 | app | configuration | AMD | Intel |
 |---|---|---|---|
-| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+32.2 %** (1.300-1.335) | 🟢 **+25.4 %** (1.245-1.263) |
+| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+32.2 %** (1.300-1.335) over our stock arm; control pending | 🟢 **+22.2 %** over upstream TSan (derived); +25.4 % (1.245-1.263) over our stock arm |
 | SQLite | LO-OBJ-G | 🟢 **+18.8 %** (1.140-1.225) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
@@ -93,7 +93,7 @@ within the configurations of record in table 1.
 | DE "checked on every path", cycle cut | a cover need not dominate if every path has one | all | audited; ≤ 1.5 % of checks; timing queued |
 | LO-OBJ-G with the latch (spec v7) | the unlocked page copy closed at run time | SQLite | audited; the figure of record above is v5 with spec v6 (the earlier v4 leg read +16.9 %, and +17.4 % in the same leg); the leg with the latch is queued on the integration compiler |
 | MySQL on Intel | FE-INL and the other levers on the Intel host | MySQL | earlier readings withdrawn; being re-checked |
-| Stock control | each compiler's stock arm against upstream TSan | all | memcached on AMD: TSan at the fork point is 3.0 % faster than our stock arm, because it leaves 3.5 % of the accesses unchecked through an upstream defect (fields of a local struct whose address has escaped), fixed upstream in April 2025 and in our tree. The control is being repeated against the fork point plus that fix |
+| Stock control | each compiler's stock arm against upstream TSan with the same checks (fork point plus upstream's capture fix), which isolates the cost of our runtime additions | all | Intel: upstream is faster by 2.5 % on FFmpeg (1.026 / 1.025) and 2.6 % on memcached (1.036 / 1.016), both beyond the A/A, so those figures are re-based; Redis 1.5 % (0.993 / 1.038), not resolved, stands. AMD memcached and MySQL are queued. Direct legs of each best configuration over upstream stock will replace the derived figures |
 | Levers re-timed, loop guard, AMD re-checks | earlier levers on the workloads of record | MySQL, SQLite, Redis | queued |
 | Integration compiler | every lever in one compiler, behind flags | all | gated and audited; identity checks running |
 
@@ -107,9 +107,9 @@ OWN-CONN, DD-EXACT (deadlock detector table: memcached +19.4 %, unsound as commi
   ratios; each leg has an A/A arm, and a result counts only if it is above the A/A range at every offset. Screenings
   use two offsets. On memcached the CPU layout changes the size of the effect, so each figure names its layout.
 - **Stock arm.** Stock arms are built by each project compiler with every pass off and link its runtime, which
-  does a little extra work even then. Each is being timed against upstream TSan with the same race-detection
-  behaviour (the fork point plus upstream's fix for unchecked fields of escaped locals); a figure is re-based if
-  that is faster beyond the A/A at both offsets.
+  does extra work even then. Each is timed against upstream TSan with the same race-detection behaviour (the fork
+  point plus upstream's fix for unchecked fields of escaped locals); where upstream is faster beyond the A/A at both
+  offsets, the figure is re-based by that ratio and marked "derived" until a direct leg over upstream stock exists.
 - **Race preservation.** Every row of tables 1-2 loses no race stock TSan reports under the premises listed in
   `soundness-fixes.md`, checked by IR tests, check-tsan, reproducers with controls and an independent audit.
 - **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
