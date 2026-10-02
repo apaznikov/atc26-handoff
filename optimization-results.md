@@ -12,7 +12,7 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 | FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.7 %** over upstream TSan (derived); +34.0 % (1.329-1.353) over our stock arm | +57 % |
 | Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+10.2 %** (1.096-1.108; 2 offsets, server with 8 I/O threads and client on disjoint CPUs) | 🟢 **+7.6 %** (1.061-1.094; 20 I/O threads) | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete | 7.5× | FE-INL on AMD; the paper's analyses alone on Intel | 🟢 **+5.4 %** (1.043-1.060) | ⚪ −0.2 %; with FE-INL 🔴 −3.0 % (0.968-0.971) | +16 % (select), +11 % (write-only) |
-| memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS | — | 🟡 +1.9 % (1.004-1.028, A/A 1.001-1.012) | +7 % |
+| memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS + SWMR-ROOTS | 🟡 +1.0 % over our stock arm (1.004-1.015, A/A 0.995-1.002); −1.7 % over upstream TSan (derived) | 🟡 +1.9 % over our stock arm (1.004-1.028, A/A 1.001-1.012), not resolved | +7 % |
 | SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −0.5 % on an earlier four-subtest set; this set not measured yet | — | +71 % |
 
 The last column is what the submitted paper printed for all its analyses together: other workloads, the Intel host,
