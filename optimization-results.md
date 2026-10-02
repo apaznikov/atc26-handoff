@@ -25,7 +25,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 
 | app | configuration | AMD | Intel |
 |---|---|---|---|
-| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+28.7 %** over upstream TSan (derived); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22.2 %** over upstream TSan (derived); +25.4 % (1.245-1.263) over our stock arm |
+| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+30.4 %** over upstream TSan (direct, 1.300-1.307, 2 offsets); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22.2 %** over upstream TSan (derived); +25.4 % (1.245-1.263) over our stock arm |
 | SQLite | LO-OBJ-G | 🟢 **+18.8 %** (1.140-1.225) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
