@@ -102,6 +102,35 @@ Not adopted or parked: OWN-HANDOFF (Redis +13.9 % over P1-v3, but it trusts the 
 OWN-CONN, DD-EXACT (deadlock detector table: memcached +19.4 %, unsound as committed), TLS-rooted escape analysis
 (Debug build only), per-element locksets (1.7 % of memcached's checks), SPIN-ACQ, SWMR-H.
 
+## Table 5. Where the analyses are conservative (estimates)
+
+How much each analysis leaves on the table because it cannot prove an alias or ownership fact that holds at run
+time. Shares are of executed checks unless marked; "pending" items are being counted on the workloads of record.
+
+| analysis | what it cannot prove | SQLite | memcached | Redis | MySQL | FFmpeg |
+|---|---|---|---|---|---|---|
+| DE, dominance | two checks hit the same address in one function invocation with no synchronisation in between, but the addresses are not provably equal (share of hits, 24 Sep, earlier workloads) | ~6 % | ~7.5 % | ~2.3 % | pending | ~12 % |
+| DE, post-dominance | the same, with the later check covering the earlier one | pending | pending | pending | pending | pending |
+| DE, "checked on every path" | a cover on every path, none dominating (built, audited) | 0.22 % | 0.00 % | 0.82 % | 0.07 % | 0.5 % |
+| DE, cycle cut | a cover lost to a path around a loop (built) | 0.92 % | 0.71 % | 0.14 % | 0.08 % | 0.89 % |
+| DE, stronger alias analysis | must-alias from SCEV or points-to analyses | 0 | 0 | 0 | — | 0 |
+| EA, all | checks on memory that only one thread touches or that is consistently ordered in the run, and that EA keeps | 72 % | 55 % | 63 % | 36 % never shared, 13 % written before readers | 70 % |
+| EA, pointer parameter | the object is reached through a pointer argument, so the callee cannot tell it is local (share of the row above; MySQL: of all checks) | 53-75 % | 53-75 % | 53-75 % | 76 % | 53-75 % |
+| EA, cross-unit parameter facts | "this argument is local in every caller", passed to the callee's unit: the upper bound of what it removes | 0.04 % | 0.05 % | 0.00 % | 0.14 % | 0.01 % |
+| EA, own stack | the address lies in the accessing thread's own stack and no other thread touches it | 4.9 % | 5.9 % | 12.5 % | 14.8-24 % | 5.8 % |
+
+- The gap between the EA rows is the point: most of the single-thread mass is real at run time but not provable
+  statically, because the objects are heap memory reachable from shared structures or passed through callers that
+  also pass shared objects. A run-time own-stack test recovers +10 % on MySQL when it skips 34 % of the checks, but
+  the test costs 4.5 % and a sound form reaches a third of that, so it is parked.
+- **The old "same location" rule.** Before the first soundness review DE treated two accesses to the same object as
+  the same location whatever the field, index or size; DE's share of statically removed checks was 32.5 % and is
+  2.9 % with the exact rule. That step was 75-100 % of each application's loss of speedup (SQLite ×1.48-1.51 →
+  ×1.09-1.10, Redis ×1.41 → ×1.10, memcached ×1.11 → ×1.02, FFmpeg ×1.356 → ×1.018). Being measured now as an
+  unsound reference, in every combination: struct fields covering each other, array elements covering each other,
+  both, and a narrower check covering a wider access, with executed-check counts, the speedup of each combination
+  and the number of stock's races each loses.
+
 ## Notes
 
 - **Method.** Each arm is built at four code offsets (0/16/32/48 bytes mod 64) and scored by the mean of per-offset
