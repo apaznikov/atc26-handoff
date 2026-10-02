@@ -10,7 +10,7 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 | app | workload | stock TSan over native | configuration | AMD | Intel | submitted paper |
 |---|---|---|---|---|---|---|
 | FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.7 %** over upstream TSan (derived); +34.0 % (1.329-1.353) over our stock arm | +57 % |
-| Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+10.2 %** (1.096-1.108; 2 offsets, server with 8 I/O threads and client on disjoint CPUs) | 🟢 **+7.6 %** (1.061-1.094; 20 I/O threads) | +45 % |
+| Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+10.2 %** (1.096-1.109; 4 offsets, server with 8 I/O threads and client on disjoint CPUs; over our stock arm) | 🟢 **+7.6 %** (1.061-1.094; 20 I/O threads) | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete; 24 connections, server and client on disjoint CPUs | 7.5× | FE-INL on AMD; the paper's analyses alone on Intel | 🟢 **+9.4 %** over upstream TSan (direct, 4 offsets); +8.0 % (1.067-1.083) over our stock arm; +5.4 % on shared CPUs | ⚪ −0.2 %; with FE-INL 🔴 −3.0 % (0.968-0.971) | +16 % (select), +11 % (write-only) |
 | memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS + SWMR-ROOTS | 🟡 +1.0 % over our stock arm (1.004-1.015, A/A 0.995-1.002); −1.7 % over upstream TSan (derived) | 🟡 +3.2 % over our stock arm (4 offsets); about +1.2 % over upstream TSan | +7 % |
 | SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −0.5 % on an earlier four-subtest set; this set not measured yet | — | +71 % |
@@ -73,7 +73,7 @@ within the configurations of record in table 1.
 | FE-hot, hot-list N1, N1-S, N1-LOOPS-∞ | FE-INL or N1 only at hot sites, by profile or statically | 🔴 none beats the full version |
 | FE-PM, N1-PM, N1b | out-of-line entries that save fewer registers | 🔴 MySQL −2 %, SQLite −2…−4 % |
 | FE-LAZY, FE-INL-CSE | entry recorded only when needed; one thread-state load per function | ⚪ ±1 % |
-| N1-CSE, N1-ATOMIC, LIBCALL-INLINE, N2 | compact, atomic, libc-call and batched variants of the check | ⚪ ±1 % (N2 up to −2 %) |
+| N1-CSE, N1-ATOMIC, LIBCALL-INLINE, N2 | compact, atomic, libc-call and batched variants of the check | ⚪ ±1 % (N2 up to −2 %); N1-ATOMIC on Redis +1.1 % on Intel and +1.6 % on AMD (0.994-1.046 over 4 offsets), not resolved |
 | SUBS | a covering record of the same thread counts as a hit | 🔴 −2…−18 %; the selective form is unsound |
 | Whole-program summaries alone, STC-TS, allowlists | closed-world facts for STC and SWMR | ⚪ < 1 % of checks |
 | LTO, Attributor, extra LLVM passes | more optimization before instrumentation | ⚪ LTO adds nothing to our analyses; the Attributor miscompiles; the passes undo most of the analyses' check removal on Redis |
@@ -94,7 +94,6 @@ within the configurations of record in table 1.
 | LO-OBJ-G with the latch (spec v7) | the unlocked page copy closed at run time | SQLite | audited; the figure of record above is v5 with spec v6 (the earlier v4 leg read +16.9 %, and +17.4 % in the same leg); the leg with the latch is queued on the integration compiler |
 | MySQL on Intel | FE-INL on the Intel host | MySQL | re-checked 2 Oct with server and client on disjoint CPUs and 24 connections, 4 offsets, A/A 0.994-1.000: FE-INL −3.0 %, the analyses alone −0.2 %. The earlier −6…−12 % came from 36 connections on a 48-CPU set; at 24 connections the layout does not matter (shared CPUs: −3.3 %). On the five other scripts only write_only loses (−5.5 %); reads are neutral |
 | Stock control | each compiler's stock arm against upstream TSan with the same checks (fork point plus upstream's capture fix), which isolates the cost of our runtime additions | all | Intel: upstream is faster by 2.5 % on FFmpeg (1.026 / 1.025) and 2.6 % on memcached (1.036 / 1.016), both beyond the A/A, so those figures are re-based; Redis 1.5 % (0.993 / 1.038), not resolved, stands. AMD: memcached 2.7 % (1.031 / 1.023), re-based; MySQL the other way, upstream 1.5 % slower than our stock arm (0.980-0.988), and the integration compiler's stock arm equals upstream there. Direct legs of each best configuration over upstream stock will replace the derived figures |
-| N1-ATOMIC on Redis | the inline hit test for atomic operations, on top of FE-INL + N1 | Redis | AMD screening: +2.8 % over the best (1.011-1.046, A/A 0.995-1.004); the 4-offset leg is queued |
 | Levers re-timed, loop guard | earlier levers on the workloads of record | MySQL, SQLite | queued |
 | Integration compiler | every lever in one compiler, behind flags | all | gated and audited; identity checks running |
 
