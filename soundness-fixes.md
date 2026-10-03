@@ -463,6 +463,15 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 - **P5** (pending since 27 Sep, adopted 1 Oct). A race report lost because the runtime recycled the trace part that
   held the other thread's history, during a deferred or range check, is a bounded-state loss of the same class as
   P-EV and P-RESET.
+- **A4** (provisional 24 Sep, adopted 3 Oct). No unit defines a reserved C or POSIX library name that another unit
+  calls (C11 7.1.3; C++ [reserved.names]). Since 3 Oct the escape analysis's interceptor toggle covers every
+  definition in the linked program through the whole-program definitions list and is off without it; A4 is needed
+  only for a definition outside the program's IR, such as a hidden or `-Bsymbolic` definition in a library loaded by
+  `dlopen`.
+- **P-REPORT** (adopted 3 Oct). In removal-mode DE, after a race report on an 8-byte cell (which marks the cell's
+  shadow), a covered access whose check was removed is not recorded again, so a second race on the same cell before
+  the thread's next synchronisation may go unreported (stock: 2 reports, removal mode: 1). The program is never left
+  without a report on that cell. Verified-mode DE, used in every reported configuration, does not need it.
 - **A10**, the parts no unit-local check can see: an ignore-sync region opened in another unit, or by the runtime
   around an ignored library. DynSTC's runtime form sees none of them.
 - **A11**, no thread exists when `main` starts, except one started by this unit's constructors, which are checked.
@@ -470,8 +479,6 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 - **Library names.** A libc or libstdc++ name binds to that library.
 
 **Provisional:**
-- **A4** (24 Sep). No unit defines a reserved C or POSIX library name that another unit calls. Shape 40's fix covers
-  only definitions the unit itself can see.
 - **A5** (24 Sep). A default-visibility definition in position-independent (`-fPIC`) code is not replaced at load
   time.
 - **A6** (24 Sep). An `available_externally` body equals the definition that gets linked. This matters only under
