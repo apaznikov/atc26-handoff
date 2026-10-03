@@ -9,11 +9,16 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 
 | app | workload | stock TSan over native | configuration | AMD | Intel | submitted paper |
 |---|---|---|---|---|---|---|
-| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.5 %** over upstream TSan (direct, 1.290-1.314, 4 offsets); +34.0 % (1.329-1.353) over our stock arm | +57 % |
+| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | 🟢 **+29.2 %** over upstream TSan (direct, 1.285-1.305, 4 offsets) | 🟢 **+30.5 %** over upstream TSan (direct, 1.290-1.314, 4 offsets); +34.0 % over our stock arm | +57 % |
 | Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+7.4 %** over upstream TSan (direct, 1.055-1.096, 4 offsets; server with 8 I/O threads and client on disjoint CPUs); +10.2 % (1.096-1.109) over our stock arm | 🟢 **+5.7 %** over upstream TSan (direct, 1.043-1.073, 4 offsets; server with 12 I/O threads and client on disjoint CPUs); +8.1 % over our stock arm; +7.6 % on shared CPUs with 20 I/O threads | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete; 24 connections, server and client on disjoint CPUs | 7.5× | FE-INL on AMD; the paper's analyses alone on Intel | 🟢 **+9.4 %** over upstream TSan (direct, 4 offsets); +8.0 % (1.067-1.083) over our stock arm; +5.4 % on shared CPUs | ⚪ −0.2 %; with FE-INL 🔴 −3.0 % (0.968-0.971) | +16 % (select), +11 % (write-only) |
 | memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS + SWMR-ROOTS | 🟡 +1.0 % over our stock arm (1.004-1.015, A/A 0.995-1.002); −1.7 % over upstream TSan (derived) | 🟡 +3.2 % over our stock arm (4 offsets); about +1.2 % over upstream TSan | +7 % |
 | SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −1.8 % (0.950-1.025, inside the A/A 0.942-0.985; 4 offsets) | — | +71 % |
+
+FFmpeg's figure is the geomean of four transcodes and is carried by the single-threaded stream copy: over upstream,
+copy 2.71× (AMD) / 2.88× (Intel), mjpeg +4.2 % / +3.7 %, h264 −0.2 % / −1.7 %, h265 −1.1 % / −1.1 %. The two encoders
+run mostly in uninstrumented x264/x265 code (stock TSan costs them 1.3-1.4×), and the inline single-thread test costs
+them slightly.
 
 The last column is what the submitted paper printed for all its analyses together: other workloads, the Intel host,
 and earlier compilers with two elisions later found unsound.
