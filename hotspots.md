@@ -28,8 +28,7 @@
   - Genuinely shared memory (S) is the largest REAL class: 59 % on memcached, 63 % on MySQL.
 - **New candidates, by ceiling.**
   - EVCONF-RANGES: memcached ≤ 16.6 %. Measured 4 Oct: +13.9 % over cmb on Intel, equal to the oracle (1.141), and
-    +10.3 % on AMD; it goes
-    into memcached's camera-ready configuration.
+    +10.3 % on AMD; it goes into memcached's camera-ready configuration.
   - Quiet mode's range skip: Redis main ≈ 19 %; already written.
   - LO-OBJ-G on `db->mutex` objects: SQLite create_drop_index_1 ≈ 5.5 % of its checks.
   - LO-OBJ-RANGES: SQLite ≤ 5.7 % of cycles; out (4 Oct): it reaches neither site (candidate table).
