@@ -111,7 +111,7 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
 
 | analysis | what it cannot prove | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|---|
-| DE, dominance | two checks of one invocation hit the same address with no synchronisation in between and the earlier dominates the later, but the addresses are not provably equal (share of all executed checks, 3 Oct, record workloads, P1-v3) | 3.35 % | 0.04 % | 3.44 % | pending | 5.92 % |
+| DE, dominance | two checks of one invocation hit the same address with no synchronisation in between and the earlier dominates the later, yet both stay checked (share of all executed checks, 3 Oct, record workloads, P1-v3). Includes pairs whose access kind or size cannot cover (a read before a write, a narrow check before a wide one); the split into missing address proofs and non-covering kinds is pending | 3.35 % | 0.04 % | 3.44 % | pending | 5.92 % |
 | DE, post-dominance | the same, the later check post-dominating the earlier one, a call between them breaking it / ceiling with calls allowed | 0.28 % / 0.37 % | 0.00 % / 0.00 % | 0.30 % / 0.92 % | pending | 0.21 % / 0.53 % |
 | DE, availability | the same pairs where neither check dominates or post-dominates the other (a flag set by the first check would be needed) | 4.36 % | 0.08 % | 5.79 % | pending | 8.56 % |
 | DE, "checked on every path" | a cover on every path, none dominating (built, audited) | 0.22 % | 0.00 % | 0.82 % | 0.07 % | 0.5 % |
@@ -122,17 +122,6 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
 | EA, cross-unit parameter facts | "this argument is local in every caller", passed to the callee's unit: the upper bound of what it removes | 0.04 % | 0.05 % | 0.00 % | 0.14 % | 0.01 % |
 | EA, own stack | the address lies in the accessing thread's own stack and no other thread touches it | 4.9 % | 5.9 % | 12.5 % | 14.8-24 % | 5.8 % |
 
-- The DE dominance row by the relation between the two pointers, read at machine level (% of executed checks):
-
-  | app | value from another block (phi, select, loop-carried) | two loads of one field | equal-index array access | same value or expression (refused for another reason) | other |
-  |---|---|---|---|---|---|
-  | SQLite | 1.10 | 0.40 | 0.09 | 0.25 | 1.55 |
-  | memcached | 0.04 | — | — | — | — |
-  | Redis | 1.57 | 0.74 | 0.01 | 0.63 | 0.49 |
-  | FFmpeg | 0.48 | 1.95 | 0.94 | 1.20 | 1.36 |
-
-  A run-time pointer-equality guard could reach at most the dominance row (3-6 % of checks on SQLite, Redis and FFmpeg,
-  0.04 % on memcached); each such check is a hit today, so the time it saves is a fraction of N1's inline test.
 - The gap between the EA rows is the point: most of the single-thread mass is real at run time but not provable
   statically, because the objects are heap memory reachable from shared structures or passed through callers that
   also pass shared objects. A run-time own-stack test recovers +10 % on MySQL when it skips 34 % of the checks, but
