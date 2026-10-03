@@ -111,8 +111,9 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
 
 | analysis | what it cannot prove | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|---|
-| DE, dominance | two checks hit the same address in one function invocation with no synchronisation in between, but the addresses are not provably equal (share of hits, 24 Sep, earlier workloads) | ~6 % | ~7.5 % | ~2.3 % | pending | ~12 % |
-| DE, post-dominance | the same, with the later check covering the earlier one | pending | pending | pending | pending | pending |
+| DE, dominance | two checks of one invocation hit the same address with no synchronisation in between and the earlier dominates the later, but the addresses are not provably equal (share of all executed checks, 3 Oct, record workloads, P1-v3) | 3.13 % | 0.04 % | 2.55 % | pending | 5.69 % |
+| DE, post-dominance | the same, the later check post-dominating the earlier one, a call between them breaking it / ceiling with calls allowed | 0.28 % / 0.39 % | 0.00 % / 0.00 % | 0.00 % / 0.66 % | pending | 0.21 % / 0.53 % |
+| DE, availability | the same pairs where neither check dominates or post-dominates the other (a flag set by the first check would be needed) | 4.55 % | 0.08 % | 6.94 % (upper bound: indirect jumps) | pending | 8.78 % |
 | DE, "checked on every path" | a cover on every path, none dominating (built, audited) | 0.22 % | 0.00 % | 0.82 % | 0.07 % | 0.5 % |
 | DE, cycle cut | a cover lost to a path around a loop (built) | 0.92 % | 0.71 % | 0.14 % | 0.08 % | 0.89 % |
 | DE, stronger alias analysis | must-alias from SCEV or points-to analyses | 0 | 0 | 0 | — | 0 |
