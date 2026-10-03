@@ -131,13 +131,25 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
   statically, because the objects are heap memory reachable from shared structures or passed through callers that
   also pass shared objects. A run-time own-stack test recovers +10 % on MySQL when it skips 34 % of the checks, but
   the test costs 4.5 % and a sound form reaches a third of that, so it is parked.
-- **The old "same location" rule.** Before the first soundness review DE treated two accesses to the same object as
-  the same location whatever the field, index or size; DE's share of statically removed checks was 32.5 % and is
-  2.9 % with the exact rule. That step was 75-100 % of each application's loss of speedup (SQLite ×1.48-1.51 →
-  ×1.09-1.10, Redis ×1.41 → ×1.10, memcached ×1.11 → ×1.02, FFmpeg ×1.356 → ×1.018). Being measured now as an
-  unsound reference, in every combination: struct fields covering each other, array elements covering each other,
-  both, and a narrower check covering a wider access, with executed-check counts, the speedup of each combination
-  and the number of stock's races each loses.
+- **The old "same location" rule, measured as an unsound reference (3 Oct).** Before the first soundness review DE
+  treated two accesses to one object as the same location whatever the field, index or size; that step was 75-100 %
+  of each application's loss of speedup. Rebuilt behind three flags: S (fields of one struct cover each other),
+  A (elements of one array cover each other; any array indexing makes a pair an array pair), Z (a narrower check
+  covers a wider access). Executed checks removed beyond today's exact DE, on the paper's analyses in removal mode:
+
+  | combination | SQLite | memcached | Redis | MySQL | FFmpeg |
+  |---|---|---|---|---|---|
+  | S | 10.7 % | 9.5 % | 21.1 % | 13.5 % | 13.7 % |
+  | A | 9.3 % | 9.0 % | 8.8 % | 4.1 % | 22.1 % |
+  | Z | 0.0 % | 0.0 % | 0.0 % | 0.0 % | 0.0 % |
+  | S + Z | 13.0 % | 11.0 % | 23.0 % | 14.1 % | 14.1 % |
+  | S + A | 19.7 % | 17.5 % | 29.8 % | 17.5 % | 34.4 % |
+  | S + A + Z | 22.1 % | 20.3 % | 32.0 % | 18.2 % | 35.4 % |
+
+  Most relaxed removals are dominance covers (post-dominance adds 7-20 % of them). Fields and elements are told apart
+  by type-based alias metadata, so S and A are a heuristic split. The speedup of each combination and the number of
+  stock's races each loses are being measured. A sound core of S under a weaker guarantee ("at least one race is
+  reported where stock reports one", the shadow-proxy rule of RedCard) is being counted against S.
 
 ## Notes
 
