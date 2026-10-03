@@ -31,7 +31,7 @@
     queued.
   - Quiet mode's range skip: Redis main ≈ 19 %; already written.
   - LO-OBJ-G on `db->mutex` objects: SQLite create_drop_index_1 ≈ 5.5 % of its checks.
-  - LO-OBJ-RANGES: SQLite ≤ 5.7 % of cycles.
+  - LO-OBJ-RANGES: SQLite ≤ 5.7 % of cycles; out (4 Oct): it reaches neither site (candidate table).
   - EVCONF-ARGS: memcached ≤ 5.4 %.
 - **Corrections.** MEMINTR-INLINE's census (3 Oct) called memcached's response memset cold; it is the hottest range
   of all (memintrin-inline-design.md §6, corrected).
@@ -394,7 +394,7 @@ parked (with the decision), in work, or NEW (with a ceiling and what it would ta
 |---|---|---|---|---|
 | EVCONF-RANGES | memcached | ≤ 16.6 % of cycles (resp_allocate's memset), plus ≈ 5.5 % of read-buffer interceptors | the confinement argument for every byte of `_mc_resp` (for review); `evconfCovered` applied in `instrumentMemIntrinsic` (destination and source); gate; audit | **in work**: the UNSOUND oracle `cmo` is built (4 offsets), and its timing against cmb is queued in the timing plan |
 | quiet mode's range skip | Redis | ≈ 19 % of the main thread (networking.c:361 14.1, quicklist.c:1300 4.8) | already written (`phase_guard_ranges`, eee8e8455ebe; tests 6da72199d92e) | in work with the phase guard |
-| LO-OBJ-RANGES | SQLite | ≤ 5.7 % of cycles (memcmp 3.7, VDBE memcpy 2.0) | LO-OBJ-G's guard applied to memory intrinsics and to the memcmp interceptor on spec-covered objects | NEW |
+| LO-OBJ-RANGES | SQLite | ≤ 5.7 % of cycles (memcmp 3.7, VDBE memcpy 2.0) | LO-OBJ-G's guard applied to memory intrinsics and to the memcmp interceptor on spec-covered objects | **OUT** (4 Oct): reaches neither site. The memcpy copies VDBE registers, which `sqlite3_value_dup` reads without `db->mutex`, so they cannot be a root. The memcmp's page side reaches `vdbeRecordCompareString` as `const void *` through a function pointer, with no owner path (lo-obj-g-design.md §6.17) |
 | EVCONF-ARGS | memcached | ≤ 5.4 % of cycles (26.6 % of checks) | EVCONF's confinement carried into a callee's pointer argument (`hash(key, nkey)`) | NEW |
 | LO-OBJ-G on `db->mutex` | SQLite | ≈ 6-7 % of create_drop_index_1's checks (section 6) | spec entries for the connection's objects (VDBE, sorter, lookaside) under `db->mutex` | NEW |
 
