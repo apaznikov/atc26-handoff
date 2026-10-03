@@ -150,8 +150,10 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
 
   Most relaxed removals are dominance covers (post-dominance adds 7-20 % of them). Fields and elements are told apart
   by type-based alias metadata, so S and A are a heuristic split. The speedup of each combination and the number of
-  stock's races each loses are being measured. A sound core of S under a weaker guarantee ("at least one race is
-  reported where stock reports one", the shadow-proxy rule of RedCard) is being counted against S.
+  stock's races each loses are being measured. The shadow-proxy rule of RedCard, the core of S that keeps "at least one race is reported where stock
+  reports one", was counted and not adopted, since it reports a different race than stock: it would remove only
+  memcached 0.13 %, Redis 1.06 %, SQLite 0.77 %, FFmpeg 0.11 % of executed checks, against S's 9.5-22.5 %, because most
+  fields are touched by a memory intrinsic or lack one proxy that accompanies every access.
 
 ## Notes
 
