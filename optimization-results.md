@@ -116,9 +116,11 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
 
 | analysis | what it cannot prove | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|---|
-| DE, dominance | two checks of one invocation hit the same address with no synchronisation in between and the earlier dominates the later, yet both stay checked (share of all executed checks, 3 Oct, record workloads, P1-v3). Includes pairs whose access kind or size cannot cover (a read before a write, a narrow check before a wide one); the split into missing address proofs and non-covering kinds is pending | 3.35 % | 0.04 % | 3.44 % | pending | 5.92 % |
-| DE, post-dominance | the same, the later check post-dominating the earlier one, a call between them breaking it / ceiling with calls allowed | 0.28 % / 0.37 % | 0.00 % / 0.00 % | 0.30 % / 0.92 % | pending | 0.21 % / 0.53 % |
-| DE, availability | the same pairs where neither check dominates or post-dominates the other (a flag set by the first check would be needed) | 4.36 % | 0.08 % | 5.79 % | pending | 8.56 % |
+| DE, dominance | two checks of one invocation hit the same address with no acquire between them at run time and the earlier dominates the later, yet both stay checked (share of all executed checks, 3 Oct, record workloads, P1-v3) | 3.35 % | 0.04 % | 3.44 % | 3.81 % | 5.92 % |
+| of which: a call on some path between them | DE refuses unless the callee is proven free of synchronisation; a call to an external or indirect callee / to a local or inlined one | 1.67 % / 0.69 % | 0.04 % / 0 | 3.38 % / 0.00 % | 0.68 % / 1.70 % | 3.53 % / 0.57 % |
+| of which: the address question | no call between, only the equality of the two addresses is unproven (array elements with equal indexes, two loads of one field, a loop phi) | 1.0-1.7 % | 0 | 0.06 % | 1.4-3.1 % | 1.8-2.4 % |
+| DE, post-dominance | the same, the later check post-dominating the earlier one, a call between them breaking it / ceiling with calls allowed | 0.28 % / 0.37 % | 0.00 % / 0.00 % | 0.30 % / 0.92 % | 0.05 % / 0.15 % | 0.21 % / 0.53 % |
+| DE, availability | the same pairs where neither check dominates or post-dominates the other (a flag set by the first check would be needed) | 4.36 % | 0.08 % | 5.79 % | 1.16 % | 8.56 % |
 | DE, "checked on every path" | a cover on every path, none dominating (built, audited) | 0.22 % | 0.00 % | 0.82 % | 0.07 % | 0.5 % |
 | DE, cycle cut | a cover lost to a path around a loop (built) | 0.92 % | 0.71 % | 0.14 % | 0.08 % | 0.89 % |
 | DE, stronger alias analysis | must-alias from SCEV or points-to analyses | 0 | 0 | 0 | — | 0 |
