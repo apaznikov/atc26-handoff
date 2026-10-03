@@ -88,14 +88,17 @@ within the configurations of record in table 1.
 
 | item | what it is | app | status |
 |---|---|---|---|
-| Redis phase guard | the main thread, which runs ≥ 99 % of the checks, skips them while the I/O threads are parked | Redis | unsound ceiling +45 % over stock; design under review, in work |
+| Redis phase guard (quiet threads) | the main thread, which runs ≥ 99 % of the checks, skips them while every other thread is quiet since a release it acquired; a run-time mode, with an automatic variant and one with a short annotation for signal handlers | Redis | unsound ceiling +45 % over stock; design reviewed (A43), runtime core and compiler half built, tests 15/17; gated build due 6 Oct, then audit and legs |
 | Removal-mode DE on FFmpeg | as in table 3 | FFmpeg | +10.2 % over N1 + DynSTC-RT in a screening (mjpeg +29 %); needs a ruling on the report loss below |
 | DE "checked on every path", cycle cut | a cover need not dominate if every path has one | all | audited; ≤ 1.5 % of checks; timing queued |
 | LO-OBJ-G with the latch (spec v7) | the unlocked page copy closed at run time | SQLite | audited; the figure of record above is v5 with spec v6 (the earlier v4 leg read +16.9 %, and +17.4 % in the same leg); the leg with the latch is queued on the integration compiler |
 | MySQL on Intel | FE-INL on the Intel host | MySQL | re-checked 2 Oct with server and client on disjoint CPUs and 24 connections, 4 offsets, A/A 0.994-1.000: FE-INL −3.0 %, the analyses alone −0.2 %. The earlier −6…−12 % came from 36 connections on a 48-CPU set; at 24 connections the layout does not matter (shared CPUs: −3.3 %). On the five other scripts only write_only loses (−5.5 %); reads are neutral |
 | Stock control | each compiler's stock arm against upstream TSan with the same checks (fork point plus upstream's capture fix), which isolates the cost of our runtime additions | all | Intel: upstream is faster by 2.5 % on FFmpeg (1.026 / 1.025) and 2.6 % on memcached (1.036 / 1.016), both beyond the A/A, so those figures are re-based; Redis 1.5 % (0.993 / 1.038), not resolved, stands. AMD: memcached 2.7 % (1.031 / 1.023), re-based; MySQL the other way, upstream 1.5 % slower than our stock arm (0.980-0.988), and the integration compiler's stock arm equals upstream there. Direct legs of each best configuration over upstream stock will replace the derived figures |
-| Levers re-timed, loop guard | earlier levers on the workloads of record | MySQL, SQLite | queued |
-| Integration compiler | every lever in one compiler, behind flags | all | gated and audited; identity checks running |
+| Levers re-timed, loop guard | earlier levers on the workloads of record (done on memcached, Redis, MySQL: none adds); the loop guard on non-FFmpeg apps | SQLite, others | SQLite queued; the loop guard runs only on its older compiler, since the camera-ready compiler rejects the flag |
+| The old "same location" rule, all combinations | unsound reference: struct fields cover each other, array elements cover each other, both, and a narrower check covers a wider one; counts, speed and lost races | all | requested 2 Oct; being built |
+| FFmpeg on AMD | the configuration of record on the AMD host | FFmpeg | running (needed a cpuset delegation on that host) |
+| Camera-ready legs | each app's best configuration on the camera-ready compiler, over upstream TSan in the same leg, 4 offsets | all | trees built; held until every hypothesis is checked |
+| Integration compiler | every lever in one compiler, behind flags; runtime with upstream's stock-path instruction count | all | gated and audited (A42, A44); cleared as the camera-ready compiler |
 
 Not adopted or parked: OWN-HANDOFF (Redis +13.9 % over P1-v3, but it trusts the program's own thread protocol),
 OWN-CONN, DD-EXACT (deadlock detector table: memcached +19.4 %, unsound as committed), TLS-rooted escape analysis
