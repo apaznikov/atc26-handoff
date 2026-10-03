@@ -171,7 +171,12 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
   instructions than upstream's on the stock path (FFmpeg copy +1.0 %, mjpeg +3.5 %, memcached +2.9 %), on the miss
   and eviction paths of the access entries; layout accounts for about 1 % on FFmpeg's stream copy only.
 - **Race preservation.** Every row of tables 1-2 loses no race stock TSan reports under the premises listed in
-  `soundness-fixes.md`, checked by IR tests, check-tsan, reproducers with controls and an independent audit.
+  `soundness-fixes.md`, checked by IR tests, check-tsan, reproducers with controls and an independent audit. On the
+  camera-ready compiler (3 Oct), application runs against stock (10 runs per arm, races matched by location pair)
+  lost no race in any app, for the best configuration and for best + DE all-paths and cycle cut: memcached 4 races
+  kept (9 more appear in only 1 of 10 stock runs), SQLite 3 kept, MySQL 232 and 236 kept over 5 sysbench scripts,
+  Redis (no race on its benchmark) all 10 seeded races kept, including three placed where the DE covers fire.
+  FFmpeg's stock reports no race, so it certifies nothing.
 - **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
   (stock 2 reports, removal 1); a ruling is pending. LO-OBJ-G up to spec v6 missed a race with `sqlite3_serialize`'s
   unlocked page copy, which the measured tests never call; spec v7's run-time latch closes it.
