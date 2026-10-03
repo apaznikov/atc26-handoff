@@ -481,15 +481,15 @@ Each premise excludes a class of programs. In an excluded program, a race may be
     test for relaxed atomics), and narrowly by DE through the `nosync` callees it trusts.
   - A start-up check has been written but not built.
 - **A9** (candidate, 25 Sep). A fatal fault ends the process. Post-dominance DE uses it.
-- **P5** (waiting for a ruling). It widens P-EV to three more runtime choices: the recycled part of the trace (the
-  per-thread event log used to restore stacks), the slot an attaching thread takes (TSan shares 256 slots among all
-  threads), and the moment a thread re-locks its slot.
 
 **Not adopted:**
 - **A7**: pointer bytes are copied, never computed. The integer-copy closure is on instead.
 - **A3-fiber**: a handler returns on the same fiber.
 - **P-PAGER** (29 Sep): SQLite's Pager and Wal objects are accessed only under their B-tree's mutex. SQLite states no
   assertion for it, so it was declined.
+- **P-HAND** (29 Sep): a Redis client's buffers are touched only by the main thread while the io threads are idle, or by
+  the io thread that holds the client during a phase. It trusts the program's own thread protocol, a class not
+  adopted; the run-time quiet-thread mode (2 Oct) replaces it without that trust.
 
 **Relaxed (results labelled "relaxed", kept apart from race-preserving results):**
 - **P-EV-DEFER** (decided 28 Sep, extended 29 Sep). It applies only to two relaxed DE flags, not to the shipped
@@ -499,9 +499,6 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   shadow already causes in stock TSan. The 29 Sep extension also admits an unhandleable termination (SIGKILL, power
   loss) inside a sync-free ranged loop. An independent audit found two further losses outside this class (a ranged
   loop whose exit is never reached; a group whose record is not stored after a report); their fixes are designed.
-- **P-HAND** (29 Sep, not ruled). Used only by the experimental Redis owner guard (OWN-HANDOFF, role test): a
-  client's buffers are touched only by the main thread while the io threads are idle, or by the io thread that holds
-  the client during a phase, with the conditions stated in the design note.
 
 ## 7. What is not known
 
