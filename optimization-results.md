@@ -154,7 +154,8 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
   (`clock_handler` reads `stats_state.curr_items` without the stats lock, while `do_item_link` and `do_item_unlink`
   write `curr_bytes` and then `curr_items` under it: under S the `curr_bytes` write covers the `curr_items` write,
   so a genuine race goes unreported). Speed over exact DE, removal mode, Redis on Intel (3 Oct, A/A 0.989-1.009):
-  S +8.4 %, A +5.9 %, S + A +11.5 %, S + A + Z +10.6 %; the other applications are being measured. The shadow-proxy rule of RedCard, the core of S that keeps "at least one race is reported where stock
+  S +8.4 %, A +5.9 %, S + A +11.5 %, S + A + Z +10.6 %; SQLite on AMD (A/A 0.997-1.049): S +11.9 %, A +12.8 %,
+  S + A +27.3 %, S + A + Z +31.2 % (create_drop_index_1 +45.5 %, stress2 +18.4 %); memcached and MySQL are being measured. The shadow-proxy rule of RedCard, the core of S that keeps "at least one race is reported where stock
   reports one", was counted and not adopted, since it reports a different race than stock: it would remove only
   memcached 0.13 %, Redis 1.06 %, SQLite 0.77 %, FFmpeg 0.11 % of executed checks, against S's 9.5-22.5 %, because most
   fields are touched by a memory intrinsic or lack one proxy that accompanies every access.
