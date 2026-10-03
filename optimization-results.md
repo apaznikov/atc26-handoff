@@ -13,7 +13,7 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 | Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+7.4 %** over upstream TSan (direct, 1.055-1.096, 4 offsets; server with 8 I/O threads and client on disjoint CPUs); +10.2 % (1.096-1.109) over our stock arm | 🟢 **+5.7 %** over upstream TSan (direct, 1.043-1.073, 4 offsets; server with 12 I/O threads and client on disjoint CPUs); +8.1 % over our stock arm; +7.6 % on shared CPUs with 20 I/O threads | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete; 24 connections, server and client on disjoint CPUs | 7.5× | FE-INL on AMD; the paper's analyses alone on Intel | 🟢 **+9.4 %** over upstream TSan (direct, 4 offsets); +8.0 % (1.067-1.083) over our stock arm; +5.4 % on shared CPUs | ⚪ −0.2 %; with FE-INL 🔴 −3.0 % (0.968-0.971) | +16 % (select), +11 % (write-only) |
 | memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS + SWMR-ROOTS | 🟡 +1.0 % over our stock arm (1.004-1.015, A/A 0.995-1.002); −1.7 % over upstream TSan (derived) | 🟡 +3.2 % over our stock arm (4 offsets); about +1.2 % over upstream TSan | +7 % |
-| SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ about 0 (−1…+2 %, inside the A/A; 2 offsets) | — | +71 % |
+| SQLite | threadtest3, shared-cache subtests stress2 and create_drop_index_1 | 4.6× and ~19× | the paper's analyses | ⚪ −1.8 % (0.950-1.025, inside the A/A 0.942-0.985; 4 offsets) | — | +71 % |
 
 The last column is what the submitted paper printed for all its analyses together: other workloads, the Intel host,
 and earlier compilers with two elisions later found unsound.
@@ -26,7 +26,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 | app | configuration | AMD | Intel |
 |---|---|---|---|
 | memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+30.4 %** over upstream TSan (direct, 1.300-1.307, 2 offsets); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22 %** over upstream TSan (1.244 over our stock arm in the same leg); +25.4 % (1.245-1.263) in the first leg |
-| SQLite | LO-OBJ-G | 🟢 **+18.5 %** (1.155-1.215, 2 offsets × N=4, both subtests; over our stock arm, which is as fast as upstream here); +18.3 % in the 4-offset leg before; v4 +16.9 % | — |
+| SQLite | LO-OBJ-G | 🟢 **+18.5 %** (1.155-1.215, 4 offsets × N=4, both subtests: stress2 +16.0 %, create_drop_index_1 +21.2 %; over our stock arm, the faster base here; +23.5 % over upstream TSan) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
   SQLite (−0.5…−3.6 %), memcached (−6.7 %) and MySQL (−2.6 %).
