@@ -30,7 +30,7 @@ run-time guard tests the ownership condition. Workloads as in table 1a.
 
 | app | configuration | AMD | Intel |
 |---|---|---|---|
-| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+30.4 %** over upstream TSan (direct, 1.300-1.307, 2 offsets); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22 %** over upstream TSan (1.244 over our stock arm in the same leg); +25.4 % (1.245-1.263) in the first leg |
+| memcached | EVCONF + SWMR-ROOTS + EA-CONTENTS | 🟢 **+30.4 %** over upstream TSan (direct, 1.300-1.307, 2 offsets); +32.2 % (1.300-1.335) over our stock arm | 🟢 **+22 %** over upstream TSan (1.244 over our stock arm in the same leg); +25.4 % (1.245-1.263) in the first leg. **With EVCONF-RANGES (4 Oct): +13.9 % on top (1.127-1.155, 4 offsets), about +41 % over our stock root (derived)**, pending the in-bounds premise |
 | SQLite | LO-OBJ-G | 🟢 **+18.5 %** (1.155-1.215, 4 offsets × N=4, both subtests: stress2 +16.0 %, create_drop_index_1 +21.2 %; over our stock arm, the faster base here; +23.5 % over upstream TSan) | — |
 
 - One configuration for every app (derived): N1 + N1-ST + DynSTC-RT gives FFmpeg +24 %, Redis +6.5 %, and loses on
@@ -58,6 +58,7 @@ within the configurations of record in table 1.
 | **EA-CONTENTS** | a pointer read from a container no longer makes the container shared | — | `a` 🟢 **+1.4** (on against off) | — | — | — |
 | **SWMR-ROOTS** | no checks on reads of a global whose only write precedes every reader thread | — | `a` 🟢 **+0.9** on top of EVCONF | — | — | — |
 | **EVCONF** (annotation) | objects annotated as owned by one thread are unchecked while a run-time guard holds (no idle-timeout thread, no external storage, connection never lent) | — | `a` 🟢 **+22.7** over stock on shared CPUs; +32.2 with the two rows above on disjoint CPUs | — | — | — |
+| **EVCONF-RANGES** (annotation) | EVCONF's guard applied to memset/memcpy of constant length on an owned object; one memset zeroing each response object was 16.6 % of the cycles | — | `f` 🟢 **+13.9** over the configuration of record (equals the unsound ceiling, +14.1; root alone −1.3) | — | — | — |
 | **LO-OBJ-G** (annotation) | objects annotated as protected by their owner's lock are unchecked while the thread holds that lock | `a` 🟢 **+18.8** over stock | — | — | — | — |
 
 - N1-ST is measured on top of N1 + DynSTC-RT and costs 1-3 % on multi-threaded code. FE-SINK is measured over
@@ -96,7 +97,7 @@ within the configurations of record in table 1.
 |---|---|---|---|
 | Redis phase guard (quiet threads) | the main thread, which runs ≥ 99 % of the checks, skips them while every other thread is quiet since a release it acquired; a run-time mode, with an automatic variant and one with a short annotation for signal handlers | Redis | unsound ceiling +45 % over stock; design reviewed (A43), runtime core and compiler half built, tests 15/17; gated build due 6 Oct, then audit and legs |
 | Removal-mode DE on FFmpeg | as in table 3 | FFmpeg | +10.2 % over N1 + DynSTC-RT in a screening (mjpeg +29 %); the report-loss premise (P-REPORT) was adopted 3 Oct, so it is admissible; not pursued, since FFmpeg's configuration is frozen (3 Oct) |
-| EVCONF-RANGES | memcached's guard of thread-owned objects applied to memset/memcpy on them (constant length inside the object's type); one memset that zeroes each 1,184-byte response object is 16.6 % of memcached's cycles | memcached | unsound ceiling (that memset uninstrumented): +13.9 % over the best on Intel (A/A 0.989-1.016); built, audited with fixes, delta audit and gate running |
+| EVCONF-RANGES | as in table 2 | memcached | audited (A46, A46b, A46c: sound under the in-bounds premise), gated; Intel +13.9 % (table 2); AMD leg and the camera-ready integration next; the in-bounds premise awaits a ruling |
 | LO-OBJ-G with the latch (spec v7) | the unlocked page copy closed at run time | SQLite | audited; the figure of record above is v5 with spec v6 (the earlier v4 leg read +16.9 %, and +17.4 % in the same leg); the leg with the latch is queued on the integration compiler |
 | MySQL on Intel | FE-INL on the Intel host | MySQL | re-checked 2 Oct with server and client on disjoint CPUs and 24 connections, 4 offsets, A/A 0.994-1.000: FE-INL −3.0 %, the analyses alone −0.2 %. The earlier −6…−12 % came from 36 connections on a 48-CPU set; at 24 connections the layout does not matter (shared CPUs: −3.3 %). On the five other scripts only write_only loses (−5.5 %); reads are neutral |
 | Stock control | each compiler's stock arm against upstream TSan with the same checks (fork point plus upstream's capture fix), which isolates the cost of our runtime additions | all | Intel: upstream is faster by 2.5 % on FFmpeg (1.026 / 1.025) and 2.6 % on memcached (1.036 / 1.016), both beyond the A/A, so those figures are re-based; Redis 1.5 % (0.993 / 1.038), not resolved, stands. AMD: memcached 2.7 % (1.031 / 1.023), re-based; MySQL the other way, upstream 1.5 % slower than our stock arm (0.980-0.988), and the integration compiler's stock arm equals upstream there. Direct legs of each best configuration over upstream stock will replace the derived figures |
