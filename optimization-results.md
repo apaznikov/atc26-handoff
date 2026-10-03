@@ -9,7 +9,7 @@ State: 2 Oct 2026. All figures are speedups over stock TSan unless a table says 
 
 | app | workload | stock TSan over native | configuration | AMD | Intel | submitted paper |
 |---|---|---|---|---|---|---|
-| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.7 %** over upstream TSan (derived); +34.0 % (1.329-1.353) over our stock arm | +57 % |
+| FFmpeg | four transcodes of one film | 2.8× | DynSTC-RT + N1 + N1-ST | — | 🟢 **+30.5 %** over upstream TSan (direct, 1.290-1.314, 4 offsets); +34.0 % (1.329-1.353) over our stock arm | +57 % |
 | Redis | seven data-heavy commands (LRANGE_100/300/500/600, MSET, ZADD, ZPOPMIN) | 6.0× | FE-INL + N1 | 🟢 **+10.2 %** (1.096-1.109; 4 offsets, server with 8 I/O threads and client on disjoint CPUs; over our stock arm) | 🟢 **+7.6 %** (1.061-1.094; 20 I/O threads) | +45 % |
 | MySQL | Release build, sysbench insert, update_non_index, delete; 24 connections, server and client on disjoint CPUs | 7.5× | FE-INL on AMD; the paper's analyses alone on Intel | 🟢 **+9.4 %** over upstream TSan (direct, 4 offsets); +8.0 % (1.067-1.083) over our stock arm; +5.4 % on shared CPUs | ⚪ −0.2 %; with FE-INL 🔴 −3.0 % (0.968-0.971) | +16 % (select), +11 % (write-only) |
 | memcached | pipelined 32-key gets with 190-byte keys; server and client on disjoint CPUs | 6.7× | the paper's analyses + EA-CONTENTS + SWMR-ROOTS | 🟡 +1.0 % over our stock arm (1.004-1.015, A/A 0.995-1.002); −1.7 % over upstream TSan (derived) | 🟡 +3.2 % over our stock arm (4 offsets); about +1.2 % over upstream TSan | +7 % |
