@@ -72,7 +72,7 @@ within the configurations of record in table 1.
 | idea | what it is | result |
 |---|---|---|
 | Removal-mode DE, DE-3R, DE-2R | covered checks deleted outright; one range check per loop; adjacent fields merged | ⚪ MySQL +0.3 %, SQLite 0, memcached 0; 🔴 Redis −3.8 %; FFmpeg open (table 4) |
-| DE "checked on every path", cycle cut | a check is covered if every path to it has a cover, even when none dominates; covers kept around loops | ⚪ over the best, AMD, 4 offsets: Redis +1.0 %, memcached −0.4 % (V3), SQLite −0.6 %, MySQL +0.1 %, all inside their A/A (3 Oct); ≤ 1.5 % of checks |
+| DE "checked on every path", cycle cut | a check is covered if every path to it has a cover, even when none dominates; covers kept around loops | ⚪ over the best, AMD, 4 offsets: Redis +1.0 %, memcached −1.2 % (Intel), SQLite −0.6 %, MySQL +0.1 %, all inside their A/A (3 Oct); ≤ 1.5 % of checks |
 | DE-5…DE-8 | finer rules for when a call or a cycle breaks a cover | ⚪ −0.8…+1.4 % |
 | IPA-DE | a check in a callee covers one in its caller | ⚪ ≤ 1 % of checks |
 | VWIDE, VWIDE-loops alone | run-time verified removal at sites no check dominates | ⚪ −0.9…+1.3 % |
