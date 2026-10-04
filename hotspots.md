@@ -32,7 +32,7 @@
   - Quiet mode's range skip: Redis main ≈ 19 %; already written.
   - LO-OBJ-G on `db->mutex` objects: SQLite create_drop_index_1 ≈ 5.5 % of its checks.
   - LO-OBJ-RANGES: SQLite ≤ 5.7 % of cycles; out (4 Oct): it reaches neither site (candidate table).
-  - EVCONF-ARGS: memcached ≤ 5.4 %.
+  - EVCONF-ARGS: memcached ≤ 5.4 %; its oracle reads 1.082 over cmf (Intel, 4 Oct), and the design is in audit (A50).
 - **Corrections.** MEMINTR-INLINE's census (3 Oct) called memcached's response memset cold; it is the hottest range
   of all (memintrin-inline-design.md §6, corrected).
 
@@ -195,7 +195,9 @@ accesses) and memcached's mutex objects (4-6 %); they appear in section 4.
   - SWMR refuses them (address escapes, or not checked); LO sees no lock at the read.
   - The T2 mass is 10 % of checks. SWMR-G (write-once globals) was closed by count on the old workloads; on this
     workload, memcached's `settings` reads alone are about 3 % of checks. This is queue item "memcached globals" of
-    1 Oct, not taken.
+    1 Oct; closed 4 Oct: `hashpower` and `expanding = true` are written under the pause of every thread,
+    `expanding = false` under one item lock (a genuine race), and the `settings` fields that admin commands write
+    have no static route (see the T2 row of section 5).
 - **Function entry and the read buffer's other bytes** (`try_read_command_ascii`, `tokenize_command`): EVCONF covers
   the fields but not the interceptors' ranges over the buffer (section 3).
 
@@ -382,7 +384,7 @@ parked (with the decision), in work, or NEW (with a ceiling and what it would ta
 | EA refuses an object reached through a pointer argument (T1) | 16.9 % (+11.9 % unclassified) | 37.2 % | 45.2 % | 17.0 % | 20.9 % | static routes **closed** (top-down facts ≤ 0.14 % on all five apps, 2 Oct; WP summaries; CLONE-ESC). Run-time routes: quiet mode (Redis main, **in work**); own stack (OWN-STACK, **parked** 2 Oct: sound form ≈ −1 %). **NEW: EVCONF-ARGS** for memcached's hashed key (≤ 5.4 % of cycles) |
 | EA: object returned by a call (T1) | 0.3 % | 2.2 % | 6.9 % | 2.5 % | 0 | **closed** (no allocator wrapper carries malloc/noalias; named allocators gave nothing) |
 | LO and SWMR judge globals only (T2, not a global) | 0.9 % | 10.8 % | 17.6 % | 6.7 % | 42.5 % | LO-OBJ-G in SQLite's best (BtShared, spec v7); its extensions SQLITE-KEY **parked** (2 Oct); PERELEM **parked**. **NEW: LO-OBJ-G for `db->mutex` objects** (section 6) |
-| globals read without a lock, or whose address escapes (T2 globals) | 7.7 % (`settings`, `expanding`, `hashpower`) | 0.2 % | 1.7 % (address in an initializer) | 2.7 % (named outside the unit) | 0 | SWMR-G and per-field SWMR **closed** by count on the old workloads (< 3 %); memcached's `settings` reads are ~3 % on the record workload: queue item of 1 Oct, **not taken** |
+| globals read without a lock, or whose address escapes (T2 globals) | 7.7 % (`settings`, `expanding`, `hashpower`) | 0.2 % | 1.7 % (address in an initializer) | 2.7 % (named outside the unit) | 0 | SWMR-G and per-field SWMR **closed** by count on the old workloads (< 3 %); for memcached **closed** 4 Oct (the oracle o2 adds 4.4 % on Intel): the admin-written `settings` fields (3.07 % of checks) and `expanding` (1.06 %, a genuine benign race at an expansion's end) have no sound route and stay checked; `hashpower` (1.07 %) is ordered by the pause protocol, which no assertion states (not taken); the never-written `settings` fields (0.34 %) are below the bar (libevent-confinement.md) |
 | genuinely shared, DE has no cover at the same location (S) | 52.8 % | 31.0 % | 15.7 % | 57.8 % | 21.9 % | REAL. The old same-location rule is UNSOUND (it lost a real memcached race, 3 Oct). Sound subsets DE-2R (merge adjacent) and DE-3R (loop ranges) were timed on the old workloads only; DE-AV (equal addresses) has its time ceiling ordered. On memcached 88 % of these checks miss, so each removal saves a slow path |
 | ranges and interceptors (cycles) | 31.3 % | 36.4 % | 17.4 % | 7.3 % | copy 26.8 %, h265 21.1 % | **NEW: EVCONF-RANGES** (memcached ≤ 16.6 % plus the read-buffer interceptors ≈ 5.5 %; oracle queued, argument and pass change in work); quiet mode's range skip (Redis main ≈ 19 %; eee8e8455ebe, **in work**); **NEW: LO-OBJ-RANGES** (SQLite's memcmp and VDBE memcpy on lock-owned bytes, ≤ 5.7 %); allocator and uninstrumented callers: runtime or none |
 | mutexes and atomics (cycles) | 24.8 % (deadlock detector 2.0) | 1.7 % | 7.3 % | 14.8 % | h264 8.4 % (libx264) | real synchronisation. An owner-to-owner mutex path (memcached's per-thread stats mutex, ≈ 6 %) is a runtime-track item, **parked** with the runtime track (25 Sep); N1-ATOMIC **closed** by timing |
@@ -395,7 +397,8 @@ parked (with the decision), in work, or NEW (with a ceiling and what it would ta
 | EVCONF-RANGES | memcached | ≤ 16.6 % of cycles (resp_allocate's memset), plus ≈ 5.5 % of read-buffer interceptors | the confinement argument for every byte of `_mc_resp` (for review); `evconfCovered` applied in `instrumentMemIntrinsic` (destination and source); gate; audit | **measured +13.9 % Intel, +10.3 % AMD (4 Oct)**: cmg (sound, `-tsan-evconf-ranges`, constant lengths inside a typed object; audits A46, A46b, A46c) 1.139 over cmb, against the UNSOUND oracle cmo 1.141; the same root without the flag 0.987, A/A 0.988-1.001 (libevent-confinement.md) |
 | quiet mode's range skip | Redis | ≈ 19 % of the main thread (networking.c:361 14.1, quicklist.c:1300 4.8) | already written (`phase_guard_ranges`, eee8e8455ebe; tests 6da72199d92e) | in work with the phase guard |
 | LO-OBJ-RANGES | SQLite | ≤ 5.7 % of cycles (memcmp 3.7, VDBE memcpy 2.0) | LO-OBJ-G's guard applied to memory intrinsics and to the memcmp interceptor on spec-covered objects | **OUT** (4 Oct): reaches neither site. The memcpy copies VDBE registers, which `sqlite3_value_dup` reads without `db->mutex`, so they cannot be a root. The memcmp's page side reaches `vdbeRecordCompareString` as `const void *` through a function pointer, with no owner path (lo-obj-g-design.md §6.17) |
-| EVCONF-ARGS | memcached | ≤ 5.4 % of cycles (26.6 % of checks) | EVCONF's confinement carried into a callee's pointer argument (`hash(key, nkey)`) | NEW |
+| EVCONF-ARGS | memcached | ≤ 5.4 % of cycles (26.6 % of checks) | EVCONF's confinement carried into a callee's pointer argument (`hash(key, nkey)`) | **oracle 1.082 over cmf** (Intel, 4 Oct; A/A 0.979-0.999); design for audit in libevent-confinement.md, audit A50 running |
+| memcached's `settings`, `expanding`, `hashpower` reads | memcached | +4.4 % (oracle o2 over o1, Intel) | - | **closed** (4 Oct): no sound route except the never-written `settings` fields (0.34 % of checks, below the bar); see the T2 row |
 | LO-OBJ-G on `db->mutex` | SQLite | ≈ 6-7 % of create_drop_index_1's checks (section 6) | spec entries for the connection's objects (VDBE, sorter, lookaside) under `db->mutex` | NEW |
 
 
