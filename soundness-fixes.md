@@ -486,14 +486,15 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   its lock scope relies on. In Redis those symbols are named only in `networking.c` and `bio.c` (static); Redis links
   with `-rdynamic`, so a module loaded with MODULE LOAD is what the premise excludes (the benchmark loads none, and an
   instrumented module turns the guard off at init).
-- **CFG-TABLE** (Redis 7.0.15 only; adopted 4 Oct). No unit other than `config.c` reads the bytes of an entry of the
-  configuration table `static_configs` or of a copy of one, or receives the value of a member pointer an entry holds,
-  whole or in pieces. Only the phase guard's annotated arm uses it: its waiver for the background threads' start
-  needs every write to `server.bio_cpulist` checked, and Redis writes that field through the entry's member pointer.
-  Inside `config.c` the compiler compares every pointer-sized value that is loaded, rebuilt, stored, passed or
-  returned against the excluded field and turns the guard off on a match; the premise covers what leaves the unit,
-  that is the entry copies `config.c` hands to `dict.c` for the `configs` dictionary, which `dict.c` only stores and
-  returns. Checked by reading the 7.0.15 sources and by four audits (A50-A53) that found no path against it.
+- **P-DICT** (5 Oct; replaces CFG-TABLE, adopted 4 Oct, which implies it). `dict.c` never reads or writes a stored
+  value or entry: it hands the dictionary only as argument 0 of the six type callbacks and to `dictEmpty`'s callback,
+  hands values only to `valDestructor`, and never rewrites a dictionary's type. Only the phase guard's annotated arm on
+  Redis needs it. Everything else CFG-TABLE stated is now a checked fact: a whole-program proof (tsan-phase-summary,
+  audits A57, A57b, A57c) shows that only `config.c` reaches a configuration-table entry, a copy of one or a member
+  pointer, through copies, arrays, dictionaries, interface calls (self-dispatch, tag-guarded reads of the union) and
+  every creation prefix; the record carries the table source's MD5 and a digest of the whole program (files,
+  compilers, flags), which `config.c`'s compile must match. The camera-ready Redis trees are built with it
+  (`tsan-qpc-bd17a87957a9`); their code equals the measured trees' but for one hash constant.
 - **A10**, the parts no unit-local check can see: an ignore-sync region opened in another unit, or by the runtime
   around an ignored library. DynSTC's runtime form sees none of them.
 - **A11**, no thread exists when `main` starts, except one started by this unit's constructors, which are checked.
