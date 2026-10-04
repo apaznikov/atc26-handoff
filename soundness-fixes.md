@@ -472,6 +472,14 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   shadow), a covered access whose check was removed is not recorded again, so a second race on the same cell before
   the thread's next synchronisation may go unreported (stock: 2 reports, removal mode: 1). The program is never left
   without a report on that cell. Verified-mode DE, used in every reported configuration, does not need it.
+- **CFG-TABLE** (Redis 7.0.15 only; adopted 4 Oct). No unit other than `config.c` reads the bytes of an entry of the
+  configuration table `static_configs` or of a copy of one, or receives the value of a member pointer an entry holds,
+  whole or in pieces. Only the phase guard's annotated arm uses it: its waiver for the background threads' start
+  needs every write to `server.bio_cpulist` checked, and Redis writes that field through the entry's member pointer.
+  Inside `config.c` the compiler compares every pointer-sized value that is loaded, rebuilt, stored, passed or
+  returned against the excluded field and turns the guard off on a match; the premise covers what leaves the unit,
+  that is the entry copies `config.c` hands to `dict.c` for the `configs` dictionary, which `dict.c` only stores and
+  returns. Checked by reading the 7.0.15 sources and by four audits (A50-A53) that found no path against it.
 - **A10**, the parts no unit-local check can see: an ignore-sync region opened in another unit, or by the runtime
   around an ignored library. DynSTC's runtime form sees none of them.
 - **A11**, no thread exists when `main` starts, except one started by this unit's constructors, which are checked.
