@@ -193,6 +193,9 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
   kept (9 more appear in only 1 of 10 stock runs), SQLite 3 kept, MySQL 232 and 236 kept over 5 sysbench scripts,
   Redis (no race on its benchmark) all 10 seeded races kept, including three placed where the DE covers fire.
   FFmpeg's stock reports no race, so it certifies nothing.
+  The final memcached configuration (EVCONF + RANGES + ARGS, 4 Oct) against stock on its own root, 10 runs: 4 races
+  kept, 0 lost, also with DE all-paths and cycle cut; check-tsan 12/12 configurations pass (390 tests each), go-check
+  passes. Redis's quiet mode is next (seeded races, ranges on and off).
 - **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
   (stock 2 reports, removal 1); a ruling is pending. LO-OBJ-G up to spec v6 missed a race with `sqlite3_serialize`'s
   unlocked page copy, which the measured tests never call; spec v7's run-time latch closes it.
