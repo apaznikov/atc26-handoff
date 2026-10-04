@@ -196,5 +196,8 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
 - **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
   (stock 2 reports, removal 1); a ruling is pending. LO-OBJ-G up to spec v6 missed a race with `sqlite3_serialize`'s
   unlocked page copy, which the measured tests never call; spec v7's run-time latch closes it.
-- **MySQL server deaths.** 2 in 104 runs of arms with N1, 0 in 342 others; four checks of N1 found nothing.
+- **MySQL server deaths (closed 4 Oct).** 2 in 104 runs of arms with N1, 0 in 342 others, on 27-28 Sep Debug roots: one
+  lost connection, one InnoDB debug assertion. Neither root is an ancestor of today's N1 code (their distinctive N1
+  changes, a miss-path single skip and N1-CSE load sharing, are not in it). A sweep of every N1 run since (Redis 715,
+  FFmpeg 660, memcached 258, SQLite 184, MySQL 148) finds no other N1 failure; MySQL since then: 0 deaths in 670 runs.
 - **Compile time** of the paper's analyses over stock (CPU): SQLite +20 %, memcached +8 %, Redis +9 %, FFmpeg +16 %.
