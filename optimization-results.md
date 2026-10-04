@@ -196,7 +196,10 @@ time. Shares are of executed checks unless marked; "pending" items are being cou
   FFmpeg's stock reports no race, so it certifies nothing.
   The final memcached configuration (EVCONF + RANGES + ARGS, 4 Oct) against stock on its own root, 10 runs: 4 races
   kept, 0 lost, also with DE all-paths and cycle cut; check-tsan 12/12 configurations pass (390 tests each), go-check
-  passes. Redis's quiet mode is next (seeded races, ranges on and off).
+  passes. Redis's annotated quiet mode (final root, 5 Oct), ranges on and off, 10 runs x 11 seeded scenarios: no
+  seeded race lost in any run (S1-S4, S6, S7, D1-D3 reported 10/10; S5 gives the designed loud violation; S8's race
+  stock does not report either); plain record commands: 0 races in every arm, the guard on, 1.23 G ranges skipped.
+  check-tsan x12 plus the quiet-mode configurations runs on the camera-ready tip.
 - **Open soundness points.** Removal-mode DE: after a race report on a cell, a covered write is not re-recorded
   (stock 2 reports, removal 1); a ruling is pending. LO-OBJ-G up to spec v6 missed a race with `sqlite3_serialize`'s
   unlocked page copy, which the measured tests never call; spec v7's run-time latch closes it.
