@@ -472,6 +472,20 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   shadow), a covered access whose check was removed is not recorded again, so a second race on the same cell before
   the thread's next synchronisation may go unreported (stock: 2 reports, removal mode: 1). The program is never left
   without a report on that cell. Verified-mode DE, used in every reported configuration, does not need it.
+- **IN-BOUNDS** (adopted 4 Oct). No access leaves the object its pointer was derived from (no buffer overflow, no
+  index past an array's end). It is the spatial counterpart of no-use-after-free: every analysis that reasons about
+  objects relies on it (EA, LO, SWMR, the paper's analyses), and so do EVCONF, EVCONF-RANGES (constant-length ranges
+  inside the object's type) and EVCONF-ARGS (key reads inside the bytes received).
+- **FIELD-ADDR** (adopted 4 Oct; the phase guard's objects only). For registered objects, holders of excluded
+  members (Redis: `server`), lock-scoped globals and configuration-table entries, no member's address is used to reach
+  another member of the same object; the object's own address may reach every member. Nothing is assumed of other
+  objects (Redis's sds headers are reached from their buffers and are no guard objects). Checked for Redis 7.0.15 by
+  reading: no `offsetof` on those types, no `container_of`, no arithmetic on `&server`.
+- **A12-DATA** (adopted 4 Oct; extends A12 to data). Nothing outside the program's IR (a precompiled library, module
+  asm, a module loaded with `dlopen`) names a data symbol that the phase guard's whole-program record admits or that
+  its lock scope relies on. In Redis those symbols are named only in `networking.c` and `bio.c` (static); Redis links
+  with `-rdynamic`, so a module loaded with MODULE LOAD is what the premise excludes (the benchmark loads none, and an
+  instrumented module turns the guard off at init).
 - **CFG-TABLE** (Redis 7.0.15 only; adopted 4 Oct). No unit other than `config.c` reads the bytes of an entry of the
   configuration table `static_configs` or of a copy of one, or receives the value of a member pointer an entry holds,
   whole or in pieces. Only the phase guard's annotated arm uses it: its waiver for the background threads' start
