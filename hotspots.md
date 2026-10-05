@@ -7,7 +7,8 @@ the history, commit ec0d58e. Results: `optimization-results.md`. Russian: `hotsp
 
 **Legend:** ✅ taken, in a configuration of record · ⏳ built, awaiting a ruling · ⏸ parked · ✖ closed (no sound
 route, or below the bar) · ○ open, not measured. Shares are of the instrumented run's user cycles (Redis: of its main
-thread M) unless they say "of checks", which means executed plain-access checks.
+thread M) unless they say "of checks", which means executed plain-access checks. "Quiet mode" is the quiet threads
+(QUIET-THREADS: silent-thread mode, the Redis phase guard); names and aliases as in `optimization-results.md`.
 
 ## 1. At a glance
 
