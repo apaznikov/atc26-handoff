@@ -1,6 +1,6 @@
 # Soundness fixes since the March 2026 compiler, and what they cost
 
-29 Sep 2026. Anything inferred is marked *(inference)*.
+29 Sep 2026; the premises (§6) and the open points (§7) as of 5 Oct. Anything inferred is marked *(inference)*.
 
 ## Short version
 
@@ -418,6 +418,8 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   - Stock TSan also sees such synchronisation only where it delivers the signal. For synchronous handlers, however
     (a SIGSEGV handler that posts a semaphore), A3 is a real exclusion.
   - Every `__tsan_atomic*` entry is also a delivery point, and a handler that does not return is outside the model.
+  - A handler that releases a mutex the interrupted code holds is outside the model too (`pthread_mutex_unlock` is
+    not async-signal-safe, so it is undefined behaviour already). The quiet mode's lock scope relies on this.
 - **A12, closed world** (adopted 25 Sep). No function is called from outside the program, except through a plugin
   API listed with `-tsan-external-symbols`.
   - Only whole-program mode relies on it.
@@ -474,8 +476,9 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   without a report on that cell. Verified-mode DE, used in every reported configuration, does not need it.
 - **IN-BOUNDS** (adopted 4 Oct). No access leaves the object its pointer was derived from (no buffer overflow, no
   index past an array's end). It is the spatial counterpart of no-use-after-free: every analysis that reasons about
-  objects relies on it (EA, LO, SWMR, the paper's analyses), and so do EVCONF, EVCONF-RANGES (constant-length ranges
-  inside the object's type) and EVCONF-ARGS (key reads inside the bytes received).
+  objects relies on it (EA, LO, SWMR, the paper's analyses), and so do EVCONF, EVCONF-RANGES (ranges inside the
+  object), EVCONF-ARGS (key reads inside the bytes received) and EVCONF-INTERCEPT (the variable lengths of memchr and
+  strlen on the read buffer).
 - **FIELD-ADDR** (adopted 4 Oct; the phase guard's objects only). For registered objects, holders of excluded
   members (Redis: `server`), lock-scoped globals and configuration-table entries, no member's address is used to reach
   another member of the same object; the object's own address may reach every member. Nothing is assumed of other
@@ -501,7 +504,23 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 - **Plain lock success.** A plain `pthread_mutex_lock` does not fail.
 - **Library names.** A libc or libstdc++ name binds to that library.
 
-**Provisional:**
+**Pending a ruling** (submitted 4 Oct; the results of record already use the first three):
+- **P-X86-FD, narrow form.** On x86-64 Linux, `close(n)` in a connection's owner thread happens before the
+  `accept()` in `main` that returns the same descriptor `n`: the kernel's file table orders the two, and Linux system
+  calls act as full barriers. TSan's runtime has no such edge. EVCONF (memcached) uses it only for a previous owner's
+  lend, a case not found in memcached 1.6.
+- **The libevent callback contract** (EVCONF). libevent runs an event's callback on the thread that runs the loop of
+  the event base the event was added to. With each worker running its own base, EVCONF derives from it that a
+  connection's callbacks run on its owner thread.
+- **MALLOC-ATTR.** A function the program declares `__attribute__((malloc))` (LLVM's `noalias` return) returns memory
+  no other live pointer refers to, which is the attribute's definition. The quiet mode's fresh-allocation rule uses
+  it; Redis needs it for nothing, since zmalloc carries no such mark and is checked through its fresh-object rule.
+- **P-X86-FD, wider form.** Every access before `close(n)` happens before every access after the `accept()` that
+  returns `n`. Only EVCONF-FIELDS needs it (not in any configuration of record). Its cost: stock's reports between a
+  connection's previous owner and its next owner across descriptor reuse, 4 sites per close/reuse event on memcached,
+  which the kernel orders but TSan does not model.
+
+**Provisional** (submitted for adoption 4 Oct with the list above):
 - **A5** (24 Sep). A default-visibility definition in position-independent (`-fPIC`) code is not replaced at load
   time.
 - **A6** (24 Sep). An `available_externally` body equals the definition that gets linked. This matters only under
@@ -509,7 +528,8 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 - **A8** (25 Sep). The runtime keeps its default `force_seq_cst_atomics=0`.
   - It is needed by `-tsan-de-relaxed-atomic-nosync` (DE crosses relaxed atomics) and by N1-ATOMIC (an inline hit
     test for relaxed atomics), and narrowly by DE through the `nosync` callees it trusts.
-  - A start-up check has been written but not built.
+  - A start-up check has been written but not built; until it is, DE trusts `nosync` callees over relaxed atomics in
+    every build on this premise.
 - **A9** (candidate, 25 Sep). A fatal fault ends the process. Post-dominance DE uses it.
 
 **Not adopted:**
@@ -552,7 +572,8 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   declarations-only name tables of shapes 37 and 40 *(inference)*.
 - **A known open issue with no reach.** DE trusts alias analysis across an `addrspacecast` that changes pointer size
   (x86 `__ptr32`; found by audit A19b, one of the numbered independent audits). No module in the five applications
-  uses it. It is still to be stated as a premise or guarded.
+  uses it. It is still to be stated as a premise or guarded; a guard is built and passes the IR suites on branch
+  `fix/de-addrspace-cast` (b45769089506) and is not merged.
 
 ## 8. Sources
 
