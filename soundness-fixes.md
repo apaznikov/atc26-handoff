@@ -520,6 +520,23 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   connection's previous owner and its next owner across descriptor reuse, 4 sites per close/reuse event on memcached,
   which the kernel orders but TSan does not model.
 
+- **PROVENANCE** (submitted 5 Oct; spec-free EVCONF). A pointer read from memory that an integer, null or
+  floating-point constant overwrote, wholly or in part, points to no object other than the one the overwritten pointer
+  pointed to, if any. It is C's pointer-provenance rule for constants only, narrower than the declined A7 (computed
+  pointer bytes). The derivation applies it only to stores at a variable offset from a typed base.
+
+- **FD-LIFETIME** (submitted 5 Oct; needed by the run-time model of descriptor reuse that backs P-X86-FD). Every call
+  that frees or may free descriptor number n is made by a thread that holds the instance at n: the call that returned
+  that instance returned before it, ordered by the program's own synchronization. The calls are close, __close,
+  closedir, fclose, pclose, freopen, __res_iclose, signalfd on n, dup2/dup3 onto n, and close_range or closefrom over
+  a range containing n, and any free the runtime does not see (a raw system call, a library's internal close); this
+  includes calls that fail, and a range close covers no number another thread may be obtaining. It is the descriptor
+  counterpart of no-use-after-free.
+- **G1, descriptor reuse in general** (submitted 5 Oct; the general form of the wider P-X86-FD, applied by the runtime
+  only in binaries that contain EVCONF elisions). On Linux, within one file table, a free of descriptor number n happens
+  before any later call that returns n. Programs that split the table (unshare(CLONE_FILES), close_range with
+  CLOSE_RANGE_UNSHARE) are outside it. With FD-LIFETIME it adds only orderings the kernel provides.
+
 **Provisional** (submitted for adoption 4 Oct with the list above):
 - **A5** (24 Sep). A default-visibility definition in position-independent (`-fPIC`) code is not replaced at load
   time.
