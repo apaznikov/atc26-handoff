@@ -15,14 +15,15 @@ items). Names in parentheses are the aliases the records use.
 |---|---|---|---|---|---|
 | SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | 1.02× ⚪ | **1.21×** (LO-OBJ-G) | — |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.10×** (FE-INL + N1) | — | **1.39×** (+ quiet threads) |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.45×** (FE-INL + N1 + quiet threads, derived automatically) | — | — |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — |
 | memcached | pipelined 32-key gets, 190-byte keys | 1.07× | 1.01× 🟡 over our stock TSan build (the analyses + EA-CONTENTS + SWMR-ROOTS) | — | **1.80×** (+ EVCONF line) |
 | Chromium | — | 1.39× | not re-measured | — | — |
 
 - **Annotations.** SQLite's spec is taken from SQLite's own `sqlite3_mutex_held` assertions (about 85 in btree.c).
-  Redis's 12 lines (quiet threads) and memcached's spec (EVCONF) state facts the program does not assert; each is
-  checked by the compiler against the code and guarded at run time.
+  memcached's spec (EVCONF) states facts the program does not assert; it is checked by the compiler against the code
+  and guarded at run time. Redis's quiet threads need no annotation: the compiler derives the 12 lines from the
+  whole program (audits A60-A60c), with the same skips as the hand-written lines, which read 1.40× in the same leg.
 - **FFmpeg** is carried by the single-threaded stream copy: copy 2.71×, mjpeg 1.04×, h264 1.00×, h265 0.99×.
 - **Stock TSan over native:** SQLite 4.6× and ~19×, FFmpeg 2.8×, Redis 6.0×, MySQL 7.5×, memcached 6.7×.
 - The submitted paper's figures came from other workloads, the Intel host and a compiler with two elisions later
@@ -50,11 +51,11 @@ app's configuration.
 | **EVCONF-RANGES** (annotation) | the guard applied to memset/memcpy on an owned object | — | `a` 🟢 **+18.5** | — | — | — |
 | **EVCONF-ARGS** (annotation) | the confinement carried into the hash function's key argument (a clone of MurmurHash3) | — | `a` 🟢 **+7.3** | — | — | — |
 | **EVCONF-INTERCEPT** (annotation) | the guard around memchr, strlen and bcmp on the confined read buffer | — | `a` 🟢 **+7.5** | — | — | — |
-| **Quiet threads** (QUIET-THREADS, REDIS-MAIN: silent-thread mode, the Redis phase guard; annotation) | Redis's main thread, which runs ≥ 99 % of the checks, skips its checks (range checks included) while every other thread is quiet since a release it acquired | — | — | `a` 🟢 **+29.6** | — | — |
+| **Quiet threads** (QUIET-THREADS, REDIS-MAIN, AUTO-BIO: silent-thread mode, the Redis phase guard) | Redis's main thread, which runs ≥ 99 % of the checks, skips its checks (range checks included) while every other thread is quiet since a release it acquired; the background threads' start is proven by whole-program rules | — | — | `a` 🟢 **+31.9** | — | — |
 | **LO-OBJ-G** (annotation) | objects protected by their owner's lock are unchecked while the thread holds that lock | `a` 🟢 **+20.9** over upstream (spec v7) | — | — | — | — |
 
-- **Quiet threads without annotations** (AUTO) read 0.946-0.962 of the best: without the 12 lines the background
-  thread's start is not proven and the main thread almost never skips. Deriving the lines automatically is in work.
+- **Quiet threads:** the rule that admits only park objects and start routines it can check alone (AUTO) reads
+  0.946-0.962 of the best on Redis; the whole-program derivation of bio's lines (AUTO-BIO) gives +31.9 %.
 - N1-ST is measured on top of N1 + DynSTC-RT; FE-SINK adds nothing on top of FE-INL. On FFmpeg the paper's
   compile-time DynSTC gives +10.1 %, DynSTC-RT +12.2 %, both together +31.9 % (DYNSTC-DIRECT); the compile-time one
   loses elsewhere (Redis 0.945, memcached 0.995, MySQL 0.993).
@@ -63,7 +64,7 @@ app's configuration.
 
 | idea | what it is | result |
 |---|---|---|
-| Removal-mode DE (DE-REMOVAL), DE-3R, DE-2R | covered checks deleted outright; one range check per loop; adjacent fields merged | ⚪ MySQL +0.3 %, SQLite 0, memcached 0; 🔴 Redis −3.8 %; FFmpeg +10.2 % in a screening (table 4) |
+| Removal-mode DE (DE-REMOVAL), DE-3R, DE-2R | covered checks deleted outright; one range check per loop; adjacent fields merged | ⚪ MySQL +0.3 %, SQLite 0, memcached 0, FFmpeg −0.3 % (full leg; a screening had read +10.2 %); 🔴 Redis −3.8 % |
 | **All-paths DE + cycle cut** (DE-ALLPATHS, DE-5) | a check is covered if every path to it has a cover, even when none dominates; covers kept around loops | ⚪ Redis +1.0 %, SQLite −0.6 %, MySQL +0.1 %, memcached −1.2 %; ≤ 1.5 % of checks |
 | Loop guard (T8, DE-LC) and the T10 package | a loop-invariant access checked once per synchronisation-free stretch; the older full lever package | ⚪ Redis +2.2 / +3.1 %, memcached 0 / +1.6 %, MySQL −0.1 / −4.2 %, SQLite unresolvable; FFmpeg loop guard +1.4 % |
 | Levers on top of SQLite's LO-OBJ-G | N1, N1-L, MEMINTR, FE-INL | ⚪ FE-INL +4.5 %, MEMINTR +3.5 % (inside a wide A/A), N1 🔴 −18.5 % |
@@ -99,14 +100,12 @@ app's configuration.
 
 | item | app | status |
 |---|---|---|
-| **Quiet threads without annotations** (AUTO-BIO): the 12 lines derived by whole-program rules | Redis | in work, top priority; target: derived build equal to the annotated one, audited, timed by 10 Oct |
 | **memcached EVCONF without the spec**: the spec derived from libevent's event-base affinity, the owner store and the foreign-reader closure | memcached | in work: a report-only derivation first |
-| **Removal-mode DE on FFmpeg** | FFmpeg | +10.2 % over N1 + DynSTC-RT in a screening (mjpeg +29 %); sound under the adopted P-EV and P-REPORT; not timed in a full leg (FFmpeg frozen 3 Oct) |
 | **EVCONF-FIELDS**: the owner's reads of its connection's own fields | memcached | `a` +3.6 % on top of table 1; audited; needs the wider P-X86-FD |
 | QUIET-FE: function entry and exit not recorded while Redis's main thread skips | Redis | FE is 10.3 % of the main thread's cycles; not built |
 | DE-AV (SAME-PTR, DE-10): DE's covers checked at run time where no dominance holds | SQLite | unsound ceiling +8-11 %; a sound run-time flag reaches 3-17 % of executions, about +2-4 % expected; parked |
 | LO-OBJ-G on the connection's objects under `db->mutex` | SQLite | unsound ceiling +5.8 %; needs a second lock type; parked |
-| Camera-ready legs | all | trees built on the one camera-ready compiler and IR-identical to the measured ones; the runtime per app is picked by the separation legs of 5 Oct; held for the go |
+| Camera-ready legs | all | trees built on the one camera-ready compiler and IR-identical to the measured ones; runtime: Redis on the quiet-mode runtime, the others on the runtime without the guard (its hit-path test costs MySQL 2 % on AMD; with the TLS fix alone MySQL reads 1.134 over upstream); held for the go |
 
 ## Table 5. Where the analyses are conservative (shares of executed checks)
 
