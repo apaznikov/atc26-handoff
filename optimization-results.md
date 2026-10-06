@@ -13,7 +13,7 @@ items). Names in parentheses are the aliases the records use.
 
 | app | workload | submitted paper | sound, no annotations | sound + annotations backed by the program's own asserts | sound + our own annotations |
 |---|---|---|---|---|---|
-| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | **1.16×** (LO-OBJ-G, spec generated from SQLite's own assertions, gen6) | **1.25×** (LO-OBJ-G, hand-written spec v7) | — |
+| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | **1.16×** (LO-OBJ-G, spec generated from SQLite's own assertions, gen6; the lock and its enter/leave functions are named by hand, sqgen-rules.md P1-P3) | **1.25×** (LO-OBJ-G, hand-written spec v7) | — |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** (FE-INL + N1 + quiet threads, derived automatically; the one configuration) | — | — |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — |
