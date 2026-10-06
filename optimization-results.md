@@ -13,7 +13,7 @@ items). Names in parentheses are the aliases the records use.
 
 | app | workload | submitted paper | sound, no annotations | sound + annotations backed by the program's own asserts | sound + our own annotations |
 |---|---|---|---|---|---|
-| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | **1.16×** (LO-OBJ-G, spec generated from SQLite's own assertions, gen6; the lock and its enter/leave functions are named by hand, sqgen-rules.md P1-P3) | **1.25×** (LO-OBJ-G, hand-written spec v7) | — |
+| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | **1.16×** (LO-OBJ-G, spec generated from SQLite's own assertions, gen6 = gen8's output; hand-named inputs: the lock BtShared.mutex, removeFromSharingList, the allocator names, iDb, CellInfo, sqgen-rules.md "gen8") | **1.25×** (LO-OBJ-G, hand-written spec v7) | — |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** (FE-INL + N1 + quiet threads, derived automatically; the one configuration) | — | — |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — |
@@ -232,4 +232,79 @@ No result yet: sendmsg batching, the interceptor bypass, EA-P1's out-parameter c
   seeded races; FFmpeg's stock reports none).
 - **Premises awaiting a ruling:** P-X86-FD (narrow: EVCONF; wider: EVCONF-FIELDS), the libevent callback contract,
   MALLOC-ATTR, A5, A8, A9.
-- **Compile time** of the paper's analyses: SQLite +20 %, memcached +8 %, Redis +9 %, FFmpeg +16 %.
+- **Compile time:** see "Compile time" below (whole build, 6-7 Oct). The earlier figures (SQLite +20 %, memcached
+  +8 %, Redis +9 %, FFmpeg +16 %) were per-unit compiles; they did not include the -wp summary step.
+
+## Compile time
+
+One root for every row: tsan-cc-744024407b56 (7 Oct; the phase-summary fixes, the in-run digest and R2 option (b)).
+Each app's line of record against stock TSan built by that root from the same tree, so both arms use one harness.
+Method (7 Oct): compile = the -wp summary step + the build, from build.sh's ns timer (the harness's
+build-ns-timer.diff in each fresh tree), without the static site count that build.sh runs after its timer. Fresh trees,
+no ccache, legbuild.sh, CPUs 28-35, medians of 3 (reps within 1 % on memcached, Redis, SQLite and MySQL; up to 7 % on FFmpeg). Rows: `/extra/alexey/wt-dev2-r/cct/btime.txt`
+(step 7, step 8); the earlier mixed-root rows are kept there only.
+
+| app | line of record (tree) | -j | stock | line | overhead | of which summary step |
+|---|---|---|---|---|---|---|
+| memcached | no annotations: the analyses + FE-INL, MEMINTR (mcf) | 8 | 6.07 s | 11.01 s | +81 % | 4.67 s |
+| memcached | one configuration + EVCONF (mcy, the 1.81× row) | 8 | 6.16 s | 14.83 s | +141 % | 8.53 s |
+| Redis | one configuration (rcy) | 8 | 5.06 s | 22.91 s | +353 % | 13.06 s |
+| SQLite | LO-OBJ-G gen6 (zg6) | 8 | 32.88 s | 41.63 s | +27 % | (no -wp) |
+| FFmpeg | ffn (no -wp, no phase flags) | 8 | 77.30 s | 139.29 s | +80 % | (no -wp) |
+| MySQL | Release, FE-INL (rpf) | 6 | 858.30 s | 1005.21 s | +17 % | (no -wp) |
+
+- **Notes on the rows:**
+  - Stock per tree: mcf__'s harness builds the whole memcached target, the one-configuration trees (mcj__, rcj__)
+    only the server, so memcached has two stock arms (6.07 and 6.16 s).
+  - The one-run summary step (the overlay patches) went into mcy's tree. mcf's and rcy's trees carry their own
+    generators (the patch has no Redis file, and mcf__'s memcached generator is not the phx one), so their summary
+    steps run the passes separately.
+  - MySQL ran at -j6: 8 jobs exceed the 16 GiB scope. Its tree of record rpf__ is gone, so the source was its copy
+    myrpfj6r1 (same harness).
+  - The static count is not in these rows. With it, the wall times read up to ~30 s more on FFmpeg's ffn (inline hit
+    tests slow the counter), ~8 s on stock.
+- **Why FFmpeg grows +80 % without -wp** (7 Oct; evidence in `/extra/alexey/de-recovery-gate/degen/n1g/`:
+  run.sh, units.txt, the .time files and RESULTS.txt):
+  - FFmpeg's line carries N1's inline hit tests, which SQLite's (LO-OBJ-G) and MySQL's (FE-INL) lines do not.
+  - ffmpeg plus its 8 libraries have 3.8× stock's .text (95.6 MB against 25.0 MB).
+  - On 40 random FFmpeg units (root 6815ac749368, the build's own flags):
+    - the analyses alone add 17 % compile CPU (.text ×1.47);
+    - the inline hit test brings it to ×1.96 (.text ×4.5);
+    - N1-ST adds 10 % more.
+  - MySQL's FE-INL grows mysqld's .text ×1.86, for the +17 % above.
+- **What the summary step spends.** FFmpeg on 6815ac749368, each opt run timed alone on ffy's linked IR: parse 12.8 s,
+  single-threaded 30.5 s, lock-ownership 40.2 s, escape-analysis-global 39.1 s, tsan-phase-summary 234.6 s, program
+  digest 13.1 s. Building the per-unit IR takes the rest: configure 19 s, a double compile 79 s, llvm-nm and
+  llvm-link 46 s.
+  - The phase-summary pass re-read the module's asm text once per global. Fixed in 510cbba6ec58:
+    249.8 s → 37.5 s alone, identical records.
+  - memcached: phase summary 3.7 s, the rest ≤ 0.4 s each.
+  - The Redis profile rows are void: the driver did not find the linked IR, so opt read nothing.
+- **Which programs get -wp (7 Oct).** The one configuration builds with -wp, and with it the phase derivation (the
+  phase flags and the program digest), only for a program whose whole-program record gives it something to use: a
+  libevent loop that the configuration's EVCONF line covers, or a quiet-thread candidate (a `start-routine` line the
+  phase derivation derives). It is decided once per program version, from one summary step. Any other program builds
+  without -wp and without the phase flags.
+
+  | app | libevent registration and loop | EVCONF line | derived start routines (all derived lines) | -wp |
+  |---|---|---|---|---|
+  | Redis | no | no | 1 (13) | yes |
+  | memcached | yes | yes | 4 (17) | yes |
+  | SQLite | no | no | 0 (0) | no |
+  | FFmpeg | no | no | 0 (0) | no |
+  | MySQL | yes (the X plugin's `ngs::Socket_events`) | no | 0 (0) | no |
+
+  - Records: the rcy, mcy, sqy, ffy and myy trees on root 6815ac749368. The libevent column is EVCONF's own gate
+    (a registration and a loop function, both used) read on each linked module.
+  - FFmpeg's line of record is therefore ffn: ffy without -wp and the phase flags, same root and harness. It reads
+    1.004× over ffy (screening ffn4, A/A 1.001; copy 1.037, h264 0.990, h265 1.002, mjpeg 0.986). ffy's record
+    derives no line, so its phase flags emitted no code either; -wp's own summaries remove 108 of ffn's 58,643 sites.
+- **Every compile-time fix in (7 Oct):** the table above is on the refrozen root with every fix. the earlier
+  744024407b56 rows (Redis +324 %, memcached +121 %, wall time, CPUs 4-11) are in
+  `/extra/alexey/de-recovery-gate/degen/cctr/btime.txt`. The single-compile generator for FFmpeg's -wp arms (make
+  56.5 → 44.9 s at -j16, identical IR) is in the harness but on no line of record.
+- **Run notes:**
+  - One FFmpeg -wp rep failed from a harness race: gen_summaries.sh's `| head -50` under pipefail. Fixed;
+    the rep was rerun.
+  - The MySQL step was stopped once for derivation work and rerun whole.
+
