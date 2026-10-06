@@ -509,9 +509,11 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   `accept()` in `main` that returns the same descriptor `n`: the kernel's file table orders the two, and Linux system
   calls act as full barriers. TSan's runtime has no such edge. EVCONF (memcached) uses it only for a previous owner's
   lend, a case not found in memcached 1.6.
-- **The libevent callback contract** (EVCONF). libevent runs an event's callback on the thread that runs the loop of
-  the event base the event was added to. With each worker running its own base, EVCONF derives from it that a
-  connection's callbacks run on its owner thread.
+- **The libevent callback contract (P-LIBEVENT)** (EVCONF). libevent runs an event's callback on the thread that runs
+  the loop of the event base the event was added to, and passes the callback the descriptor the event was registered
+  with. With each worker running its own base, EVCONF derives from it that a connection's callbacks run on its owner
+  thread; spec-free EVCONF also derives from the second clause that memcached's event_handler sanity branch
+  (fd != c->sfd → conn_close) is unreachable.
 - **MALLOC-ATTR.** A function the program declares `__attribute__((malloc))` (LLVM's `noalias` return) returns memory
   no other live pointer refers to, which is the attribute's definition. The quiet mode's fresh-allocation rule uses
   it; Redis needs it for nothing, since zmalloc carries no such mark and is checked through its fresh-object rule.
@@ -524,6 +526,10 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   floating-point constant overwrote, wholly or in part, points to no object other than the one the overwritten pointer
   pointed to, if any. It is C's pointer-provenance rule for constants only, narrower than the declined A7 (computed
   pointer bytes). The derivation applies it only to stores at a variable offset from a typed base.
+  The post-latch drain's untyped writes (D-H3, 6 Oct) do not rest on this premise but on the one the paper's escape
+  analysis already uses: an object whose address never escapes (never stored to memory, converted to an integer,
+  passed to an external function or returned) is accessed only through pointers derived from that address. The
+  residue is then the completeness of the derivation's escape check O1 (audit A59e E-H1), not a new premise.
 
 - **FD-LIFETIME** (submitted 5 Oct; needed by the run-time model of descriptor reuse that backs P-X86-FD). Every call
   that frees or may free descriptor number n is made by a thread that holds the instance at n: the call that returned
@@ -536,6 +542,16 @@ Each premise excludes a class of programs. In an excluded program, a race may be
   only in binaries that contain EVCONF elisions). On Linux, within one file table, a free of descriptor number n happens
   before any later call that returns n. Programs that split the table (unshare(CLONE_FILES), close_range with
   CLOSE_RANGE_UNSHARE) are outside it. With FD-LIFETIME it adds only orderings the kernel provides.
+
+- **P-ALIAS** (submitted 6 Oct; spec-free EVCONF). The program obeys C11's effective-type rule (6.5p7, strict aliasing):
+  an object is accessed only through its own type, a compatible one or a character type; struct headers that the code
+  re-casts are unified by the derivation. Only for programs not built with -fno-strict-aliasing.
+- **A12-DATA for EVCONF** (submitted 6 Oct). A12-DATA, adopted for the quiet threads, extended to the data slots the
+  spec-free EVCONF derivation judges: nothing outside the program's IR names them.
+
+- **POSIX fresh descriptors** (submitted 6 Oct; spec-free EVCONF). A successful accept, socket or open returns a
+  descriptor number no other open descriptor of the process holds (the lowest free number, POSIX), so a freshly
+  returned number names no live object of the program.
 
 **Provisional** (submitted for adoption 4 Oct with the list above):
 - **A5** (24 Sep). A default-visibility definition in position-independent (`-fPIC`) code is not replaced at load
