@@ -517,6 +517,9 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 - **MALLOC-ATTR.** A function the program declares `__attribute__((malloc))` (LLVM's `noalias` return) returns memory
   no other live pointer refers to, which is the attribute's definition. The quiet mode's fresh-allocation rule uses
   it; Redis needs it for nothing, since zmalloc carries no such mark and is checked through its fresh-object rule.
+  6 Oct: the config-table proof no longer trusts any allocator by name either (audits A63e, A63f; proof version 12):
+  freshness, size and zeroing come from the IR (noalias, allocsize, allockind, a wrapper's own returns and writes),
+  so Redis's derivation rests only on the libc allocation contract those attributes state (LIBC-ALLOC). P-DICT stays.
 - **P-X86-FD, wider form.** Every access before `close(n)` happens before every access after the `accept()` that
   returns `n`. Only EVCONF-FIELDS needs it (not in any configuration of record). Its cost: stock's reports between a
   connection's previous owner and its next owner across descriptor reuse, 4 sites per close/reuse event on memcached,
