@@ -503,6 +503,35 @@ Each premise excludes a class of programs. In an excluded program, a race may be
 - **A11**, no thread exists when `main` starts, except one started by this unit's constructors, which are checked.
 - **Plain lock success.** A plain `pthread_mutex_lock` does not fail.
 - **Library names.** A libc or libstdc++ name binds to that library.
+- **ALLOC-NOUAF** (adopted 6 Oct, with dynamic validation). A block a thread returns to its own allocator's free list
+  is not accessed through earlier pointers until that allocator hands it out again: the no-use-after-free premise
+  carried over to a program's own allocators (memcached's `cache_free`/`cache_alloc` and response bundles). The
+  cross-thread half needs no premise (a hand-off clears the holders first, rule (e)); the premise covers the owner's
+  own stale pointers. Behind a flag that is off by default. Validated by runs of a build with every check on and a
+  run-time record of pushed blocks that reports any access to a block between its push and its next pop.
+  - **Validation (7 Oct 2026), zero hits.** 50 runs, 7,341,545 pushes, 7,317,359 pops, 0 hits, 0 double pushes.
+    - The build: memcached 1.6.29, config `tsan` (nothing elided).
+      - Root `tsan-cv-b032815698a0` (experiment/alloc-nouaf-validate: 367a5b5aa988, abe54dac972d, b032815698a0).
+      - The sites are those C12 identifies on the linked program, whatever their verdict: pushes in
+        `cache_free`/`do_cache_free` and pops in `cache_alloc`/`do_cache_alloc`. Every caller's push (`resp_free`'s
+        bundle push among them) reaches these.
+      - The binary has 2 push and 2 pop calls, matching the site list.
+    - The runtime: every instrumented access and interceptor range is checked; a block's size is its allocated size
+      (0 pushes without one).
+    - Controls on a cache.c-shaped model with derived sites: clean 0 hits; a write after `cache_free` 1 hit (its line
+      and stack); a `memcpy` from a freed block 1 hit (the interceptor path).
+    - Runs, 10 each, server on 4 CPUs (8 threads), memtier on 4:
+      - V4, 10 000 requests per client: 15,030 pushes;
+      - sets and gets with evictions (-m 8, 4 KiB values): 6.40 M;
+      - V4 with `lru_crawler crawl`/`metadump` in a loop: 14,486;
+      - V4 with `flush_all` every 2 s: 15,329;
+      - connection churn (a reconnect every 5 requests): 896,030.
+    - Every run's server exited with its record: push and pop counts above zero, no hits, no free-list walk reported.
+    - In two crawl runs memtier did not finish within 30 min (the metadump loop under this slow runtime), and one took
+      976 s. Their servers still checked every access until shutdown.
+    - Coverage is what C12 identifies. memcached 1.6's response objects inside a bundle are reused by flag, not
+      through a free list, and are outside this check.
+    - Notes: `alloc-nouaf-validation.md`. Rows: `/extra/alexey/wt-dev2-r/nouaf/runs.txt`; logs in `runlogs/`.
 
 **Pending a ruling** (submitted 4 Oct; the results of record already use the first three):
 - **P-X86-FD, narrow form.** On x86-64 Linux, `close(n)` in a connection's owner thread happens before the
