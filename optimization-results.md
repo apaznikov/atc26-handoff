@@ -17,7 +17,7 @@ items). Names in parentheses are the aliases the records use.
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** (FE-INL + N1 + quiet threads, derived automatically; the one configuration) | — | — |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — |
-| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | 1.01× 🟡 over our stock TSan build (the analyses + EA-CONTENTS + SWMR-ROOTS) | — | **1.80×** (+ EVCONF line) |
+| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | 1.01× 🟡 over our stock TSan build (the analyses + EA-CONTENTS + SWMR-ROOTS) | — | **1.81×** (+ EVCONF line; the one configuration) |
 | Chromium | — | 1.39× | not re-measured | — | — |
 
 - **Annotations.** SQLite's spec is taken from SQLite's own `sqlite3_mutex_held` assertions (about 85 in btree.c).
@@ -28,6 +28,8 @@ items). Names in parentheses are the aliases the records use.
   whole program (audits A60-A60c), with the same skips as the hand-written lines, which read 1.40× in the same leg.
   The 1.54× is the one configuration every app ships with (R3 + R2 runtime, root tsan-cc-6815ac749368) over stock
   TSan built by the same compiler and runtime (leg rcs4, A/A 1.005); the earlier leg on another root read 1.45×.
+- **memcached's 1.81×** is the one configuration (R3 + R2 runtime, root tsan-cc-6815ac749368) with the hand-written
+  EVCONF line, over stock TSan built by the same compiler and runtime (leg mct4, A/A 0.999).
 - **FFmpeg** is carried by the single-threaded stream copy: copy 2.71×, mjpeg 1.04×, h264 1.00×, h265 0.99×.
 - **Stock TSan over native:** SQLite 4.6× and ~19×, FFmpeg 2.8×, Redis 6.0×, MySQL 7.5×, memcached 6.7×.
 - The submitted paper's figures came from other workloads, the Intel host and a compiler with two elisions later
