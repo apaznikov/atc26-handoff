@@ -15,7 +15,7 @@ items). Names in parentheses are the aliases the records use.
 |---|---|---|---|---|---|
 | SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | **1.14×** (LO-OBJ-G, spec generated from SQLite's own assertions, gen5) | **1.21×** (LO-OBJ-G) | — |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.45×** (FE-INL + N1 + quiet threads, derived automatically) | — | — |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** (FE-INL + N1 + quiet threads, derived automatically; the one configuration) | — | — |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — |
 | memcached | pipelined 32-key gets, 190-byte keys | 1.07× | 1.01× 🟡 over our stock TSan build (the analyses + EA-CONTENTS + SWMR-ROOTS) | — | **1.80×** (+ EVCONF line) |
 | Chromium | — | 1.39× | not re-measured | — | — |
@@ -26,6 +26,8 @@ items). Names in parentheses are the aliases the records use.
   memcached's spec (EVCONF) states facts the program does not assert; it is checked by the compiler against the code
   and guarded at run time. Redis's quiet threads need no annotation: the compiler derives the 12 lines from the
   whole program (audits A60-A60c), with the same skips as the hand-written lines, which read 1.40× in the same leg.
+  The 1.54× is the one configuration every app ships with (R3 + R2 runtime, root tsan-cc-6815ac749368) over stock
+  TSan built by the same compiler and runtime (leg rcs4, A/A 1.005); the earlier leg on another root read 1.45×.
 - **FFmpeg** is carried by the single-threaded stream copy: copy 2.71×, mjpeg 1.04×, h264 1.00×, h265 0.99×.
 - **Stock TSan over native:** SQLite 4.6× and ~19×, FFmpeg 2.8×, Redis 6.0×, MySQL 7.5×, memcached 6.7×.
 - The submitted paper's figures came from other workloads, the Intel host and a compiler with two elisions later
@@ -106,7 +108,7 @@ app's configuration.
 | **EVCONF-FIELDS**: the owner's reads of its connection's own fields | memcached | `a` +3.6 % on top of table 1; audited; needs the wider P-X86-FD |
 | QUIET-FE: function entry and exit not recorded while Redis's main thread skips | Redis | FE is 10.3 % of the main thread's cycles; not built |
 | DE-AV (SAME-PTR, DE-10): DE's covers checked at run time where no dominance holds | SQLite | unsound ceiling +8-11 %; a sound run-time flag reaches 3-17 % of executions, about +2-4 % expected; parked |
-| LO-OBJ-G on the connection's objects under `db->mutex` | SQLite | unsound ceiling +5.8 %; needs a second lock type; parked |
+| LO-OBJ-G on the connection's objects under `db->mutex` | SQLite | unsound ceiling +5.8 %; needs a second lock type; parked. 0 % reachable by the sound guard in this harness (MULTITHREAD, NULL db->mutex); the +5.8 % is the unsound oracle |
 | Camera-ready legs | all | trees built on the one camera-ready compiler and IR-identical to the measured ones; runtime: Redis on the quiet-mode runtime, the others on the runtime without the guard (its hit-path test costs MySQL 2 % on AMD; with the TLS fix alone MySQL reads 1.134 over upstream); held for the go |
 
 ## Table 5. Where the analyses are conservative (shares of executed checks)
