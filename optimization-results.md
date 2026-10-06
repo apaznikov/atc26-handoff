@@ -299,6 +299,19 @@ no ccache, legbuild.sh, CPUs 28-35, medians of 3 (reps within 1 % on memcached, 
   - FFmpeg's line of record is therefore ffn: ffy without -wp and the phase flags, same root and harness. It reads
     1.004× over ffy (screening ffn4, A/A 1.001; copy 1.037, h264 0.990, h265 1.002, mjpeg 0.986). ffy's record
     derives no line, so its phase flags emitted no code either; -wp's own summaries remove 108 of ffn's 58,643 sites.
+  - **The rule costs those programs nothing, by construction, apart from a few start-up hook calls** (verified 7 Oct,
+    not timed; `/extra/alexey/wt-dev2-r/hookcnt/`):
+    - Code: SQLite built with zq7's flags on tsan-cc-744024407b56, from zq7__'s harness and from the one-configuration
+      tree's (no -wp, no phase flags). threadtest3's .text is byte-identical (3,277,712 bytes), and so is its sequence of
+      76,093 calls into the TSan runtime. Only the runtime is shared with the one configuration.
+    - Runtime: with phase_guard=1, phase_on is set at initialization (PhaseInit takes the flag), so the hooks run in the
+      runtime's sync interceptors until the first thread creation, where they go off (R2 option (b), b2c356018845).
+      Counted with a measurement-only runtime (tmp/phase-hook-count 7017a5f8266f: hook calls before/after the first
+      creation), one run each:
+      - SQLite threadtest3 stress2 create_drop_index_1: 1 before, 0 after;
+      - MySQL mysqld --initialize-insecure: 27 before, 0 after;
+      - FFmpeg h264 5 s, -threads 8: 284 before, 0 after.
+      In all three, latch-cause plain-init and hooks=off at exit.
 - **Every compile-time fix in (7 Oct):** the table above is on the refrozen root with every fix. the earlier
   744024407b56 rows (Redis +324 %, memcached +121 %, wall time, CPUs 4-11) are in
   `/extra/alexey/de-recovery-gate/degen/cctr/btime.txt`. The single-compile generator for FFmpeg's -wp arms (make
