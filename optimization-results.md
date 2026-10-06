@@ -1,6 +1,6 @@
 # TSan instrumentation optimizations: results
 
-State: 5 Oct 2026. Every figure is the best sound result measured: a speedup over upstream TSan in the same leg,
+State: 6 Oct 2026. Every figure is the best sound result measured: a speedup over upstream TSan in the same leg,
 4 code offsets, unless a cell says otherwise. `a` = AMD (2 × EPYC 9115), `f` = Intel (Xeon w9-3495X). Earlier, longer
 versions are in the history (3abcd2c, b8d5c56).
 
@@ -13,7 +13,7 @@ items). Names in parentheses are the aliases the records use.
 
 | app | workload | submitted paper | sound, no annotations | sound + annotations backed by the program's own asserts | sound + our own annotations |
 |---|---|---|---|---|---|
-| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | 1.02× ⚪ | **1.21×** (LO-OBJ-G) | — |
+| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | **1.14×** (LO-OBJ-G, spec generated from SQLite's own assertions, gen5) | **1.21×** (LO-OBJ-G) | — |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.45×** (FE-INL + N1 + quiet threads, derived automatically) | — | — |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — |
@@ -21,6 +21,8 @@ items). Names in parentheses are the aliases the records use.
 | Chromium | — | 1.39× | not re-measured | — | — |
 
 - **Annotations.** SQLite's spec is taken from SQLite's own `sqlite3_mutex_held` assertions (about 85 in btree.c).
+  Without any hand-written line, a generator reads those assertions and writes the spec itself (gen5, audit A61d;
+  preservation: no race-report site lost, 10 stock vs 10 runs); it reads 1.14× over stock (leg zg5st4, A/A 1.016).
   memcached's spec (EVCONF) states facts the program does not assert; it is checked by the compiler against the code
   and guarded at run time. Redis's quiet threads need no annotation: the compiler derives the 12 lines from the
   whole program (audits A60-A60c), with the same skips as the hand-written lines, which read 1.40× in the same leg.
