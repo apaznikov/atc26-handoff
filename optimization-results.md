@@ -214,8 +214,32 @@ Method:
 | memcached | one configuration + EVCONF (mcy) | 8 | 6.47 s | 8.71 s | +35 % | 7.38 s (configure included, P1a) |
 | Redis | one configuration (rcy) | 8 | 5.53 s | 18.31 s | +231 % (with P1d: +212 %, CPU +158 %) | 8.23 s |
 | SQLite | LO-OBJ-G gen6 (zg6) | 8 | 33.23 s | 42.57 s | +28 % | (no -wp) |
+| SQLite | LO-OBJ-G gen9b (zgB), build only | 8 | 33.27 s (CPU 34.1) | 43.28 s (CPU 43.1) | +30 % | (no -wp) |
+| SQLite | zgB with its spec generator, no profile (once per program version) | — | 33.27 s | 576.7 s (CPU ~579) | 17.3× | generator 533.4 s |
 | FFmpeg | ffn = ffk, full inline hit test | 8 | 76.10 s | 149.88 s | +97 % | (no -wp) |
 | MySQL | Release, FE-INL (rpf) | 6 | 874.75 s | 1015.13 s | +16 % | (no -wp) |
+
+**SQLite zgB rows (8 Oct, separate runs; same root and harness).** Stock and zgB are built from zgB__ in the same
+run, 3 reps, medians. SQLite compiles one unit, so its CPU is close to its wall. The rows and generator times are in
+`$EXTRA/wt-dev2-r/cczgb/` (btime.txt; generator g0time.txt; drivers cczgb.sh, cczgb23.sh, gen0.sh).
+
+- **The generator, per run, with no profile (wall; CPU), 3 reps (gen0.sh, the record run for column 3's provenance):**
+  - **IR:** sqlite3.c to IR at -O0 twice, a dbg build with -DSQLITE_DEBUG (assertions live) and a rel build, each
+    with mem2reg, in parallel: 3.6 s; ~6.4 CPU-s.
+  - **sqgen16d.py**, which writes the spec, with an empty executed-function list: 529.7 s on one thread.
+  - Total 533.4 s.
+  - **Every rep's spec has fe95d761's directives exactly.** The files differ only in the header, which names that
+    rep's input paths.
+  - **The line's own build needs none of it.** The two -O0 IR builds are the generator's alone, including the dbg
+    build, which no benchmark build uses.
+  - It runs once per program version: the spec is a file, reused by every later build.
+  - **Not needed: the coverage step** (a native coverage build and a 120 s workload run, 137.7 s). The function list
+    only chooses latch against exclude, and on SQLite it does not change the spec.
+- **Identity of the build:** the line built with a generated spec has the same code as one built with
+  `sqlite3-gen9b.spec`, 6/6 objects, compared in trees whose names have the same length. The host tools jimsh,
+  lemon and mkkeywordhash embed absolute source paths, so a shorter tree name shifts their `.rodata`; the first
+  control differed for that reason.
+- The cost is sqgen16d (530 s, Python, one thread).
 
 FFmpeg variants: inline hit tests at statically chosen sites (N1-S), same run and stock. Speed is over stock TSan as shipped (no runtime options), from leg fft4b (AMD, 4 offsets × N=1, balanced order; per-offset range in brackets).
 
