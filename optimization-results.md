@@ -19,7 +19,7 @@ under the premises of §6).
 
 - SQLite (3), (4): leg zg64b. Inputs still named by hand (audit A61f): `BtShared.mutex`, `removeFromSharingList`, the allocator names, `iDb`, `CellInfo`, the mutex API, 12 field names.
 - Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): screening kcs0, root `tsan-ecc-835062685086` (audits A70-A70d, fit to quote; residual L-1'), leg kcj4 next; (4): leg mct4.
-- FFmpeg's 1.29× is being re-checked against the same-compiler stock base (leg ffb4; pgp4 read 1.18× for the shipping line).
+- FFmpeg (2): leg ffb4, 1.29× over same-compiler stock for both the record line and the shipping line (copy_passthrough 2.64×, encoders ~1.00-1.05×); upstream stock lies within 1 % of it.
 - One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (≤ 284 start-up hook calls), and on Redis and memcached its cost is inside the A/A and −1.6 %.
 
 ## Table 2. Optimizations that gain
@@ -210,7 +210,21 @@ Root `tsan-cc-744024407b56`, both arms from the same tree; -wp summary step + bu
 
 - FFmpeg: N1's inline hit tests give 3.8× stock's .text; on 40 units the analyses add 17 % compile CPU, the hit test ×1.96. MySQL: FE-INL grows .text ×1.86.
 - Fixed: the phase-summary pass on FFmpeg 249.8 → 37.5 s (510cbba6ec58, identical records).
-- In progress (7 Oct): lock-scope memo (opt 4.46 → 1.37 s memcached, 9.14 → 4.52 s Redis, identical outputs); configure once for memcached; PGO-PLACE for FFmpeg.
+- **Lock-scope memo (P0, a0c3b51bbe07, root `tsan-cc-a0c3b51bbe07`; gate passed 7 Oct).** The phase derivation now computes the set of functions that may release a mutex once per round, not once per function. Old root vs new root, the same tree, alternated in each rep, CPUs 12-19, -j8, medians of 3:
+
+  | line | old root | P0 root | summary step |
+  |---|---|---|---|
+  | memcached mcf | 12.70 s | 12.62 s | (no phase pass) |
+  | memcached mcy | 15.58 s | 13.02 s | 8.98 → 6.04 s |
+  | Redis rcy | 24.66 s | 21.50 s | 13.98 → 11.01 s |
+
+  - **Identity:** 12 pairs, covering memcached mcf and mcy and Redis rcy × 3 reps, plus SQLite zg6, FFmpeg ffn and MySQL rpf × 1.
+    - Every linked binary has the same code bytes and allocated section sizes.
+    - Redis's one exception is by design: the phase guard's program-hash constant at 90 constructor sites. The program digest folds in each unit's recorded compile line, which names the compiler.
+    - The summaries are the same, apart from the digest and the phase record that holds it. Given the old build's own IR, the new root re-derives every summary file byte for byte, the digest included.
+  - Rows, gate and scripts: `$EXTRA/de-recovery-gate/degen/ctime/p0/` (btime.txt, gate.txt, ctp0.sh, elfcmp.py, sumcmp.py, rederive.sh).
+  - These rows are a separate run from the table above, so compare within this table only.
+- Parked (7 Oct): configure once for memcached (P1a, its gate written, not run). Per-module summaries and compile-once are deferred. PGO-PLACE for FFmpeg is in progress.
 
 ## Notes
 
