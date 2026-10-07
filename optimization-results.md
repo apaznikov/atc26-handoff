@@ -14,11 +14,11 @@ under the premises of §6).
 | FFmpeg | four transcodes of one film | 1.57× | — | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× (FE-INL + N1) | **1.54×** (FE-INL + N1 + quiet threads derived from the whole program) | — | 1.40× (hand-written quiet-thread lines; superseded by (2)) |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — | — |
-| memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **≈1.36×** (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time; screening, leg of record running) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
+| memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **1.34×** (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time; a faster line is being audited) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
 | Chromium | — | 1.39× | not re-measured | | | |
 
 - SQLite (3), (4): leg zg64b. Inputs still named by hand (audit A61f): `BtShared.mutex`, `removeFromSharingList`, the allocator names, `iDb`, `CellInfo`, the mutex API, 12 field names.
-- Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): screening kcs0, root `tsan-ecc-835062685086` (audits A70-A70d, fit to quote; residual L-1'), leg kcj4 next; (4): leg mct4.
+- Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): leg kcj4, root `tsan-ecc-835062685086` (audits A70-A70d; residual L-1'; A/A 1.001); the loop-hoisted line kcn (root `9c656c7b6d62`, audits A70e-A70f, preservation PASS) is in its final gate; (4): leg mct4.
 - FFmpeg (2): leg ffb4, 1.29× over same-compiler stock for both the record line and the shipping line (copy_passthrough 2.64×, encoders ~1.00-1.05×); upstream stock lies within 1 % of it.
 - One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (≤ 284 start-up hook calls), and on Redis and memcached its cost is inside the A/A and −1.6 %.
 
