@@ -212,7 +212,7 @@ Method:
 |---|---|---|---|---|---|---|
 | memcached | no annotations (mcf) | 8 | 7.25 s | 8.03 s | +11 % | 6.74 s (configure included, P1a) |
 | memcached | one configuration + EVCONF (mcy) | 8 | 6.47 s | 8.71 s | +35 % | 7.38 s (configure included, P1a) |
-| Redis | one configuration (rcy) | 8 | 5.53 s | 18.31 s | +231 % | 8.23 s |
+| Redis | one configuration (rcy) | 8 | 5.53 s | 18.31 s | +231 % (with P1d: +212 %, CPU +158 %) | 8.23 s |
 | SQLite | LO-OBJ-G gen6 (zg6) | 8 | 33.23 s | 42.57 s | +28 % | (no -wp) |
 | FFmpeg | ffn = ffk, full inline hit test | 8 | 76.10 s | 149.88 s | +97 % | (no -wp) |
 | MySQL | Release, FE-INL (rpf) | 6 | 874.75 s | 1015.13 s | +16 % | (no -wp) |
@@ -235,6 +235,14 @@ FFmpeg variants: inline hit tests at statically chosen sites (N1-S), same run an
   - Both are logged in each row's `others=`.
 - **Static placement remains a negative for speed** (Table 6). It trades compile time against speed; s1 halves FFmpeg's compile overhead (+97 % → +46 %) for 1.285× → 1.241× speed over stock, and the choice among s1, s4 and k2 is a trade-off, not a fix.
 
+- **Where Redis rcy's time goes (8 Oct, measured on the final table's setup; `$EXTRA/wt-dev2-r/rct/RESULTS.txt`).**
+  - The cost driver is the inline fast paths, mostly in instruction selection. Over the 89 units the build takes
+    +34.0 CPU-s over stock (20.4 → 54.5); the inline fast paths account for 30.5 of them (instruction selection
+    19.4 CPU-s across all units). The analyses add 5.9 and the phase flags 3.3; the variants overlap.
+  - The TSan pass itself costs 1.75 CPU-s, 0.91 of it in module.c.
+  - The summary step takes 8.1 s wall: make -n 1.9, IR emission 1.6, link 1.0, deps 0.8, opt 2.0 (parse 0.75,
+    EA 0.76, phase summary 0.33).
+  - The build's wall time is also set by order: module.c, the longest unit (5.9 s), starts 58th of 89 in make's order.
 - FFmpeg: N1's inline hit tests give 3.8× stock's .text; on 40 units the analyses add 17 % compile CPU, the hit test ×1.96. MySQL: FE-INL grows .text ×1.86.
 - Fixed: the phase-summary pass on FFmpeg 249.8 → 37.5 s (510cbba6ec58, identical records).
 - **Lock-scope memo (P0, a0c3b51bbe07, root `tsan-cc-a0c3b51bbe07`; gate passed 7 Oct).** The phase derivation now computes the set of functions that may release a mutex once per round, not once per function. Old root vs new root, the same tree, alternated in each rep, CPUs 12-19, -j8, medians of 3:
@@ -265,6 +273,23 @@ FFmpeg variants: inline hit tests at statically chosen sites (N1-S), same run an
   - Base and P1c alternated per rep. Another user's builds ran on the host during the run (load ~6).
   - Rows, gate, patch: `$EXTRA/de-recovery-gate/degen/ctime/p1c/` (btime.txt, gate.txt, p1c-apply.py, ctp1c.sh, sumcmp.py).
   - SQLite's generator still links text, so the same change applies there; FFmpeg and MySQL already link bitcode.
+- **Redis scheduling (P1d, 8 Oct).** The gate passed: 6 pairs (Redis stock and rcy × 3) with identical linked code;
+  for rcy the summaries and the summary step's compile lines are identical too. Two changes, both in the harness:
+  - **(a) No Makefile.dep remake in the summary step.** The step's `make -n` finds an empty `src/Makefile.dep` and
+    no longer remakes it. GNU make remakes included makefiles even under -n, by a one-thread `clang -MM` over every
+    source. Summary step 7.79 → 6.11 s.
+  - **(b) The ten largest objects first, as make goals.** Stock gets the same order in the same run. This gains
+    nothing in the harness (build 9.83 → 9.66 s): module.c alone takes about 6.6 s, the whole object phase, so it is
+    the critical path whatever the order. The 13.0 → 10.4 s seen in a standalone build from distclean did not
+    reproduce here. Keeping (b) is optional.
+  - **Rows (root e52d, harness P1a + P1c + P1d, CPUs 28-35, -j8, medians of 3; stock → rcy, both arms ordered):**
+    - wall 5.05 → 15.75 s (+212 %), CPU 44.5 → 115.0 s (+158 %);
+    - the same run without P1d: 5.06 → 17.58 s (+247 %), CPU 44.2 → 116.9 s;
+    - CPU is the children's user+sys of the whole legbuild call.
+  - Rows and gate: `$EXTRA/de-recovery-gate/degen/ctime/p1d/` (btime.txt, gate.txt, p1d-apply.py, ctp1d.sh).
+  - **What is left on the wall: module.c.** Its TSan pass takes 0.91 s (every other unit ≤ 0.08 s); an
+    identity-preserving fix there comes straight off the critical path. Its instruction selection (2.1 s) is the
+    inline fast paths' own cost.
 - **FFmpeg's +85 %** comes from the inline fast path at every check, and its speed needs them. Static placement s1 cuts the compile overhead from +85 % to +45 % at a 1.7 % speed loss; it, the other static rules and the profile hot list are closed (Table 6). Rows: `$EXTRA/wt-dev2-r/cct/btime.txt` (s9ff*), root `tsan-n1s-bd979a775aa7`.
 
 ## Notes
