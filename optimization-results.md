@@ -14,11 +14,11 @@ under the premises of §6).
 | FFmpeg | four transcodes of one film | 1.57× | — | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× (FE-INL + N1) | **1.54×** (FE-INL + N1 + quiet threads derived from the whole program) | — | 1.40× (hand-written quiet-thread lines; superseded by (2)) |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — | — |
-| memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **1.34×** (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time; a faster line is being audited) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
+| memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **1.76×** (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
 | Chromium | — | 1.39× | not re-measured | | | |
 
 - SQLite (3), (4): leg zg64b. Inputs still named by hand (audit A61f): `BtShared.mutex`, `removeFromSharingList`, the allocator names, `iDb`, `CellInfo`, the mutex API, 12 field names.
-- Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): leg kcj4, root `tsan-ecc-835062685086` (audits A70-A70d; residual L-1'; A/A 1.001); the loop-hoisted line kcn (root `9c656c7b6d62`, audits A70e-A70f, preservation PASS) is in its final gate; (4): leg mct4.
+- Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): leg kcn record (A/A 0.998-1.000, no void run; the two apollo halves read 1.77 and 1.74), root `tsan-ecc-9c656c7b6d62` (audits A70-A70f, check-tsan ×12, preservation PASS; residual L-1'); the earlier root without the loop-hoisted check read 1.34× (kcj4); (4): leg mct4.
 - FFmpeg (2): leg ffb4, 1.29× over same-compiler stock for both the record line and the shipping line (copy_passthrough 2.64×, encoders ~1.00-1.05×); upstream stock lies within 1 % of it.
 - One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (≤ 284 start-up hook calls), and on Redis and memcached its cost is inside the A/A and −1.6 %.
 
@@ -86,7 +86,7 @@ Kind: S static · R run-time checked, no annotation · G generated from the prog
 
 | item | kind | app | status |
 |---|---|---|---|
-| **EVCONF-CHECKED**: analysis proposes ownership candidates; run-time owner checks and a shadow marker make each elision sound (a failed check voids the run) | R | memcached | root `tsan-ecc-835062685086`, audits A70-A70d (fit to quote; residual L-1'); screening kcs0 ≈1.36× over stock; leg kcj4 running; get-path ARGS (kcl) next |
+| **EVCONF-CHECKED**: analysis proposes ownership candidates; run-time owner checks and a shadow marker make each elision sound (a failed check voids the run) | R | memcached | root `tsan-ecc-9c656c7b6d62`, audits A70-A70f; **1.76×** over stock (kcn record); the one check per walked loop (A70e/A70f) took it from 1.34× |
 | **SQGEN-AUTO**: the generator derives the lock API | G | SQLite | gen8 derives enter/leave and predicates; audit A61f; same code as gen6 |
 | **EVCONF-FIELDS**: the owner's reads of its connection's fields | A+R | memcached | +3.6 % on the EVCONF line; needs the wider P-X86-FD |
 | QUIET-FE: entry/exit not recorded while Redis's main thread skips | R | Redis | FE 10.3 % of the main thread's cycles; not built |
