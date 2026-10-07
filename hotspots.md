@@ -1,54 +1,44 @@
 # Hotspots: where the best configurations still pay, and why
 
-State: 7 Oct 2026 (figures refreshed from `optimization-results.md`). The profiles are of 3-4 Oct: each app's best
-configuration of that day on root `tsan-integcr-1738fdee35e7`, record workloads. The levers measured since are marked
-where they apply; no app has been profiled again. The full per-site tables of 4 Oct (15 sites per app, every census
-column) are in the history, commit ec0d58e. Russian: `hotspots.ru.md` (not committed).
+State 7 Oct 2026; profiles of 3-4 Oct (root `tsan-integcr-1738fdee35e7`, record workloads), not repeated since. Longer earlier versions: 9666281, ec0d58e. Results: `optimization-results.md`.
 
-**Legend:** kind of a lever, as in `optimization-results.md`: **S** static · **R** run-time checked, no annotation ·
-**G** generated from the program's assertions · **A** hand-written annotation (**A+R** guarded at run time) ·
-**RT** runtime-only. Standing: ✅ taken, in a configuration of record · ⏳ built, awaiting a ruling · ⏸ parked ·
-✖ closed (no sound route, or below the bar) · ○ open, not measured. Shares are of the instrumented run's user cycles
-(Redis: of its main thread M) unless they say "of checks", which means executed plain-access checks. "Quiet mode" is
-the quiet threads (QUIET-THREADS: silent-thread mode, the Redis phase guard).
+- **Kind** of a lever: S static · R run-time checked, no annotation · G generated from the program's assertions · A hand-written annotation (A+R: run-time guarded) · RT runtime-only.
+- **Standing**: ✅ in a configuration of record · ⏳ awaiting a ruling · ⏸ parked · ✖ closed · ○ open.
+- **Shares** are of the instrumented run's user cycles (Redis: of its main thread M); "of checks" = executed plain-access checks.
+- **Classes** (26 Sep oracles): T1 one thread, T2 consistently locked or written before publication, S genuinely shared.
 
 ## 1. At a glance
 
-| app | best now (over stock TSan; MySQL, FFmpeg over upstream) | where the cycles went (3 Oct) | hottest site (3 Oct) | what took it | what is left |
+| app | best now (over stock TSan) | where the cycles went (3 Oct) | hottest site | what took it | what is left |
 |---|---|---|---|---|---|
-| **memcached** | 1.02× S; 1.81× A+R (EVCONF line) | ranges and interceptors 31 %, checks 30 % (88 % of them miss), mutexes 25 % | `memset` of each response object, **16.6 %** | ✅ EVCONF-RANGES A+R (+18.5 %), EVCONF-ARGS A+R (+7.3 %), EVCONF-INTERCEPT A+R (+7.5 %) | mutexes and plain checks, about a quarter each; ⏳ EVCONF-FIELDS A+R (+3.6 %); ○ EVCONF-CHECKED R (the same without annotations); ✖ unlocked flag globals |
-| **Redis**, main thread | 1.54× R (quiet threads, derived) | ranges and interceptors 36 %, checks 28 % (97 % hit), function entry 10 % | the reply list's `memcpy`, **14.1 %** | ✅ quiet threads R with the range skip, +31.9 % over FE-INL + N1 | function entry (○ QUIET-FE R); the allocator; the guard's own code (≈ 6 %) |
-| **SQLite** | 1.16× G+R; 1.25× A+R (LO-OBJ-G) | checks 51 % (flat: one site above 0.8 %), ranges 17 %, mutexes 7 % | none dominates; `memcmp` of record bytes 3.7 % | ✅ LO-OBJ-G (spec generated from SQLite's assertions, or hand-written v7) | objects reached through pointer arguments (45 % of checks, no static route); ⏸ connection objects under `db->mutex`; ⏸ DE-AV R |
-| **MySQL** | 1.13× S (FE-INL) | checks 41 % (flat, top site 0.36 %), atomics and sync 15 %, function entry 12 % | none | ✅ FE-INL S | 62.5 % of checks are on genuinely shared memory; ○ EA call-site census |
-| **FFmpeg** | 1.29× R (DynSTC-RT + N1 + N1-ST) | mjpeg: checks 58 %; copy: ranges and allocator 27 %; h264/h265: about 60 % in uninstrumented x264/x265 | mjpeg's codec contexts | ✅ DynSTC-RT R + N1-ST R | frozen since 3 Oct |
+| **memcached** | 1.02× S; 1.81× A+R | ranges and interceptors 31 %, checks 30 % (88 % miss), mutexes 25 % | `memset` of each response object, **16.6 %** | ✅ EVCONF-RANGES, -ARGS, -INTERCEPT (A+R) | mutexes and plain checks, a quarter each; ⏳ EVCONF-FIELDS (A+R); ○ EVCONF-CHECKED (R); ✖ unlocked flag globals |
+| **Redis**, main thread | 1.54× R | ranges and interceptors 36 %, checks 28 % (97 % hit), function entry 10 % | the reply list's `memcpy`, **14.1 %** | ✅ quiet threads with the range skip (R) | function entry (○ QUIET-FE, R); the allocator; the guard's own code (≈ 6 %) |
+| **SQLite** | 1.16× G+R; 1.25× A+R | checks 51 % (no site above 0.8 %), ranges 17 %, mutexes 7 % | `memcmp` of record bytes, 3.7 % | ✅ LO-OBJ-G (G+R, A+R) | pointer-argument objects (45 % of checks); ⏸ `db->mutex` objects; ⏸ DE-AV (R) |
+| **MySQL** | 1.13× S | checks 41 % (top site 0.36 %), atomics and sync 15 %, function entry 12 % | none | ✅ FE-INL (S) | 62.5 % of checks on genuinely shared memory; ○ EA call-site census |
+| **FFmpeg** | 1.29× R | mjpeg: checks 58 %; copy: ranges and allocator 27 %; h264/h265: ≈ 60 % in uninstrumented x264/x265 | mjpeg's codec contexts | ✅ DynSTC-RT, N1-ST (R) | frozen since 3 Oct |
 
-What paid: a range site that concentrates the cost, an unsound ceiling first (the site uninstrumented), then the
-sound design and its audit. Plain checks never concentrate this way: no plain-check site exceeds 5.4 % of an app's
-cycles, and on SQLite and MySQL none exceeds 1 %.
+- No plain-check site exceeds 5.4 % of an app's cycles (on SQLite and MySQL none exceeds 1 %); what paid were range sites.
 
 ## 2. What this report turned into (4-5 Oct)
 
 | hotspot (3 Oct) | lever (kind) | unsound ceiling | measured, sound | standing |
 |---|---|---|---|---|
-| memcached: `memset(resp, 0, sizeof(*resp))` in `resp_allocate`, 16.6 % | EVCONF-RANGES (A+R): EVCONF's guard on memory intrinsics over an owned object | `f` +14.1 % | `f` +13.9 %, `a` +18.5 % | ✅ |
-| memcached: MurmurHash3's reads of the request key, 5.4 % (26.6 % of checks, all miss) | EVCONF-ARGS (A+R): a clone of the hash with the key reads unchecked while the guard holds | `f` +8.2 %, `a` +5.7 % | `f` +7.2 %, `a` +7.3 % (≈ 83 % of the key reads) | ✅ |
-| memcached: `memchr`, `strlen` and the request-key side of `bcmp` on the read buffer, ≈ 4.7 % | EVCONF-INTERCEPT (A+R): the guard around those libc calls | `f` +6.5 % | `f` +5.7 %, `a` +7.5 % | ✅ |
-| memcached: reads of the connection's own fields, ≥ 14 % of checks (77 % miss) | EVCONF-FIELDS (A+R): the owner's reads unchecked, writes checked | `f` +3.6 % | `f` +2.9 %, `a` +3.6 % | ⏳ the wider P-X86-FD |
-| Redis: the reply-list `memcpy` (14.1 %) and `initEntry`'s `memset` (4.8 %) | quiet mode's range skip (R) | — | +3.6…+9.9 % on top of quiet mode | ✅ |
-| memcached: `settings`, `expanding`, `hashpower` read without a lock, ≈ 5 % (5.5 % of checks) | — | `f` +4.5 % | — | ✖ admin-written or a genuine benign race |
-| SQLite: `memcmp` (3.7 %) and VDBE `memcpy` (2.0 %) on lock-owned bytes | LO-OBJ-RANGES (A+R) | — | — | ✖ reaches neither site |
+| memcached: `memset` in `resp_allocate`, 16.6 % | EVCONF-RANGES (A+R) | `f` +14.1 % | `f` +13.9 %, `a` +18.5 % | ✅ |
+| memcached: MurmurHash3's key reads, 5.4 % (26.6 % of checks, all miss) | EVCONF-ARGS (A+R) | `f` +8.2 %, `a` +5.7 % | `f` +7.2 %, `a` +7.3 % | ✅ |
+| memcached: `memchr`, `strlen`, key side of `bcmp`, ≈ 4.7 % | EVCONF-INTERCEPT (A+R) | `f` +6.5 % | `f` +5.7 %, `a` +7.5 % | ✅ |
+| memcached: the connection's own fields, ≥ 14 % of checks (77 % miss) | EVCONF-FIELDS (A+R) | `f` +3.6 % | `f` +2.9 %, `a` +3.6 % | ⏳ wider P-X86-FD |
+| Redis: reply-list `memcpy` (14.1 %), `initEntry`'s `memset` (4.8 %) | quiet range skip (R) | — | +3.6…+9.9 % on top of quiet mode | ✅ |
+| memcached: `settings`, `expanding`, `hashpower` unlocked, ≈ 5 % | — | `f` +4.5 % | — | ✖ admin-written or a benign race |
+| SQLite: `memcmp` (3.7 %), VDBE `memcpy` (2.0 %) | LO-OBJ-RANGES (A+R) | — | — | ✖ reaches neither site |
 | SQLite: the record comparison, ≤ 4.4 % | LO-OBJ-ARGS (A+R) | +2.3 %, inside the A/A | — | ✖ |
-| SQLite: the connection's objects under `db->mutex`, ≈ 5.5 % of create_drop_index_1's checks | LO-OBJ-G with a second lock (A+R) | `a` +5.8 % | — | ⏸ needs two lock types and a ruling on how the lock is asserted |
-| MySQL: a THD's fields read by its own thread, ≤ 2.35 % of checks | owner reads (S) | — | — | ✖ below the 3 % bar |
-| Redis: the I/O threads, 88 % of all cycles | — | — | — | ✖ 98.5 % of it is a spin, no checks |
-| objects one thread touches (T1), 17-53 % of checks | a run-time owner tag (unsound) | — | — | ✖ unsound: a skipped access leaves no record to race with |
+| SQLite: `db->mutex` objects, ≈ 5.5 % of create_drop_index_1's checks | LO-OBJ-G, second lock (A+R) | `a` +5.8 % | — | ⏸ |
+| MySQL: a THD's fields read by its thread, ≤ 2.35 % of checks | owner reads (S) | — | — | ✖ below the bar |
+| Redis: the I/O threads, 88 % of all cycles | — | — | — | ✖ 98.5 % is a spin |
+| T1 objects, 17-53 % of checks | run-time owner tag | — | — | ✖ unsound |
 
-## 3. Where the time goes
+## 3. Where the time goes (3 Oct, shares of cycles)
 
-`perf record -e cycles:u --call-graph=lbr`, 3 runs per app, 3 Oct. Columns are shares of the app's cycles. "Checks"
-splits into N1's inline hits, hits inside a runtime entry, and misses (the rest of the entry and the race check).
-
-| app (threads) | checks (inline hit / entry hit / miss) | function entry | ranges + interceptors | atomics + sync | runtime internals + deadlock detector | program | other |
+| app (threads) | checks (inline hit / entry hit / miss) | function entry | ranges + interceptors | atomics + sync | runtime + deadlock detector | program | other |
 |---|---|---|---|---|---|---|---|
 | Redis, main thread (12 % of cycles) | 27.8 (22.3 / 1.2 / 4.3) | 10.3 | **36.4** | 1.7 | 0.2 | 21.4 | 2.2 |
 | Redis, I/O threads (88 %) | 0.0 | 0.0 | 0.1 | **98.5** (spin) | 0.0 | 1.4 | 0.0 |
@@ -60,128 +50,88 @@ splits into N1's inline hits, hits inside a runtime entry, and misses (the rest 
 | FFmpeg mjpeg | **58.4** (27.2 / 1.2 / 30.0) | 2.3 | 4.8 | 1.3 | 0.4 | 32.2 | 0.5 |
 | FFmpeg copy | 3.5 (3.1 / 0.4 / 0.0) | 3.9 | **26.8** | 2.0 | 0.5 | 55.2 | 8.1 |
 
-- **Hit rates differ by an order of magnitude** (counting runs): memcached 12.2 %, MySQL 54.6 %, SQLite 71.3 %,
-  Redis's main thread 96.9 %. memcached takes and releases mutexes on every request, each a new epoch, so a check
-  rarely finds its own record; there every removed check saves a slow path. On Redis the cost is the number of
-  checks, not the misses.
-- **Stock TSan over native** (one leg each): Redis 6.0×, memcached 6.7×, SQLite 9.2× (stress2 4.5×,
-  create_drop_index_1 16-21×), MySQL 7.5×, FFmpeg 2.8× (copy 5.5-5.9×, mjpeg 6.0-6.2×, h264 1.3×, h265 1.4×).
-  Instrumentation is therefore 64-89 % of a run (FFmpeg's encoders 20-30 %), and a category's share of the overhead
-  is its share above divided by that fraction.
+- Hit rates: memcached 12.2 %, MySQL 54.6 %, SQLite 71.3 %, Redis main thread 96.9 %.
+- Stock TSan over native: Redis 6.0×, memcached 6.7×, SQLite 9.2× (stress2 4.5×, create_drop_index_1 16-21×), MySQL 7.5×, FFmpeg 2.8× (copy 5.5-5.9×, mjpeg 6.0-6.2×, h264 1.3×, h265 1.4×).
 
 ## 4. Per application
 
-Each table lists the sites that cost most, plain checks and ranges together, with the refusal that keeps each one
-checked. Classes from the 26 Sep oracles: T1 one thread, T2 consistently locked or written before publication (both
-a static imprecision), S genuinely shared.
-
-### memcached (profiled on EVCONF + SWMR-ROOTS + EA-CONTENTS, 3 Oct; best now 1.81× / 1.02×)
+### memcached (profiled on EVCONF + SWMR-ROOTS + EA-CONTENTS)
 
 | cycles | site | object | why still checked | now |
 |---|---|---|---|---|
-| 16.6 % | `memset` in `resp_allocate` (memcached.c:1085) | the worker's own response object (1,176 bytes) | EVCONF covered plain accesses only | ✅ EVCONF-RANGES |
-| 5.4 % | `getblock32` in MurmurHash3 (murmur3_hash.c:50) | the request key in the connection's read buffer | EA: pointer argument; EVCONF did not follow the call | ✅ EVCONF-ARGS |
-| ≈ 5 % | `assoc_find`, `process_get_command`, `do_item_get`, `conn_set_state` | the globals `expanding`, `settings.*`, `hashpower` | LO: no lock held; SWMR: the address escapes | ✖ |
-| ≈ 4.7 % | `memchr` 2.1, `strlen` 1.6, `bcmp` 1.0 (the key half of 2.0) | the read buffer | interceptor ranges were outside EVCONF | ✅ EVCONF-INTERCEPT |
-| 2.7 % | `main` 0.99, `assoc_find` 0.79, `complete_nread_ascii` 0.58, `drive_machine` 0.30 | — | no debug line, so the census cannot place them | ○ SITE-ID census |
-| 1.8 % | `read` into the read buffer | the read buffer | the interceptor also carries the descriptor's acquire | ○ |
+| 16.6 % | `memset` in `resp_allocate` (memcached.c:1085) | the worker's own response object | EVCONF covered plain accesses only | ✅ EVCONF-RANGES |
+| 5.4 % | `getblock32` in MurmurHash3 | the request key in the read buffer | EA: pointer argument | ✅ EVCONF-ARGS |
+| ≈ 5 % | `assoc_find`, `process_get_command`, `do_item_get`, `conn_set_state` | `expanding`, `settings.*`, `hashpower` | LO: no lock; SWMR: address escapes | ✖ |
+| ≈ 4.7 % | `memchr` 2.1, `strlen` 1.6, `bcmp` 1.0 | the read buffer | interceptor ranges outside EVCONF | ✅ EVCONF-INTERCEPT |
+| 2.7 % | `main`, `assoc_find`, `complete_nread_ascii`, `drive_machine` | — | no debug line | ○ SITE-ID census |
+| 1.8 % | `read` into the read buffer | the read buffer | carries the descriptor's acquire | ○ |
+| 7.5 % | `item_lock` | the hash-partitioned lock array | real synchronisation | stays |
+| ≈ 6.4 % | the worker's stats mutex | taken by its owner on every response | real synchronisation | ⏸ owner-to-owner path (RT) |
 
-- **Mutexes, 24.8 %:** `item_lock` 7.5 (the global hash-partitioned lock array: shared, real synchronisation) and the
-  worker's own stats mutex ≈ 6.4 (taken by its owner on every response, rarely by the aggregator). No pass can remove
-  a mutex operation; a cheaper owner-to-owner path in the runtime is ⏸ with the runtime track. The deadlock detector
-  is 2.0 %.
-- **After the 4-5 Oct levers** mutexes and plain checks are about a quarter of the cycles each *(by subtraction, not
-  re-profiled)*.
-
-### Redis, main thread (profiled on FE-INL + N1, 3 Oct; best now 1.54× with the quiet threads)
+### Redis, main thread (profiled on FE-INL + N1)
 
 | cycles | site | object | why still checked | now |
 |---|---|---|---|---|
-| 14.1 % | `memcpy` in `_addReplyProtoToList` (networking.c:361) | the client's reply block: M fills it, the I/O threads drain it | handed between threads by phase: no static fact | ✅ quiet range skip |
-| 8.2 % (+0.9) | `malloc`, `free`, `realloc` through zmalloc | — | the allocator's bookkeeping, not a check | stays |
+| 14.1 % | `memcpy` in `_addReplyProtoToList` (networking.c:361) | the reply block, drained by the I/O threads | handed over by phase | ✅ quiet range skip |
+| 8.2 % (+0.9) | `malloc`, `free`, `realloc` via zmalloc | — | allocator bookkeeping | stays |
 | 4.8 % | `memset` in `initEntry` (quicklist.c:1300) | 16 bytes of the caller's stack | EA: pointer argument | ✅ quiet range skip |
-| 4.8 % | `quicklistNext`, `listTypeNext` (the LRANGE iterator) | a `quicklistEntry` on the caller's stack (T1) | EA: pointer argument | ✅ quiet mode |
-| 4.4 % | `_addReplyProtoToList` reads the tail block (3.08) and writes its `used` (1.35) | the reply list (S, T2) | EA: pointer argument; LO, SWMR: not a global | ✅ quiet mode |
+| 4.8 % | `quicklistNext`, `listTypeNext` | a `quicklistEntry` on the caller's stack (T1) | EA: pointer argument | ✅ quiet threads |
+| 4.4 % | `_addReplyProtoToList`, the tail block | the reply list (S, T2) | EA: pointer argument; not a global | ✅ quiet threads |
 | 10.3 % | function entry and exit | — | FE-INL records every frame | ○ QUIET-FE |
 
-- **What quiet mode leaves:** on 5 Oct it read 1.256-1.314 over FE-INL + N1 on Intel, against an unsound ceiling of
-  1.365 for skipping all of M's plain checks. The rest is function entry, the allocator, and the guard's own compiled
-  tests (about 6 % of M's cycles; folding them is ⏸). The one configuration now reads 1.54× over stock on AMD.
-- **The I/O threads** spend 98.5 % of their cycles spinning on `io_threads_pending`; nothing there to take.
+- Quiet threads read 1.256-1.314 over FE-INL + N1 on Intel (5 Oct) against an unsound ceiling of 1.365.
 
-### SQLite (profiled on LO-OBJ-G v5 + spec v7; best now 1.25× with spec v7, 1.16× with the generated spec)
+### SQLite (profiled on LO-OBJ-G v5 + spec v7)
 
 | cycles | site | object | why still checked | now |
 |---|---|---|---|---|
-| 3.7 % | `memcmp` in `vdbeRecordCompareString` | record bytes on a b-tree page against the caller's key | the page side arrives through a function pointer | ✖ LO-OBJ-ARGS |
-| 2.0 % | VDBE register `memcpy` in `sqlite3VdbeExec` | the statement's registers | `sqlite3_value_dup` reads them without `db->mutex` | ✖ LO-OBJ-RANGES |
-| 1.9 % | `strHash` 0.77, `sqlite3StrICmp` 0.71 + 0.45 | identifiers from the SQL text and the schema (T2) | LO, SWMR: not a global | ⏸ part of the `db->mutex` objects |
+| 3.7 % | `memcmp` in `vdbeRecordCompareString` | page record bytes vs the caller's key | page side via a function pointer | ✖ LO-OBJ-ARGS |
+| 2.0 % | VDBE register `memcpy` | the statement's registers | read without `db->mutex` | ✖ LO-OBJ-RANGES |
+| 1.9 % | `strHash`, `sqlite3StrICmp` | SQL-text and schema identifiers (T2) | not a global | ⏸ `db->mutex` objects |
 | 1.6 % | `sqlite3_str_vappendf` | — | no debug line | ○ |
-| 0.7 % | `sqlite3_mutex_enter`/`leave` reading `sqlite3Config` | a global written at start-up (T2) | its address is in an initializer | ✖ SWMR-ROOTS on SQLite (closed 5 Oct) |
+| 0.7 % | `sqlite3_mutex_enter`/`leave` reading `sqlite3Config` | start-up global (T2) | address in an initializer | ✖ SWMR-ROOTS (closed 5 Oct) |
 | 7.3 % | `pthreadMutexEnter`/`Leave` | shared cache, page cache, memory | real synchronisation | stays |
 
-- **Flat.** T1 is 53 % of the checks (pointer arguments 45 %, objects from a call 7 %), T2 21 %, all on non-globals:
-  the parser's stack and engine, the VDBE's registers, b-tree page content. Those under BtShared's mutex are
-  LO-OBJ-G's already.
-- **What the unsound same-location rule removes on create_drop_index_1** (17.8 % of its checks), by class:
+What the unsound same-location rule removes on create_drop_index_1 (17.8 % of its checks):
 
-  | class | share of the subtest's checks | sound route | standing |
-  |---|---|---|---|
-  | the connection's objects under `db->mutex`: the VDBE under construction, the sorter, lookaside | ≈ 5.5 % | LO-OBJ-G with spec entries for them | ⏸ (ceiling +5.8 %) |
-  | fields under BtShared's mutex that spec v7 does not name | ≈ 1.2 % | spec lines | ○ |
-  | adjacent bytes and loops over the SQL text | ≈ 1.7 % | DE-2R, DE-3R | below the bar alone |
-  | the parser's stack (`yy_reduce`) | ≈ 1.0 % | own stack | ⏸ |
-  | equal indexes | 0 | DE-AV | — |
-  | the rest, mostly connection-owned registers | ≈ 8 % | as the first row | — |
+| class | share of checks | sound route | standing |
+|---|---|---|---|
+| connection objects under `db->mutex` (VDBE, sorter, lookaside) | ≈ 5.5 % | LO-OBJ-G spec entries | ⏸ ceiling +5.8 % |
+| BtShared fields spec v7 does not name | ≈ 1.2 % | spec lines | ○ |
+| adjacent bytes, loops over the SQL text | ≈ 1.7 % | DE-2R, DE-3R | below the bar |
+| the parser's stack (`yy_reduce`) | ≈ 1.0 % | own stack | ⏸ |
+| the rest, mostly connection-owned registers | ≈ 8 % | as the first row | — |
 
-### MySQL (best: FE-INL, Release, 1.13×)
+### MySQL (FE-INL, Release)
 
-Flat: the top site is 0.36 % of the cycles. 62.5 % of the checks touch genuinely shared memory.
-- InnoDB's mutex implementation (`ut0mutex.h`, `ib0mutex.h`) and buffer-pool page reads (`mach_read_from_1/2`): S,
-  real.
-- System variables read without a lock: `srv_n_spin_wait_rounds` 0.36, the spin multiplier 0.19, `innodb_hton_ptr`
-  0.15, `srv_read_only_mode` 0.14 (0.84 % in all). Those written by SET GLOBAL have no sound route, as memcached's
-  `settings`; init-once ones could take a SWMR-ROOTS rule (✖ closed 5 Oct: ≤ 1.3 % reachable).
-- `std::thread::id` built on the stack: 0.46 %, S by the oracle.
-- Atomics 14.8 % (`std::atomic` loads 6.5): 74 % of the atomic entries are seq_cst, so an inline relaxed-atomic test
-  reaches ≤ 0.65 % (✖).
-- Function entry 12.1 %: FE-INL is in the best on AMD and loses 3 % on Intel.
-- The EA call-site census (counting run done: 80.4 G checks in the timed phase, 34.9 % on the accessing thread's own
-  stack) has not been joined with the IR yet (○).
+| cycles | site or class | why still checked | now |
+|---|---|---|---|
+| — | InnoDB mutexes, buffer-pool page reads | S, real | stays |
+| 0.84 % | unlocked system variables (`srv_n_spin_wait_rounds` 0.36 …) | SET GLOBAL writes them | ✖ (init-once ones: SWMR-ROOTS closed) |
+| 0.46 % | `std::thread::id` on the stack | S by the oracle | stays |
+| 14.8 % | atomics (`std::atomic` loads 6.5) | 74 % seq_cst | ✖ N1-ATOMIC (≤ 0.65 %) |
+| 12.1 % | function entry | — | ✅ FE-INL on AMD (Intel −3 %) |
+| — | 34.9 % of 80.4 G checks on the thread's own stack | not joined with the IR | ○ EA call-site census |
 
-### FFmpeg (frozen since 3 Oct; best 1.29×)
+### FFmpeg (frozen since 3 Oct)
 
-The cost is in mjpeg (checks 58.4 %: codec contexts reached through pointer arguments, T1) and in h264 decoding
-(CABAC, per-slice state, T2). h264 and h265 run about 60 % of their cycles in uninstrumented libx264/libx265, whose
-intercepted libc calls are the "ranges" there. The stream copy pays the allocator and option parsing at start-up.
+- mjpeg: checks 58.4 % on codec contexts via pointer arguments (T1); h264: CABAC and per-slice state (T2); copy: allocator and option parsing.
 
 ## 5. Blocker classes across applications
 
-Rows 1-5 are shares of plain checks; rows 6-8 shares of cycles.
-
 | class | memcached | Redis main | SQLite | MySQL | FFmpeg | standing |
 |---|---|---|---|---|---|---|
-| EA: an object reached through a pointer argument (T1) | 16.9 % (+11.9 % unclassified) | 37.2 % | 45.2 % | 17.0 % | 20.9 % | static routes ✖ (cross-unit facts ≤ 0.14 % everywhere); run-time: ✅ quiet mode R (Redis), ⏸ own stack R, ○ call-site census |
-| EA: an object returned by a call (T1) | 0.3 % | 2.2 % | 6.9 % | 2.5 % | 0 | ✖ no allocator wrapper carries `malloc` |
-| LO and SWMR judge only globals (T2, not a global) | 0.9 % | 10.8 % | 17.6 % | 6.7 % | 42.5 % | ✅ LO-OBJ-G G+R / A+R (SQLite's BtShared); ⏸ its `db->mutex` extension |
-| globals read without a lock, or whose address escapes (T2 globals) | 7.7 % | 0.2 % | 1.7 % | 2.7 % | 0 | ✖ memcached (admin-written, or a benign race); ○ SWMR-ROOTS S on SQLite and MySQL (closed 5 Oct: ≤ 1.3 % reachable) |
-| genuinely shared, no cover at the same location (S) | 52.8 % | 31.0 % | 15.7 % | 57.8 % | 21.9 % | real races are possible here; the old same-location rule is unsound; ⏸ DE-AV R |
-| ranges and interceptors | 31.3 % | 36.4 % | 17.4 % | 7.3 % | copy 26.8 %, h265 21.1 % | ✅ memcached (EVCONF-RANGES, -INTERCEPT, A+R); ✅ Redis (quiet range skip, R); ✖ SQLite; the rest is allocator or uninstrumented callers |
-| mutexes and atomics | 24.8 % | 1.7 % | 7.3 % | 14.8 % | h264 8.4 % (x264) | real synchronisation; ⏸ owner-to-owner mutex path (RT); ✖ N1-ATOMIC |
-| function entry and exit | 1.2 % | 10.3 % | 3.3 % | 12.1 % | ≤ 2.3 % | FE-INL S in the best; ○ QUIET-FE R |
+| EA: object via a pointer argument (T1), of checks | 16.9 % (+11.9 % unclassified) | 37.2 % | 45.2 % | 17.0 % | 20.9 % | static ✖ (cross-unit facts ≤ 0.14 %); ✅ quiet threads R; ⏸ own stack R; ○ call-site census |
+| EA: object returned by a call (T1), of checks | 0.3 % | 2.2 % | 6.9 % | 2.5 % | 0 | ✖ no wrapper carries `malloc` |
+| LO, SWMR judge only globals (T2), of checks | 0.9 % | 10.8 % | 17.6 % | 6.7 % | 42.5 % | ✅ LO-OBJ-G G+R / A+R; ⏸ `db->mutex` |
+| unlocked or escaping globals (T2), of checks | 7.7 % | 0.2 % | 1.7 % | 2.7 % | 0 | ✖ memcached; ✖ SWMR-ROOTS elsewhere (closed 5 Oct) |
+| genuinely shared, no exact cover (S), of checks | 52.8 % | 31.0 % | 15.7 % | 57.8 % | 21.9 % | ⏸ DE-AV R |
+| ranges and interceptors, of cycles | 31.3 % | 36.4 % | 17.4 % | 7.3 % | copy 26.8 %, h265 21.1 % | ✅ memcached A+R; ✅ Redis R; ✖ SQLite |
+| mutexes and atomics, of cycles | 24.8 % | 1.7 % | 7.3 % | 14.8 % | h264 8.4 % | ⏸ owner-to-owner path RT; ✖ N1-ATOMIC |
+| function entry and exit, of cycles | 1.2 % | 10.3 % | 3.3 % | 12.1 % | ≤ 2.3 % | ✅ FE-INL S; ○ QUIET-FE R |
 
-## Method and limits
+## Method
 
-- **Time split:** `perf record -e cycles:u --call-graph=lbr`, 3 runs per app; each runtime entry's cycles go to its
-  first instrumented caller. MySQL's timed phase is a 30 s run minus a 1 s run. Kernel time (memcached's `sendmsg`
-  and `read`) is not in `cycles:u`.
-- **Counts:** one record-workload run per app with a counting runtime (measure/hotspots `5bd1070eef6f`): the shipped
-  build's checked set and hit condition; per caller pc the executed checks, the misses and the class of the missed
-  address. Redis's counting build drops the inline hit test. MySQL is a 60 s run minus a 1 s run. FFmpeg has no
-  counting run: its 26 Sep profile of the same input gives executed checks only. The counting runtime counts atomics
-  too (reported apart) and slows the run, so hit rates are those of a slower run.
-- **Why a site is checked:** `-tsan-explain-missed` with each app's best flags over its pre-TSan IR, giving per load
-  and store its status and the first refusal of each analysis.
-- **Classes T1/T2/S** come from the 26 Sep oracle profiles of older workloads; "-" where that profile had no check.
-- **Join:** file, line and column across builds of the same sources; collisions 0, except 5 on MySQL. A site at line 0
-  has no debug line and is reported unattributed.
+- Time: `perf record -e cycles:u --call-graph=lbr`, 3 runs per app; kernel time not included.
+- Counts: one record-workload run per app with a counting runtime (`5bd1070eef6f`); FFmpeg from its 26 Sep profile.
+- Why checked: `-tsan-explain-missed` over each app's pre-TSan IR; sites joined by file, line and column.
