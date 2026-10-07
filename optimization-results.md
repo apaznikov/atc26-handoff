@@ -2,43 +2,31 @@
 
 State: 7 Oct 2026. Longer earlier versions: 90a735e, f02509d, b8d5c56. Premises: `soundness-fixes.md` §6.
 
-- **Speedup**: stock TSan's run time over the optimized build's, same leg, geomean over 4 code offsets. **A/A**: the base run twice; a gain counts beyond its range.
-- **Host**: AMD (2 × EPYC 9115) unless marked `f` (Intel Xeon w9-3495X). `$EXTRA` = the lab host's `/extra/<user>`.
-- **Kind**: S static · R run-time checked, no annotation · G generated from the program's assertions · A hand-written annotation (A+R: run-time guarded) · RT runtime-only · U unsound, ceiling only.
-- **Sound**: loses no race stock TSan reports, under the premises of `soundness-fixes.md` §6. Every figure is the best sound one measured.
-- 🟢 gain beyond the A/A · 🟡 1-2 % or unresolved · ⚪ within ±1 % · 🔴 loss · — not measured. Aliases in parentheses.
+## Table 1. Summary (AMD, 2 × EPYC 9115)
 
-## Table 1. Summary (AMD)
+Speedup = stock TSan's run time over the optimized build's, same leg, geometric mean over 4 code offsets, stock built
+by the same compiler and runtime. Every figure is the best sound one measured (no race stock TSan reports is lost,
+under the premises of §6).
 
 | app | workload | submitted paper | (1) no annotations, static | (2) no annotations, run-time checked | (3) spec generated from the program's assertions | (4) our annotations |
 |---|---|---|---|---|---|---|
-| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | 1.02× ⚪ (the paper's analyses) | — | **1.16×** (LO-OBJ-G, gen6 = gen8's output; run-time lock guard) | **1.25×** (LO-OBJ-G, spec v7; run-time guarded) |
+| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | 1.02× (the paper's analyses) | — | **1.16×** (LO-OBJ-G, gen6 = gen8's output; run-time lock guard) | **1.25×** (LO-OBJ-G, spec v7; run-time guarded) |
 | FFmpeg | four transcodes of one film | 1.57× | — | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× (FE-INL + N1) | **1.54×** (FE-INL + N1 + quiet threads derived from the whole program; the one configuration) | — | 1.40× (hand-written quiet-thread lines; superseded by (2)) |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× (FE-INL + N1) | **1.54×** (FE-INL + N1 + quiet threads derived from the whole program) | — | 1.40× (hand-written quiet-thread lines; superseded by (2)) |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — | — |
-| memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | in progress (EVCONF-CHECKED) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded; the one configuration) |
+| memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **≈1.36×** (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time; screening, leg of record running) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
 | Chromium | — | 1.39× | not re-measured | | | |
 
 - SQLite (3), (4): leg zg64b. Inputs still named by hand (audit A61f): `BtShared.mutex`, `removeFromSharingList`, the allocator names, `iDb`, `CellInfo`, the mutex API, 12 field names.
-- Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here). memcached (4): leg mct4.
-
-## The one configuration
-
-One compiler configuration and one runtime for every app (root `tsan-cc-6815ac749368`, refrozen as `tsan-cc-744024407b56`).
-
-| app | -wp | cost against the app's line of record |
-|---|---|---|
-| Redis | yes (1 derived start routine) | none measurable (ccrd4: 1.036, inside the A/A) |
-| memcached | yes (EVCONF line; 4 derived start routines) | −1.6 % (mcxy4; without the inline hit test, which cost ~8 %) |
-| SQLite | no | none by construction: .text and its 76,093 runtime calls byte-identical; 1 start-up hook call |
-| MySQL | no | none by construction: 27 start-up hook calls; repeat on the refrozen root 1.002 (myj4) |
-| FFmpeg | no | none by construction: ≤ 284 start-up hook calls; ffn4 1.004 |
-
-- Rule (7 Oct): -wp only where the record uses it, a libevent loop covered by EVCONF or a derived start-routine line. Hook counts: `$EXTRA/wt-dev2-r/hookcnt/`.
+- Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): screening kcs0, root `tsan-ecc-835062685086` (audits A70-A70d, fit to quote; residual L-1'), leg kcj4 next; (4): leg mct4.
+- FFmpeg's 1.29× is being re-checked against the same-compiler stock base (leg ffb4; pgp4 read 1.18× for the shipping line).
+- One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (≤ 284 start-up hook calls), and on Redis and memcached its cost is inside the A/A and −1.6 %.
 
 ## Table 2. Optimizations that gain
 
 Rows above EA-CONTENTS: single levers over P1-v3 (the paper's analyses with every soundness fix). Below: on top of their app's configuration.
+
+Kind: S static · R run-time checked, no annotation · G generated from the program's assertions · A hand-written annotation (A+R: run-time guarded) · RT runtime-only · U unsound, ceiling only. Markers: 🟢 gain beyond the A/A (the base run twice) · 🟡 1-2 % or unresolved · ⚪ within ±1 % · 🔴 loss · — not measured. `f` = Intel Xeon w9-3495X, otherwise AMD. Aliases in parentheses.
 
 | optimization | kind | what it is | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|---|---|
@@ -98,7 +86,7 @@ Rows above EA-CONTENTS: single levers over P1-v3 (the paper's analyses with ever
 
 | item | kind | app | status |
 |---|---|---|---|
-| **EVCONF-CHECKED**: analysis proposes ownership candidates; run-time owner checks and a shadow marker make each elision sound (a failed check voids the run) | R | memcached | approved 7 Oct; audits A70, A70b sound with conditions; not timed |
+| **EVCONF-CHECKED**: analysis proposes ownership candidates; run-time owner checks and a shadow marker make each elision sound (a failed check voids the run) | R | memcached | root `tsan-ecc-835062685086`, audits A70-A70d (fit to quote; residual L-1'); screening kcs0 ≈1.36× over stock; leg kcj4 running; get-path ARGS (kcl) next |
 | **SQGEN-AUTO**: the generator derives the lock API | G | SQLite | gen8 derives enter/leave and predicates; audit A61f; same code as gen6 |
 | **EVCONF-FIELDS**: the owner's reads of its connection's fields | A+R | memcached | +3.6 % on the EVCONF line; needs the wider P-X86-FD |
 | QUIET-FE: entry/exit not recorded while Redis's main thread skips | R | Redis | FE 10.3 % of the main thread's cycles; not built |
@@ -209,7 +197,7 @@ The old "same location" rule (U; removal mode, over exact DE):
 
 ## Compile time
 
-Root `tsan-cc-744024407b56`, both arms from the same tree; -wp summary step + build, no ccache, medians of 3. Rows: `$EXTRA/wt-dev2-r/cct/btime.txt`.
+Root `tsan-cc-744024407b56`, both arms from the same tree; -wp summary step + build, no ccache, medians of 3. Rows: `$EXTRA/wt-dev2-r/cct/btime.txt` (`$EXTRA` = the lab host's `/extra/<user>`).
 
 | app | line of record (tree) | -j | stock | line | overhead | of which summary step |
 |---|---|---|---|---|---|---|
