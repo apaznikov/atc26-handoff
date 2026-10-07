@@ -394,83 +394,68 @@ Key to table 3:
 
 ## 6. Premises the soundness claims rest on
 
-Each premise excludes a class of programs; in an excluded program a race may be lost. State: 7 Oct 2026. Earlier
-long wording of every entry: commit 5786aa8.
+In a program a premise excludes, a race may be lost. State 7 Oct; longer wording: commit 43568d5.
 
 ### 6a. Adopted
 
-| premise | adopted | needed by | statement, and why it is acceptable |
+| premise | adopted | needed by | statement |
 |---|---|---|---|
-| **No use-after-free** | 24 Sep | every analysis | A race reached only through a dangling pointer to freed and reallocated memory, or reused stack, may go unreported (shape 32). Such a program has undefined behaviour already. |
-| **IN-BOUNDS** | 4 Oct | every analysis that reasons about objects; EVCONF and its levers | No access leaves the object its pointer was derived from. The spatial counterpart of the line above. |
-| **ALLOC-NOUAF** | 6 Oct, validated 7 Oct | EVCONF hand-off through a program's own allocator (behind a flag, off by default) | A block a thread returns to its own allocator's free list is not accessed through earlier pointers until handed out again: no-use-after-free carried over to the program's allocator. Validation below. |
-| **A3**, signals | 24 Sep (later clauses 25 Sep) | DE; the quiet mode's lock scope | Handlers that synchronise with other threads, and signal delivery itself, are outside the model (shape 41). Stock sees such synchronisation only where it delivers the signal; unlocking an interrupted thread's mutex in a handler is undefined behaviour already. |
-| **A2** | 24 Sep provisional, 1 Oct | EVCONF, the thread-root SWMR rule, whole-program summaries | An indirect call reaches only functions of the same IR function type: the C rule Clang's control-flow integrity enforces. |
-| **A2-LIB** | 1 Oct | the thread-root SWMR rule | The program does not call a function pointer that only a library produced (other than pointers the program stored there itself). |
-| **A4** | 24 Sep provisional, 3 Oct | EA's interceptor toggle, for definitions outside the program's IR | No unit defines a reserved C or POSIX name that another unit calls (C11 7.1.3). Inside the program the whole-program definitions list checks it. |
-| **A10, A11** | in use | DynSTC's runtime form; STC | A10: ignore-sync regions opened in another unit or by the runtime are unseen. A11: no thread exists when `main` starts, except one started by this unit's (checked) constructors. |
-| **A12**, closed world | 25 Sep | whole-program mode (-wp) | No function is called from outside the program, except a plugin API listed with `-tsan-external-symbols`. FFmpeg's line of record no longer uses -wp; Redis's -wp build links only `src/` and lists `deps/` as external (audit A60). |
-| **A12-DATA** | 4 Oct | the quiet threads (Redis) | Nothing outside the program's IR names a data symbol the phase record admits or its lock scope relies on (a module loaded with MODULE LOAD is excluded; the benchmark loads none). |
-| **FIELD-ADDR** | 4 Oct | the phase guard's objects only | No member's address is used to reach another member of a registered object (checked for Redis 7.0.15 by reading: no `offsetof`, no `container_of`, no arithmetic on `&server`). |
-| **CFG-TABLE** | 4 Oct | Redis quiet threads | Narrowed on 5 Oct to P-DICT (below): the rest is a whole-program proof (audits A57, A57b, A57c). |
-| **P-DICT** | 4 Oct (the narrowed form of CFG-TABLE, covered by its adoption) | Redis quiet threads (1.54×) | `dict.c` never reads or writes a stored value or entry: it hands the dictionary only to its type callbacks and `dictEmpty`'s callback, values only to `valDestructor`, and never rewrites a dictionary's type. A proof from roles alone was audited unsound (A63d) and is parked. |
-| **Criterion G** | 25 Sep | merging under verified removal | A covering record of the same thread and epoch counts as a hit; every granule stock reports on is still reported, no later, but not pair for pair. |
-| **R3 and P-OWN** | 29 Sep | LO-OBJ-G only | R3: every conflicting access to an annotated object holds the annotated lock or happens before its publication. P-OWN: the spec names the right lock. |
-| **P-EV**, eviction | ruled 1 Oct | every analysis | A race lost only because the covering shadow record was evicted is accepted, as in the paper's completeness remark. Read strictly 25 Sep-1 Oct, which forced verified DE. |
-| **P-RESET** | 1 Oct | removal-mode DE, merge, loop ranges | Same class as P-EV for a global shadow reset (epoch exhaustion, `__tsan_flush_memory`, `memory_limit_mb`; LG-2). Frequent on memcached (≈ 1 reset/s); verified DE and the loop guard re-check and do not need it. |
-| **P5** | 1 Oct | deferred and range checks | A report lost because the runtime recycled the trace part holding the other thread's history: same class as P-EV. |
-| **ASYNC-TERM** | 1 Oct | terminating post-dominance DE; loop-range DE | A race may go unreported if, between two accesses of one thread, the process or thread is terminated asynchronously or a signal handler does not return. |
-| **FWD-PROGRESS** | 1 Oct | loop-range DE, terminating post-dominance | A loop the language lets the compiler assume terminates (C11 6.8.5p6, C++ forward progress) does terminate. |
-| **P-REPORT** | 3 Oct | removal-mode DE only | After a report on an 8-byte cell, a second race on it before the thread's next synchronisation may go unreported; the cell is never left without a report. |
-| **Plain lock success; library names** (with **LIBC-ALLOC**) | in use | LO; every name table; Redis's config-table proof | A plain `pthread_mutex_lock` does not fail. A libc or libstdc++ name binds to that library, and libc's allocation functions behave as their IR attributes state (fresh, sized, zeroed where marked). |
+| **No use-after-free** | 24 Sep | every analysis | No access through a dangling pointer to freed or reused memory (shape 32). |
+| **IN-BOUNDS** | 4 Oct | every object-based analysis; EVCONF | No access leaves the object its pointer was derived from. |
+| **ALLOC-NOUAF** | 6 Oct | EVCONF hand-off through a program's own allocator (flag, off by default) | A block on its owner's free list is not accessed through earlier pointers until handed out again. |
+| **A3**, signals | 24 Sep (later clauses 25 Sep) | DE; quiet mode's lock scope | Handlers that synchronise with other threads, and signal delivery, are outside the model (shape 41). |
+| **A2** | 1 Oct | EVCONF, thread-root SWMR, whole-program summaries | An indirect call reaches only functions of its IR function type (the CFI rule). |
+| **A2-LIB** | 1 Oct | thread-root SWMR | The program calls no function pointer that only a library produced. |
+| **A4** | 3 Oct | EA's interceptor toggle outside the program's IR | No unit defines a reserved C or POSIX name another unit calls. |
+| **A10, A11** | in use | DynSTC's runtime form; STC | Ignore-sync regions opened elsewhere are unseen; no thread exists when `main` starts except from checked constructors. |
+| **A12**, closed world | 25 Sep | -wp | Nothing outside the program calls in, except a plugin API listed with `-tsan-external-symbols` (Redis lists `deps/`, audit A60). |
+| **A12-DATA** | 4 Oct | quiet threads | Nothing outside the program's IR names a data symbol the phase record relies on. |
+| **FIELD-ADDR** | 4 Oct | phase-guard objects | No member's address is used to reach another member (checked for Redis 7.0.15). |
+| **CFG-TABLE** → **P-DICT** | 4 Oct; narrowed 5 Oct | Redis quiet threads | `dict.c` never reads or writes a stored value or entry; the rest of CFG-TABLE is a whole-program proof (A57-A57c). |
+| **Criterion G** | 25 Sep | merging under verified removal | Every granule stock reports on is still reported, no later, not pair for pair. |
+| **R3, P-OWN** | 29 Sep | LO-OBJ-G | Every conflicting access holds the spec's lock or precedes publication; the spec names the right lock. |
+| **P-EV**, eviction | 1 Oct | every analysis | A race lost only because the covering record was evicted is accepted. |
+| **P-RESET** | 1 Oct | removal-mode DE, merge, loop ranges | The same for a global shadow reset (LG-2; ≈ 1/s on memcached). |
+| **P5** | 1 Oct | deferred and range checks | The same for a recycled trace part. |
+| **ASYNC-TERM** | 1 Oct | terminating post-dominance, loop-range DE | Asynchronous termination or a non-returning handler between two accesses may hide a race. |
+| **FWD-PROGRESS** | 1 Oct | loop-range DE, terminating post-dominance | A loop the language may assume terminates does terminate. |
+| **P-REPORT** | 3 Oct | removal-mode DE | A second race on an already reported cell before the next sync may go unreported. |
+| **Plain lock success; library names; LIBC-ALLOC** | in use | LO; name tables; Redis's config-table proof | `pthread_mutex_lock` does not fail; libc names bind to libc; allocators behave as their IR attributes state. |
 
-**ALLOC-NOUAF validation** (7 Oct; `alloc-nouaf-validation.md`): memcached 1.6.29 built with every check on and a
-run-time record of pushed blocks (root `tsan-cv-b032815698a0`); scope: the `cache.c` free lists (`cache_free` /
-`cache_alloc`, which every caller's push reaches; response objects reused by flag are outside it). 50 runs over five
-workloads (evictions, crawler and metadump, `flush_all`, connection churn): 7,341,545 pushes, 0 accesses to a pushed
-block, 0 double pushes. Controls on a cache.c-shaped model: a write after free and a `memcpy` from a freed block each
-report 1 hit. Rows: `$EXTRA/wt-dev2-r/nouaf/runs.txt` (`$EXTRA`: the lab host's `/extra` data area).
+- ALLOC-NOUAF validation (7 Oct, `alloc-nouaf-validation.md`): 50 runs of a full-check memcached build, 7,341,545 pushes, 0 accesses to a pushed block; scope `cache.c` free lists.
 
 ### 6b. Pending a ruling
 
 | premise | submitted | needed by | statement |
 |---|---|---|---|
-| **P-X86-FD**, narrow form | 4 Oct | EVCONF (memcached 1.81×) | On x86-64 Linux, `close(n)` in a connection's owner happens before the `accept()` in `main` that returns `n`; the kernel orders them, TSan has no such edge. Used only for a previous owner's lend, not found in memcached 1.6. |
-| **P-LIBEVENT**, the callback contract | 4 Oct | EVCONF | libevent runs an event's callback on the thread that runs its base's loop, and passes it the descriptor the event was registered with. |
-| **A5** | 24 Sep | per-unit analyses on `-fPIC` code | A default-visibility definition in position-independent code is not replaced at load time. |
-| **A6** | 24 Sep | LTO only | An `available_externally` body equals the definition that gets linked. |
-| **A8** | 25 Sep | `-tsan-de-relaxed-atomic-nosync`, N1-ATOMIC, DE's trusted `nosync` callees | The runtime keeps `force_seq_cst_atomics=0`. A start-up check is written, not built. |
+| **P-X86-FD**, narrow | 4 Oct | EVCONF (1.81×) | `close(n)` in the owner happens before the `accept()` in `main` that returns `n`. |
+| **P-LIBEVENT** | 4 Oct | EVCONF | A callback runs on its base's loop thread with the descriptor it was registered with. |
+| **A5** | 24 Sep | per-unit analyses on `-fPIC` code | A default-visibility definition is not replaced at load time. |
+| **A6** | 24 Sep | LTO only | An `available_externally` body equals the linked definition. |
+| **A8** | 25 Sep | relaxed-atomic DE rule, N1-ATOMIC | The runtime keeps `force_seq_cst_atomics=0` (start-up check not built). |
 | **A9** | 25 Sep | post-dominance DE | A fatal fault ends the process. |
-| **P-X86-FD**, wider form | 4 Oct | EVCONF-FIELDS only (no result of record) | Every access before `close(n)` happens before every access after the `accept()` returning `n`. Cost: 4 report sites per close/reuse event on memcached that stock reports. |
-| **FD-LIFETIME** | 5 Oct | the run-time model of descriptor reuse behind P-X86-FD | Every call that frees or may free descriptor `n` is made by a thread that holds the instance at `n`: the descriptor counterpart of no-use-after-free. |
-| **G1**, descriptor reuse | 5 Oct | the general form of the wider P-X86-FD, applied only in binaries with EVCONF elisions | Within one file table, a free of `n` happens before any later call that returns `n`. |
-| **MALLOC-ATTR**, general form | 4 Oct | the quiet mode's fresh-allocation rule on a program that marks an allocator `malloc` | A function declared `__attribute__((malloc))` returns memory no other live pointer refers to. Redis no longer rests on it (6c). |
+| **P-X86-FD**, wider | 4 Oct | EVCONF-FIELDS (no result of record) | Every access before `close(n)` happens before every access after the `accept()` returning `n`. |
+| **FD-LIFETIME** | 5 Oct | descriptor-reuse model behind P-X86-FD | Whoever frees descriptor `n` holds the instance at `n`. |
+| **G1** | 5 Oct | binaries with EVCONF elisions | Within one file table, freeing `n` happens before any later call returning `n`. |
+| **MALLOC-ATTR**, general | 4 Oct | quiet mode's fresh-allocation rule | An `__attribute__((malloc))` function returns unaliased memory. |
+| **PROVENANCE**, **P-ALIAS**, **A12-DATA for EVCONF**, **POSIX fresh descriptors** | 5-6 Oct | only the parked EVCONF-DERIVE; no result rests on them | constant-overwritten pointers; strict aliasing; A12-DATA for the derivation's slots; fresh descriptor numbers. |
 
-Submitted only for the spec-free derivation of EVCONF (EVCONF-DERIVE, parked 7 Oct: 0 fields derived); no result
-rests on them:
-- **PROVENANCE** (5 Oct): a pointer read from memory a constant overwrote points to no object other than the
-  overwritten pointer's. (The drain's untyped writes, D-H3, rest on the escape-analysis premise instead.)
-- **P-ALIAS** (6 Oct): the program obeys C11's effective-type rule (strict aliasing).
-- **A12-DATA for EVCONF** (6 Oct): A12-DATA extended to the data slots the derivation judges.
-- **POSIX fresh descriptors** (6 Oct): a successful accept, socket or open returns a number no open descriptor holds.
-
-### 6c. Withdrawn, declined or not adopted
+### 6c. Withdrawn, declined, not adopted
 
 | premise | when | why |
 |---|---|---|
-| **MALLOC-ATTR** for Redis | withdrawn 6 Oct | The config-table proof trusts no allocator by name (audits A63e, A63f; proof version 12): freshness, size and zeroing come from the IR, so Redis rests on LIBC-ALLOC only. |
-| **A7**: pointer bytes are copied, never computed | not adopted | The integer-copy closure is on instead (`-tsan-ea-integer-copies-escape`). |
-| **A3-fiber**: a handler returns on the same fiber | not adopted | — |
-| **P-PAGER**: SQLite's Pager and Wal accessed only under their b-tree's mutex | declined 29 Sep | SQLite asserts nothing of it. |
-| **P-CONN**: SQLite's private connections obey SQLite's documented threading rule (OWN-CONN) | adopted and withdrawn 29 Sep | It rests on a documented rule, not on SQLite's own assertions, and LO-OBJ-G already covers SQLite. |
-| **P-HAND**: a Redis client's buffers follow the program's hand-off protocol | not adopted 29 Sep | It trusts the program's own thread protocol; the run-time quiet threads (2 Oct) replace it. |
+| **MALLOC-ATTR** for Redis | withdrawn 6 Oct | The config-table proof trusts no allocator by name (A63e, A63f); Redis rests on LIBC-ALLOC. |
+| **A7**: pointer bytes never computed | not adopted | The integer-copy closure is on instead. |
+| **A3-fiber** | not adopted | — |
+| **P-PAGER** | declined 29 Sep | SQLite asserts nothing of it. |
+| **P-CONN** (OWN-CONN) | withdrawn 29 Sep | Rests on a documented rule, not on SQLite's assertions. |
+| **P-HAND** | not adopted 29 Sep | Trusts Redis's protocol; the run-time quiet threads replace it. |
 
-### 6d. Relaxed (results labelled "relaxed", kept apart from race-preserving results)
+### 6d. Relaxed (results labelled "relaxed")
 
-- **P-EV-DEFER** (28 Sep, extended 29 Sep): only for the relaxed DE flags DE-3R (loop ranges) and DE-2R (adjacent-field
-  merging). A race may be lost only when the other access's record disappears between an access and its deferred or
-  widened check, or on an unhandleable termination inside a ranged loop. An audit found two losses outside this class
-  (a ranged loop whose exit is never reached; a group whose record is not stored after a report); fixes designed.
+| premise | when | needed by | statement |
+|---|---|---|---|
+| **P-EV-DEFER** | 28-29 Sep | DE-3R, DE-2R | A race lost when the other record disappears before a deferred or widened check; two losses outside this class found, fixes designed. |
 
 ## 7. What is not known
 
