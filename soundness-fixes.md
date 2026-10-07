@@ -401,7 +401,7 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 | premise | adopted | needed by | statement |
 |---|---|---|---|
 | **No use-after-free** | 24 Sep | every analysis | No access through a dangling pointer to freed or reused memory (shape 32). |
-| **IN-BOUNDS** | 4 Oct | every object-based analysis; EVCONF | No access leaves the object its pointer was derived from. |
+| **IN-BOUNDS** | 4 Oct | every object-based analysis; EVCONF, EVCONF-CHECKED | No access leaves the object its pointer was derived from; this includes a pointer walked through a block in a loop, whose ownership EVCONF-CHECKED checks once before the loop (audit A70f). |
 | **ALLOC-NOUAF** | 6 Oct | EVCONF hand-off through a program's own allocator (flag, off by default) | A block on its owner's free list is not accessed through earlier pointers until handed out again. |
 | **A3**, signals | 24 Sep (later clauses 25 Sep) | DE; quiet mode's lock scope | Handlers that synchronise with other threads, and signal delivery, are outside the model (shape 41). |
 | **A2** | 1 Oct | EVCONF, thread-root SWMR, whole-program summaries | An indirect call reaches only functions of its IR function type (the CFI rule). |
