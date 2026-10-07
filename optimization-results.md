@@ -17,7 +17,7 @@ under the premises of §6).
 | memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **1.76×** (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
 | Chromium | — | 1.39× | not re-measured | | | |
 
-- SQLite (3), (4): leg zgb4 (4 offsets × N=6, A/A 1.005; gen6, the earlier (3), reads 1.17× in the same leg). (3) names no SQLite struct, field or function except `BtShared.mutex`; the generator also names the sqlite3_mutex_* API, malloc/free and __assert_fail (audits A61h-A61m; premise PM, §6). (3) leaves ~5 % against the hand-written spec (0.951). create_drop_index_1 is not quoted: its A/A reads 1.18× (the same binary varies 0.92-1.36×).
+- SQLite (3), (4): leg zgb4 (4 offsets × N=6, A/A 1.005; gen6, the earlier (3), reads 1.17× in the same leg). (3) names no SQLite struct, field or function except `BtShared.mutex`; the generator also names the sqlite3_mutex_* API, malloc/free and __assert_fail (audits A61h-A61m; premise PM, §6). (3) leaves ~5 % against the hand-written spec (0.951). create_drop_index_1 is not quoted: its A/A reads 1.18× (the same binary varies 0.92-1.36×). Measured on half A (CPUs 8-15,40-47: socket 0, local to the NVMe, 16 hardware threads). On half B (socket 1, 32 threads) stock's stress2 runs ~3.5 % faster while gen6's does not, so gen6 reads 1.10-1.12× there instead of 1.17×.
 - Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): leg kcn record (A/A 0.998-1.000, no void run; the two apollo halves read 1.77 and 1.74), root `tsan-ecc-9c656c7b6d62` (audits A70-A70f, check-tsan ×12, preservation PASS; residual L-1'); the earlier root without the loop-hoisted check read 1.34× (kcj4); (4): leg mct4.
 - FFmpeg (2): leg ffb4, 1.29× over same-compiler stock for both the record line and the shipping line (copy_passthrough 2.64×, encoders ~1.00-1.05×); upstream stock lies within 1 % of it. Of the 1.29×, 1.085× is DynSTC-RT's runtime option alone (stock TSan run with dynstc_rt=1 gains the same; leg fft4b), and the instrumentation 1.18×. FFmpeg's record workload reports no race in stock, so preservation rests on seeded races (8 Oct, `ffmpeg-seeded-design.md`): 8 seeds, one per mechanism the line changes (DynSTC-RT transitions, N1 inline test, N1-ST skip, copy_passthrough's hot path, DE-covered accesses), each reported 10/10 by stock and by ffk and s1; seeds off, 0 reports.
 - One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (≤ 284 start-up hook calls), and on Redis and memcached its cost is inside the A/A and −1.6 %.
@@ -290,6 +290,10 @@ FFmpeg variants: inline hit tests at statically chosen sites (N1-S), same run an
   - **What is left on the wall: module.c.** Its TSan pass takes 0.91 s (every other unit ≤ 0.08 s); an
     identity-preserving fix there comes straight off the critical path. Its instruction selection (2.1 s) is the
     inline fast paths' own cost.
+  - **Parked lever (8 Oct, not built): memoise classifySyncEffect in DE's scanPaths.** Each covering pair rescans
+    the same calls, 8.2 % of module.c's compile. Identical by construction (a pure function of the call, its callee
+    and read-only analyses). Expected gain about −0.4 s wall on rcy (+212 % → ~+204 %) and −0.5 CPU-s. Not worth a
+    root and a full gate now.
 - **FFmpeg's +85 %** comes from the inline fast path at every check, and its speed needs them. Static placement s1 cuts the compile overhead from +85 % to +45 % at a 1.7 % speed loss; it, the other static rules and the profile hot list are closed (Table 6). Rows: `$EXTRA/wt-dev2-r/cct/btime.txt` (s9ff*), root `tsan-n1s-bd979a775aa7`.
 
 ## Notes
