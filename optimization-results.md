@@ -194,6 +194,7 @@ The old "same location" rule (U; removal mode, over exact DE):
 | FFmpeg, MySQL, SQLite one configuration with -wp | 0.991 (ffr4); 0.994 / 0.987 (myr4); unresolvable (sqxy4) | no -wp | -wp rule, 7 Oct |
 | Removal-mode DE on FFmpeg | +10.2 % (screening) | −0.3 % (full leg) | did not reproduce |
 | Compile time, per unit | SQLite +20 %, memcached +8 %, Redis +9 %, FFmpeg +16 % | table below | omitted the -wp summary step |
+| SQLite zgB with its spec generator (8 Oct) | sqgen16d 529.7 s; line 576.7 s, 17.3× stock (gen0.sh, g0time.txt) | sqgen16e 49.3 s; 96.2 s, 2.89× | sqgen16e, byte-identical output |
 | Compile time, first rows on 744024407b56 | Redis +324 %, memcached +121 % | table below | method fixed 7 Oct |
 | Compile time on 744024407b56, before P0, P1a, P1c (cct/btime.txt) | mcf +81 %, mcy +141 %, Redis +353 %, SQLite +27 %, FFmpeg +80 %, MySQL +17 % | mcf +11 %, mcy +35 %, Redis +231 %, SQLite +28 %, FFmpeg +97 %, MySQL +16 % (final table) | P0 in the compiler; P1a and P1c in the harness, all identity-gated |
 
@@ -215,7 +216,7 @@ Method:
 | Redis | one configuration (rcy) | 8 | 5.53 s | 18.31 s | +231 % (with P1d: +212 %, CPU +158 %) | 8.23 s |
 | SQLite | LO-OBJ-G gen6 (zg6) | 8 | 33.23 s | 42.57 s | +28 % | (no -wp) |
 | SQLite | LO-OBJ-G gen9b (zgB), build only | 8 | 33.27 s (CPU 34.1) | 43.28 s (CPU 43.1) | +30 % | (no -wp) |
-| SQLite | zgB with its spec generator, no profile (once per program version) | — | 33.27 s | 576.7 s (CPU ~579) | 17.3× | generator 533.4 s |
+| SQLite | zgB with its spec generator (sqgen16e), no profile (once per program version) | — | 33.27 s | 96.2 s (CPU ~98.6) | 2.89× | generator 52.9 s |
 | FFmpeg | ffn = ffk, full inline hit test | 8 | 76.10 s | 149.88 s | +97 % | (no -wp) |
 | MySQL | Release, FE-INL (rpf) | 6 | 874.75 s | 1015.13 s | +16 % | (no -wp) |
 
@@ -223,13 +224,15 @@ Method:
 run, 3 reps, medians. SQLite compiles one unit, so its CPU is close to its wall. The rows and generator times are in
 `$EXTRA/wt-dev2-r/cczgb/` (btime.txt; generator g0time.txt; drivers cczgb.sh, cczgb23.sh, gen0.sh).
 
-- **The generator, per run, with no profile (wall; CPU), 3 reps (gen0.sh, the record run for column 3's provenance):**
+- **The generator, per run, with no profile (wall; CPU), 3 reps** (gen1.sh, the record run for column 3's provenance;
+  `g1time.txt`):
   - **IR:** sqlite3.c to IR at -O0 twice, a dbg build with -DSQLITE_DEBUG (assertions live) and a rel build, each
-    with mem2reg, in parallel: 3.6 s; ~6.4 CPU-s.
-  - **sqgen16d.py**, which writes the spec, with an empty executed-function list: 529.7 s on one thread.
-  - Total 533.4 s.
-  - **Every rep's spec has fe95d761's directives exactly.** The files differ only in the header, which names that
-    rep's input paths.
+    with mem2reg, in parallel: 3.6 s; ~6.3 CPU-s.
+  - **sqgen16e.py** (9e08d7dd499d1de1), which writes the spec, with an empty executed-function list: 49.3 s on one
+    thread.
+  - Total 52.9 s.
+  - **Every rep's spec has fe95d761's directives exactly**, and its body equals sqgen16d's from the same IR byte for
+    byte. The files differ only in the header, which names that rep's input paths.
   - **The line's own build needs none of it.** The two -O0 IR builds are the generator's alone, including the dbg
     build, which no benchmark build uses.
   - It runs once per program version: the spec is a file, reused by every later build.
@@ -239,7 +242,6 @@ run, 3 reps, medians. SQLite compiles one unit, so its CPU is close to its wall.
   `sqlite3-gen9b.spec`, 6/6 objects, compared in trees whose names have the same length. The host tools jimsh,
   lemon and mkkeywordhash embed absolute source paths, so a shorter tree name shifts their `.rodata`; the first
   control differed for that reason.
-- The cost is sqgen16d (530 s, Python, one thread).
 
 FFmpeg variants: inline hit tests at statically chosen sites (N1-S), same run and stock. Speed is over stock TSan as shipped (no runtime options), from leg fft4b (AMD, 4 offsets × N=1, balanced order; per-offset range in brackets).
 
