@@ -10,14 +10,14 @@ under the premises of §6).
 
 | app | workload | submitted paper | (1) no annotations, static | (2) no annotations, run-time checked | (3) spec generated from the program's assertions | (4) our annotations |
 |---|---|---|---|---|---|---|
-| SQLite | threadtest3: stress2, create_drop_index_1 | 1.71× | 1.02× (the paper's analyses) | — | **1.16×** (LO-OBJ-G, gen6 = gen8's output; run-time lock guard) | **1.25×** (LO-OBJ-G, spec v7; run-time guarded) |
+| SQLite | threadtest3: stress2 | 1.71× | 1.02× (the paper's analyses) | — | **1.19×** (LO-OBJ-G, spec gen9b = sqgen16's output; run-time lock guard) | **1.25×** (LO-OBJ-G, spec v7; run-time guarded) |
 | FFmpeg | four transcodes of one film | 1.57× | — | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× (FE-INL + N1) | **1.54×** (FE-INL + N1 + quiet threads derived from the whole program) | — | 1.40× (hand-written quiet-thread lines; superseded by (2)) |
 | MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** (FE-INL) | — | — | — |
 | memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **1.76×** (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
 | Chromium | — | 1.39× | not re-measured | | | |
 
-- SQLite (3), (4): leg zg64b. Inputs still named by hand (audit A61f): `BtShared.mutex`, `removeFromSharingList`, the allocator names, `iDb`, `CellInfo`, the mutex API, 12 field names.
+- SQLite (3), (4): leg zgb4 (4 offsets × N=6, A/A 1.005; gen6, the earlier (3), reads 1.17× in the same leg). (3) names no SQLite struct, field or function except `BtShared.mutex`; the generator also names the sqlite3_mutex_* API, malloc/free and __assert_fail (audits A61h-A61m; premise PM, §6). (3) leaves ~5 % against the hand-written spec (0.951). create_drop_index_1 is not quoted: its A/A reads 1.18× (the same binary varies 0.92-1.36×).
 - Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): leg kcn record (A/A 0.998-1.000, no void run; the two apollo halves read 1.77 and 1.74), root `tsan-ecc-9c656c7b6d62` (audits A70-A70f, check-tsan ×12, preservation PASS; residual L-1'); the earlier root without the loop-hoisted check read 1.34× (kcj4); (4): leg mct4.
 - FFmpeg (2): leg ffb4, 1.29× over same-compiler stock for both the record line and the shipping line (copy_passthrough 2.64×, encoders ~1.00-1.05×); upstream stock lies within 1 % of it. Of the 1.29×, 1.085× is DynSTC-RT's runtime option alone (stock TSan run with dynstc_rt=1 gains the same; leg fft4b), and the instrumentation 1.18×. FFmpeg's record workload reports no race in stock, so preservation there certifies nothing (7 Oct, 10 runs per arm, all codecs).
 - One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (≤ 284 start-up hook calls), and on Redis and memcached its cost is inside the A/A and −1.6 %.
