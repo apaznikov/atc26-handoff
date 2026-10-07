@@ -19,7 +19,7 @@ under the premises of §6).
 
 - SQLite (3), (4): leg zg64b. Inputs still named by hand (audit A61f): `BtShared.mutex`, `removeFromSharingList`, the allocator names, `iDb`, `CellInfo`, the mutex API, 12 field names.
 - Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2): leg kcn record (A/A 0.998-1.000, no void run; the two apollo halves read 1.77 and 1.74), root `tsan-ecc-9c656c7b6d62` (audits A70-A70f, check-tsan ×12, preservation PASS; residual L-1'); the earlier root without the loop-hoisted check read 1.34× (kcj4); (4): leg mct4.
-- FFmpeg (2): leg ffb4, 1.29× over same-compiler stock for both the record line and the shipping line (copy_passthrough 2.64×, encoders ~1.00-1.05×); upstream stock lies within 1 % of it.
+- FFmpeg (2): leg ffb4, 1.29× over same-compiler stock for both the record line and the shipping line (copy_passthrough 2.64×, encoders ~1.00-1.05×); upstream stock lies within 1 % of it. Of the 1.29×, 1.085× is DynSTC-RT's runtime option alone (stock TSan run with dynstc_rt=1 gains the same; leg fft4b), and the instrumentation 1.18×. FFmpeg's record workload reports no race in stock, so preservation there certifies nothing (7 Oct, 10 runs per arm, all codecs).
 - One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (≤ 284 start-up hook calls), and on Redis and memcached its cost is inside the A/A and −1.6 %.
 
 ## Table 2. Optimizations that gain
@@ -154,6 +154,7 @@ The old "same location" rule (U; removal mode, over exact DE):
 | **N1, FE and other inline paths** | | | | |
 | N1-ST =miss; N1-ST (b), (c) =fs | R | flag read on a miss; hoisted; in the fast state | FFmpeg −6.6 %; equal | front kept |
 | N1-ST-WORKER; N1-SPLIT, N1-PAIR; N1-CSE across calls | S | inline-test variants | 0; subsumed by DE-2R; ≤ 1 % expected | closed; not built |
+| N1 placement for compile time: profile hot list (PGO-PLACE q=0.99, 0.999); static frequency (N1-S s1, s4, K=2) | S | the inline hit test only at profile-hot or statically hot checks (block frequency per function entry ≥ 1, ≥ 4; top 2 per function), to cut FFmpeg's compile time | FFmpeg compile overhead +97 % → +46 / +36 / +20 % (static, final table); speed over stock 1.285× → 1.241× / 1.227× (fft4b), k2 ≈ 1.09× (screening); profile 0.963 / 0.989 of full inline. All of the loss is in copy_passthrough | closed |
 | FE-INL exit-max=1; unified exit | S | FE-INL variants | MySQL −5.2 %; identical | dropped |
 | FE oracle; TSan-aware inlining | U | entry/exit removed | Redis +23.5 pp, MySQL +13.6, SQLite +4.4 | ceiling |
 | call-cost ceiling (N1/N2-real) | U | time in runtime calls of hitting checks | SQLite 21 %, FFmpeg 17.5 %, Redis 25 %, memcached ≈ 0 | bounds N1, N2 |
@@ -194,19 +195,45 @@ The old "same location" rule (U; removal mode, over exact DE):
 | Removal-mode DE on FFmpeg | +10.2 % (screening) | −0.3 % (full leg) | did not reproduce |
 | Compile time, per unit | SQLite +20 %, memcached +8 %, Redis +9 %, FFmpeg +16 % | table below | omitted the -wp summary step |
 | Compile time, first rows on 744024407b56 | Redis +324 %, memcached +121 % | table below | method fixed 7 Oct |
+| Compile time on 744024407b56, before P0, P1a, P1c (cct/btime.txt) | mcf +81 %, mcy +141 %, Redis +353 %, SQLite +27 %, FFmpeg +80 %, MySQL +17 % | mcf +11 %, mcy +35 %, Redis +231 %, SQLite +28 %, FFmpeg +97 %, MySQL +16 % (final table) | P0 in the compiler; P1a and P1c in the harness, all identity-gated |
 
 ## Compile time
 
-Root `tsan-cc-744024407b56`, both arms from the same tree; -wp summary step + build, no ccache, medians of 3. Rows: `$EXTRA/wt-dev2-r/cct/btime.txt` (`$EXTRA` = the lab host's `/extra/<user>`).
+**Final table (7 Oct).** Root `tsan-n1s-e52d8787b59e`: 744024407b56 plus P0 (a0c3b51bbe07) plus the two N1-S commits, which only the FFmpeg variants s1, s4 and k2 switch on. Its runtime is byte-identical to `tsan-cc-a0c3b51bbe07`'s. Freeze gates: IR 196 passed, tsan 410 passed.
+
+Method:
+- The harness carries P1a (memcached configures once) and P1c (the summary step links bitcode).
+- Stock is built from the same tree in the same run, alternating with the line in each rep.
+- Compile = -wp summary step + build, timed by build.sh's ns timer. Fresh trees, no ccache, CPUs 28-35, medians of 3.
+- Overhead = median of the line / median of stock.
+- Rows: `$EXTRA/wt-dev2-r/cctf/btime.txt`; driver cctf.sh (`$EXTRA` = the lab host's `/extra/<user>`).
 
 | app | line of record (tree) | -j | stock | line | overhead | of which summary step |
 |---|---|---|---|---|---|---|
-| memcached | no annotations (mcf) | 8 | 6.07 s | 11.01 s | +81 % | 4.67 s |
-| memcached | one configuration + EVCONF (mcy) | 8 | 6.16 s | 14.83 s | +141 % | 8.53 s |
-| Redis | one configuration (rcy) | 8 | 5.06 s | 22.91 s | +353 % | 13.06 s |
-| SQLite | LO-OBJ-G gen6 (zg6) | 8 | 32.88 s | 41.63 s | +27 % | (no -wp) |
-| FFmpeg | ffn | 8 | 77.30 s | 139.29 s | +80 % | (no -wp) |
-| MySQL | Release, FE-INL (rpf) | 6 | 858.30 s | 1005.21 s | +17 % | (no -wp) |
+| memcached | no annotations (mcf) | 8 | 7.25 s | 8.03 s | +11 % | 6.74 s (configure included, P1a) |
+| memcached | one configuration + EVCONF (mcy) | 8 | 6.47 s | 8.71 s | +35 % | 7.38 s (configure included, P1a) |
+| Redis | one configuration (rcy) | 8 | 5.53 s | 18.31 s | +231 % | 8.23 s |
+| SQLite | LO-OBJ-G gen6 (zg6) | 8 | 33.23 s | 42.57 s | +28 % | (no -wp) |
+| FFmpeg | ffn = ffk, full inline hit test | 8 | 76.10 s | 149.88 s | +97 % | (no -wp) |
+| MySQL | Release, FE-INL (rpf) | 6 | 874.75 s | 1015.13 s | +16 % | (no -wp) |
+
+FFmpeg variants: inline hit tests at statically chosen sites (N1-S), same run and stock. Speed is over stock TSan as shipped (no runtime options), from leg fft4b (AMD, 4 offsets × N=1, balanced order; per-offset range in brackets).
+
+| variant | flags beyond ffn | line | compile overhead | (paired per-rep median) | speed over stock |
+|---|---|---|---|---|---|
+| ffk (ffn) | — | 149.88 s | +97 % | +88 % | **1.285×** (1.266-1.305) |
+| s1 (ffu) | static-hot=1e6 min-freq=1 max-insts=0 | 110.77 s | +46 % | +44 % | **1.241×** (1.237-1.246) |
+| s4 (ffv) | min-freq=4 | 103.53 s | +36 % | +33 % | 1.227× (1.220-1.234) |
+| k2 (ffw) | static-hot=2 | 91.09 s | +20 % | +15 % | ≈ 1.09× (screening: 0.845 of ffk) |
+
+- All of the speed difference is in copy_passthrough (ffk 2.68×, s1 2.34×, s4 2.27× over stock); the encoders are at 0.98-1.02.
+- Of ffk's 1.285×, 1.085× is the runtime option dynstc_rt=1, which speeds stock TSan by the same 8.5 % when stock runs with it; the instrumentation line itself gives 1.184× (leg fft4, 1.190×). A/A on the same half in fft4: 0.994.
+- FFmpeg's rep 2 ran at load ~10, and its stock build took 94.4 s against 75.1 and 76.1 s; the paired column divides each rep's line by its own stock.
+- Overlaps:
+  - The first 18 rows (rep 1, and rep 2 through Redis st) overlapped this lane's own SQLite preservation run on CPUs 52-59 (gpresb).
+  - f1ffk2j8r2 overlapped a 4-minute offset relink on 52-59 (ffsoff2).
+  - Both are logged in each row's `others=`.
+- **Static placement remains a negative for speed** (Table 6). It trades compile time against speed; s1 halves FFmpeg's compile overhead (+97 % → +46 %) for 1.285× → 1.241× speed over stock, and the choice among s1, s4 and k2 is a trade-off, not a fix.
 
 - FFmpeg: N1's inline hit tests give 3.8× stock's .text; on 40 units the analyses add 17 % compile CPU, the hit test ×1.96. MySQL: FE-INL grows .text ×1.86.
 - Fixed: the phase-summary pass on FFmpeg 249.8 → 37.5 s (510cbba6ec58, identical records).
@@ -224,7 +251,21 @@ Root `tsan-cc-744024407b56`, both arms from the same tree; -wp summary step + bu
     - The summaries are the same, apart from the digest and the phase record that holds it. Given the old build's own IR, the new root re-derives every summary file byte for byte, the digest included.
   - Rows, gate and scripts: `$EXTRA/de-recovery-gate/degen/ctime/p0/` (btime.txt, gate.txt, ctp0.sh, elfcmp.py, sumcmp.py, rederive.sh).
   - These rows are a separate run from the table above, so compare within this table only.
-- Parked (7 Oct): configure once for memcached (P1a, its gate written, not run). Per-module summaries and compile-once are deferred. PGO-PLACE for FFmpeg is in progress.
+- **Configure once for memcached (P1a, 7 Oct).** The gate passed: 6 pairs with identical linked code, summaries and configure outputs. Base flow against P1a flow on the P0 root, CPUs 28-35, -j8, medians of 3:
+  - mcf 11.44 → 8.06 s (−29.6 %);
+  - mcy 12.53 → 9.08 s (−27.5 %).
+  - Rows: `$EXTRA/de-recovery-gate/degen/ctime/p1a/btime.txt`. These rows are a separate run, with no stock row.
+  - Per-module summaries and compile-once remain deferred.
+- **Bitcode link in the summary step (P1c, 7 Oct).** The modules' IR is still emitted as text, so the recorded compile flags and the program digest do not change. llvm-as assembles each module in parallel, then llvm-link and opt read bitcode, which avoids re-parsing about 45 MB of text for Redis. Gate passed: 9 pairs (Redis rcy, memcached mcy and mcf, 3 reps each) with identical linked code and summaries, the digest included.
+  - One exception, by design: ST's `# tsan-summary-link:` comment names the file opt read, `.ll` before and `.bc` after. Readers skip it, and the gate masks only that extension.
+  - Base flow against P1c flow on the P0 root, CPUs 28-35, -j8, medians of 3, summary step / compile:
+    - Redis rcy: 10.62 → 8.00 s / 20.59 → 18.01 s (−12.5 %);
+    - mcy: 5.71 → 5.28 s / 12.15 → 11.80 s (−2.9 %);
+    - mcf: 4.84 → 4.57 s / 11.28 → 11.02 s (−2.3 %).
+  - Base and P1c alternated per rep. Another user's builds ran on the host during the run (load ~6).
+  - Rows, gate, patch: `$EXTRA/de-recovery-gate/degen/ctime/p1c/` (btime.txt, gate.txt, p1c-apply.py, ctp1c.sh, sumcmp.py).
+  - SQLite's generator still links text, so the same change applies there; FFmpeg and MySQL already link bitcode.
+- **FFmpeg's +85 %** comes from the inline fast path at every check, and its speed needs them. Static placement s1 cuts the compile overhead from +85 % to +45 % at a 1.7 % speed loss; it, the other static rules and the profile hot list are closed (Table 6). Rows: `$EXTRA/wt-dev2-r/cct/btime.txt` (s9ff*), root `tsan-n1s-bd979a775aa7`.
 
 ## Notes
 
