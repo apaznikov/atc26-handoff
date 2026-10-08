@@ -443,7 +443,7 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 | **MALLOC-ATTR**, general | 4 Oct | quiet mode's fresh-allocation rule | An `__attribute__((malloc))` function returns unaliased memory. |
 | **PROVENANCE**, **P-ALIAS**, **A12-DATA for EVCONF**, **POSIX fresh descriptors** | 5-6 Oct | only the parked EVCONF-DERIVE; no result rests on them | constant-overwritten pointers; strict aliasing; A12-DATA for the derivation's slots; fresh descriptor numbers. |
 
-- **P-SUBOBJ** (8 Oct): an address derived from a member array stays inside that member (SQLite: `MemPage.aiOvfl[]`, `MemPage.apOvfl[]`, `Pager.aStat[]` at variable indices). Decision of 8 Oct: replace it by a run-time index check that voids the run; if the check cannot be built or costs measurable time, adopt it as a premise (indexing past a member array is undefined behaviour in C in any case).
+- **P-SUBOBJ** (8 Oct): an address derived from a member array stays inside that member. For SQLite's `MemPage.aiOvfl[]`, `MemPage.apOvfl[]` and `Pager.aStat[]` it is no longer a premise: `bound` lines make the compiler test the index, and the length of a variable-length copy, before the access and void the run on a miss (root `tsan-carve-b575340c1ee8`, audit A76; 13 tests, 0.003 % of executed checks). For `BtCursor.aiIdx[]` and `apPage[]` (cursor descent, ~1 % of checks by count) the confirm leg decides between the same check and naming the premise; indexing past a member array is undefined behaviour in C in either case.
 
 ### 6c. Withdrawn, declined, not adopted
 
