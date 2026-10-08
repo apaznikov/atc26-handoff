@@ -415,6 +415,7 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 | **Criterion G** | 25 Sep | merging under verified removal | Every granule stock reports on is still reported, no later, not pair for pair. |
 | **PM** (widened 7 Oct) | 7 Oct | the SQLite spec generator (gen16 on): one mutex identity for a lookup and its registration | SQLite's configuration in use (`sqlite3Config`: method tables and flags) is fixed after initialization, and its tables are the module's constant tables; no SQLite object outlives `sqlite3_shutdown` (clause added 8 Oct, audit A61l). SQLite's API contract (`sqlite3_config` after `sqlite3_initialize` returns SQLITE_MISUSE; shutdown requires every connection closed). |
 | **B2** (per type) | in gen9b's spec since its audit (A61h); named in §6 on 8 Oct | LO-OBJ-G specs generated from assertions (column (3)) | Holding the lock of one instance counts for every object of the protected type. For the derived parser params: a cell parsed under BtShared q's lock belongs to q (its page or q's temp space). Counterexample fixture R3 (`sqauto/repro19/`): a cell of a second BtShared parsed under the first's lock loses the race; SQLite conforms by reading. Path B (column (2)) does not use it: its owner is per instance and checked at run time. |
+| **Debug-location fidelity** | 8 Oct | the carve check's narrowing (SQLite column (3)) | A debug location names the function an instruction came from: the compiler keeps or drops locations and does not attribute code to another function. An instruction without a location is always checked; a build without debug info is refused. |
 | **R3, P-OWN** | 29 Sep | LO-OBJ-G | Every conflicting access holds the spec's lock or precedes publication; the spec names the right lock. |
 | **P-EV**, eviction | 1 Oct | every analysis | A race lost only because the covering record was evicted is accepted. |
 | **P-RESET** | 1 Oct | removal-mode DE, merge, loop ranges | The same for a global shadow reset (LG-2; ≈ 1/s on memcached). |
@@ -441,6 +442,8 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 | **G1** | 5 Oct | binaries with EVCONF elisions | Within one file table, freeing `n` happens before any later call returning `n`. |
 | **MALLOC-ATTR**, general | 4 Oct | quiet mode's fresh-allocation rule | An `__attribute__((malloc))` function returns unaliased memory. |
 | **PROVENANCE**, **P-ALIAS**, **A12-DATA for EVCONF**, **POSIX fresh descriptors** | 5-6 Oct | only the parked EVCONF-DERIVE; no result rests on them | constant-overwritten pointers; strict aliasing; A12-DATA for the derivation's slots; fresh descriptor numbers. |
+
+- **P-SUBOBJ** (8 Oct): an address derived from a member array stays inside that member (SQLite: `MemPage.aiOvfl[]`, `MemPage.apOvfl[]`, `Pager.aStat[]` at variable indices). Decision of 8 Oct: replace it by a run-time index check that voids the run; if the check cannot be built or costs measurable time, adopt it as a premise (indexing past a member array is undefined behaviour in C in any case).
 
 ### 6c. Withdrawn, declined, not adopted
 
