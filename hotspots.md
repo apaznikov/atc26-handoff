@@ -10,7 +10,7 @@ State 7 Oct 2026; profiles of 3-4 Oct (root `tsan-integcr-1738fdee35e7`, record 
 
 | app | best now (over stock TSan) | where the cycles went (3 Oct) | hottest site | what took it | what is left |
 |---|---|---|---|---|---|
-| **memcached** | 1.02× S; 1.76× R (EVCONF-CHECKED); 1.81× A+R | ranges and interceptors 31 %, checks 30 % (88 % miss), mutexes 25 % | `memset` of each response object, **16.6 %** | ✅ EVCONF-RANGES, -ARGS, -INTERCEPT (A+R) | mutexes and plain checks, a quarter each; ⏳ EVCONF-FIELDS (A+R); ○ EVCONF-CHECKED (R); ✖ unlocked flag globals |
+| **memcached** | 1.02× S; 1.80× R (EVCONF-CHECKED); 1.81× A+R | ranges and interceptors 31 %, checks 30 % (88 % miss), mutexes 25 % | `memset` of each response object, **16.6 %** | ✅ EVCONF-RANGES, -ARGS, -INTERCEPT (A+R) | mutexes and plain checks, a quarter each; ⏳ EVCONF-FIELDS (A+R); ○ EVCONF-CHECKED (R); ✖ unlocked flag globals |
 | **Redis**, main thread | 1.54× R | ranges and interceptors 36 %, checks 28 % (97 % hit), function entry 10 % | the reply list's `memcpy`, **14.1 %** | ✅ quiet threads with the range skip (R) | function entry (○ QUIET-FE, R); the allocator; the guard's own code (≈ 6 %) |
 | **SQLite** | 1.16× G+R; 1.25× A+R | checks 51 % (no site above 0.8 %), ranges 17 %, mutexes 7 % | `memcmp` of record bytes, 3.7 % | ✅ LO-OBJ-G (G+R, A+R) | pointer-argument objects (45 % of checks); ⏸ `db->mutex` objects; ⏸ DE-AV (R) |
 | **MySQL** | 1.13× S | checks 41 % (top site 0.36 %), atomics and sync 15 %, function entry 12 % | none | ✅ FE-INL (S) | 62.5 % of checks on genuinely shared memory; ○ EA call-site census |
