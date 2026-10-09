@@ -213,6 +213,8 @@ The old "same location" rule (U; removal mode, over exact DE):
 
 ## Compile time
 
+**Chromium (9-10 Oct, compiler `tsan-cr-8345a0396fa5`, Intel host).** One ninja invocation each from an empty out dir, 76 jobs on all CPUs, host otherwise idle, same night, 40,165 compile edges in each; one build per configuration, so no variance is known. Stock TSan 3456 s wall (249,461 s summed over compile edges); CR1 3513 s (253,221 s): +1.7 % wall, +1.5 % by edge sum, i.e. about 2 %, inside what two identical builds may differ by. CR1+N1 3916 s, +13.3 % wall and +12.3 % by edge sum, not clean (site counts, two profiles and a copy ran beside it). AllOpt has no figure: the dominance elimination did not finish on one unit (v8 maglev-ir.cc) in 35 minutes; that unit compiles in 74 s under stock, 90 s under CR1 and 124 s under CR1+N1. The stock binary rebuilt for this pair is byte-identical to the first one.
+
 **Final table (7 Oct).** Root `tsan-n1s-e52d8787b59e`: 744024407b56 plus P0 (a0c3b51bbe07) plus the two N1-S commits, which only the FFmpeg variants s1, s4 and k2 switch on. Its runtime is byte-identical to `tsan-cc-a0c3b51bbe07`'s. Freeze gates: IR 196 passed, tsan 410 passed.
 
 Method:
