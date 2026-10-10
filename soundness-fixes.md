@@ -462,6 +462,53 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 |---|---|---|---|
 | **P-EV-DEFER** | 28-29 Sep | DE-3R, DE-2R | A race lost when the other record disappears before a deferred or widened check; two losses outside this class found, fixes designed. |
 
+### 6e. Chromium (11 Oct, audit A87: `audit-a87-chromium-config-soundness.md`)
+
+Configurations: CR1 (the four analyses + SWMR thread roots + inlined function entry/exit + one-sided memory
+intrinsics), CR1+N1 (+ inline hit test), S56 (the hit test only in functions of at most 56 IR instructions), per
+translation unit, on a component build (one executable holding the runtime, 486 shared libraries). The audit found no
+lost check and no false report in the code as built; each configuration is sound with the conditions below.
+
+**What is inert there.** A library unit has no `main`, so the single-threaded-context analysis is not run on it;
+thread roots are refused outside whole-program mode; lock ownership does not see `base::Lock` (a try-lock, then an
+out-of-line lock) or PartitionAlloc's spin lock (atomics). So on Chromium CR1's removals come from escape analysis
+alone (0.85 % of linked sites), and premises A2, A2-LIB, A11, A12 are not needed for the Chromium statement.
+
+**No longer reported (capability losses, not premises).**
+- A use after free of a heap object that never escapes, in the function that owns it (escape analysis leaves its
+  accesses unchecked).
+- A report on the destination of a one-sided copy has `__tsan_memcpy_nosrc` / `__tsan_memmove_nosrc` as its top
+  frame, so a report key that includes that frame differs from stock's.
+
+**Premises used and not listed above** (to be adopted or rejected by a ruling; none is new code):
+- `nocapture` attributes are truthful (escape analysis, one-sided copies).
+- One activation of a function runs on one thread at a time, and stacks are switched only through the fiber API
+  (one-sided copies).
+- The pass runs after coroutine splitting: -O2, no LTO, no early extension point (one-sided copies).
+- One compiler root for the runtime and every instrumented object; x86-64 Linux; the runtime in the executable. The
+  inline sequences carry no ABI stamp of their own, so a relinked executable over kept libraries would go unnoticed
+  (inlined entry/exit; for the inline hit test also the shadow mapping and the access-word layout).
+- The runtime's default access path (no quiet-thread or phase mode) for the inline hit test.
+
+**Premises that do not hold as written on Chromium (pending).**
+- "Library names bind to the library" (A4 and the libc-names premise): Chromium defines and exports `localtime`,
+  `localtime_r` and siblings and `getaddrinfo` (sandbox/linux/services/libc_interceptor.cc), its own libevent 1.4
+  `event_*`, and BoringSSL's `EVP_*`, all of them rows of the library-facts table. `localtime_r` is tabled as not
+  synchronising, but Chromium's body calls `pthread_once`: the dominance elimination (AllOpt) can lose a race across
+  such a call. The facts CR1, CR1+N1 and S56 read still hold for those bodies, by reading. Owed: a name check of the
+  487 files against the table, then `-tsan-lib-facts=false` on the Chromium arms or a stated exception list. No
+  AllOpt claim on Chromium until then.
+- A5 in a component build reads: every exported symbol defined in two loaded objects has ODR-equivalent
+  definitions, and nothing is preloaded. A6 is not "LTO only": libc++'s extern templates give
+  `available_externally` bodies in ordinary units (escape analysis refuses them; lock ownership's release summaries
+  read them). Owed: a duplicate-export check over the 487 files.
+
+**Open, disclosed beside any figure with the inline hit test:** E8 (two unexplained server deaths in 104 MySQL
+runs under the inline hit test, none in 319 without it, no recurrence in 80 later runs) was never resolved.
+
+**Preservation wording for Chromium.** The code supports one direction by construction: no race stock reports is
+removed. "Identical union" has no ten-run table behind it for these configurations.
+
 ## 7. What is not known
 
 - **Time per fix within a step.** Only checkpoints were timed, so the time cost of any single fix inside A→B, B→C
