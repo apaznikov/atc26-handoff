@@ -187,3 +187,29 @@ Column (3), premise B2 replaced by run-time checks:
 memcached column (2): 1.80x over upstream on the repaired runtime (leg kmg6); the under-repair mark is removed.
 
 Open: placement sensitivity (unresolved; needs 10+ runs per pad on the quiet half); the two-archive runtime plan (postponed); the other user's load on apollo since 09:44.
+
+## State 11 Oct 00:30 (Chromium phase)
+
+Priority since 9 Oct: Chromium for the camera-ready (16 Oct). SQLite follow-ups (fixed-work metric, the paper's 1.71x, LO-MARK v2, the six premises of LO-MARK v1) are parked by the user.
+
+Rulings of 10 Oct:
+- The runtime is not to be touched (rule of 25/28 Sep). ALS, a runtime-only fast path for atomic loads, was built against that rule, rolled back and filed as an idea: `runtime/als.md`. Chromium is raised by the instrumentation pass alone.
+- A new compiler root with the N1-S placement rule, pass files only, was approved: `tsan-cr2-429bd8cf76b9` (runtime archives byte-identical to 8345a's).
+- Legs of record run under Chromium's default TSan options (the harness's flush_memory_ms=2000 is gone).
+- No race in stock on a workload is fine as a result; no planted races, no widened workloads.
+
+Chromium figures now (optimization-results.md, row and note rewritten after audit A86): reviewed analyses (AllOpt) 1.00x; CR1 1.06x AMD (N=3) / 1.10x Intel; CR1 + inline hit test 1.08x / 1.28x (code three times stock's; 1.06x on AMD without the two paint stories); placement variants K4 = CR1, S56 1.09x / 1.19x, s1 1.08x / 1.21x at N=1, in-sample. The submitted 1.39x does not reproduce; "2.54x" was an FFmpeg figure; "28 % of sites removed" has no data.
+
+Audits of 10-11 Oct: A84 (ALS, parked), A85 (N1-S port), A86 (method: `audit-a86-chromium-methodology.md`), A87 (soundness of the Chromium configurations: `audit-a87-chromium-config-soundness.md`; recorded as soundness-fixes.md 6e).
+
+Waiting for the user:
+1. A leg with the March binaries under today's protocol (A86 F1; he had said not to spend time on March builds; the March dirs are not deleted until he answers).
+2. Static builds as Chromium's own TSan builders use (A86 F2; DCHECK on or off, symbol level).
+3. Telling the shepherd that the Chromium gain now comes from levers not in the reviewed paper.
+4. Rulings on premises: A5/A6 in the component-build wording; the library-names premise with its Chromium exceptions (A87 F1, F2).
+5. The deletion word for old Chromium builds, in tsan-dev's session.
+6. Which Chromium configuration goes into the paper.
+
+Running at 00:30: apollo: legs with the corrected arm order (A/A in the middle, next rotation index), then the hold-out story sample and paint whole. focs: compile-time control for the other applications ended; Chromium repetition with the layout twin, then the hold-out sample. a-p13: preservation (Speedometer to ten runs per arm, 20 stock runs of paint, then Sound and AllOpt under default options).
+
+Lanes: tsan-dev: name checks over the 487 files (A87), the 400-unit compile-time sample, static-build args prepared, compile-time analysis for Redis/FFmpeg/memcached/SQLite off the timed host. tsan-dev-2: preservation tables. tsan-dev-3: placement sizing for FFmpeg and Redis. tsan-exp: legs, memory by anon+shmem, aggregator fixes.
