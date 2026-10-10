@@ -469,10 +469,15 @@ intrinsics), CR1+N1 (+ inline hit test), S56 (the hit test only in functions of 
 translation unit, on a component build (one executable holding the runtime, 486 shared libraries). The audit found no
 lost check and no false report in the code as built; each configuration is sound with the conditions below.
 
-**What is inert there.** A library unit has no `main`, so the single-threaded-context analysis is not run on it;
-thread roots are refused outside whole-program mode; lock ownership does not see `base::Lock` (a try-lock, then an
-out-of-line lock) or PartitionAlloc's spin lock (atomics). So on Chromium CR1's removals come from escape analysis
-alone (0.85 % of linked sites), and premises A2, A2-LIB, A11, A12 are not needed for the Chromium statement.
+**What is inert there (corrected 11 Oct from the source).** Inert: the single-threaded-context analysis (it needs a
+`main` in the unit, and a library unit has none) and thread roots (refused outside whole-program mode). Nearly
+inert: SWMR still runs per unit on a global that no other unit can name and that the unit stores to only in its
+initialiser; lock ownership matches the POSIX lock functions by name, so it does not see `base::Lock` (a try-lock,
+then an out-of-line lock) or PartitionAlloc's spin lock, but it can still remove checks in units that call
+`pthread_mutex_*` directly (the C libraries under third_party). So CR1's removals (0.85 % of linked sites) are
+mostly escape analysis; the share of each analysis is to be read from the pass's statistics on the 400-unit
+sample before it is described. Premises A2, A2-LIB, A11, A12 (thread roots) are not needed for the Chromium
+statement; the lock-ownership and SWMR premises of 6a are.
 
 **No longer reported (capability losses, not premises).**
 - A use after free of a heap object that never escapes, in the function that owns it (escape analysis leaves its
