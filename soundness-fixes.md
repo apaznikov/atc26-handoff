@@ -500,9 +500,11 @@ statement; the lock-ownership and SWMR premises of 6a are.
   `localtime_r` and siblings and `getaddrinfo` (sandbox/linux/services/libc_interceptor.cc), its own libevent 1.4
   `event_*`, and BoringSSL's `EVP_*`, all of them rows of the library-facts table. `localtime_r` is tabled as not
   synchronising, but Chromium's body calls `pthread_once`: the dominance elimination (AllOpt) can lose a race across
-  such a call. The facts CR1, CR1+N1 and S56 read still hold for those bodies, by reading. Owed: a name check of the
-  487 files against the table, then `-tsan-lib-facts=false` on the Chromium arms or a stated exception list. No
-  AllOpt claim on Chromium until then.
+  such a call. The facts CR1, CR1+N1 and S56 read still hold for those bodies, by reading. Owed: `-tsan-lib-facts=false` on the Chromium arms or a stated exception list. No AllOpt claim on Chromium until
+  then. Measured on 11 Oct: with the table off, 399 of 400 sampled units compile to the same code under CR1; the one
+  that differs is v8's platform-posix.o, where escape analysis uses the row "`localtime_r` keeps no pointer to its
+  arguments" to drop the check of one read of a local struct after the call. So CR1 does read a row whose callee is
+  Chromium's own body (the sandbox's interceptor), through escape analysis, not through the dominance elimination.
 - A5 in a component build reads: every exported symbol defined in two loaded objects has ODR-equivalent
   definitions, and nothing is preloaded. A6 is not "LTO only": libc++'s extern templates give
   `available_externally` bodies in ordinary units (escape analysis refuses them; lock ownership's release summaries
