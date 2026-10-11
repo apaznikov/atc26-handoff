@@ -39,8 +39,9 @@ crashpad WorkerThread::Stop vs ThreadMain (Speedometer):
   Sound   R2 2/2;  AllOpt R2 2/2;  S56 S 3/4
   Cause established: the runtime's four-record history per 8 bytes; the main thread's own check read evicts the
   worker's record when the victim index (from the trace position) falls on it. Reproduces in stock under a changed
-  layout (standalone model). Not the inline test. Recount from the runner's logs/ today; the earlier figure
-  quoted for CR1+N1 was 11/19 (one run differs, not traced).
+  layout (standalone model). Not the inline test. Counted file by file (12 Oct): 10 of 19 completed runs
+  (R 2, A 3, T 3, C 1, D 1; none in the 4 runs with the handler or renderer under the recorder). The 11/19 quoted
+  on 11 Oct was an addition slip: 9/14, then +1/1, +0 (void run), +0/3 gives 10, and its 19 counted the void run.
 V8 TypedSlots::EnsureChunk vs Merge (Speedometer): stock T 2/4 (2/15 over all), CR1 0/12, CR1+N1 T 1/4 (1/19),
   AllOpt R2 1/2, Sound 0/2, S56 0/4.
 perfetto PopulateTlsInst vs MaybeAdoptStartupTracingInDataSource (blink_perf.paint):
