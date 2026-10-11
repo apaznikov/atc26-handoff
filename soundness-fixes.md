@@ -545,8 +545,15 @@ tests at fewer sites) memcached mcf and mcy, SQLite zg6/zgB, MySQL rpf, Redis. C
 Chromium's handler (one run per arm): in CR1 the DCHECK read's victim is slot 0, the main thread's own old record
 (trace index mod 4 = 0), and the race is reported; in CR1+N1 it is slot 3, the worker's read (index mod 4 = 3), and
 nothing is left for the write to race with. Not measured: why the trace position at that point varies from run to
-run in the hit-test build and not, so far, in stock and CR1. Owed: check-tsan with `-tsan-inline-hit-test` and
-CR1's flags injected (never run; queued for 11 Oct evening).
+run in the hit-test build and not, so far, in stock and CR1. The runtime's test suite with the record flag sets injected (11 Oct, frozen
+`tsan-cr2-429bd8cf76b9`, 482 tests of which 90 unsupported and 1 expected failure on every line; each line once): no
+flags 391 pass / 0 fail; CR1 391 / 0; CR1 + inline hit test 391 / 0; S56 391 / 0; the inline hit test alone 390 / 1;
+a control with a flag the compiler does not know 21 / 370, so the injected flags reach 370 of the 391 tests (21 do not
+compile through them). The one failure is a link error, not a lost report: in a helper compiled at -O0 the pass emits
+no inline test but leaves an unused declaration of the hidden thread-local it would read, and the linker refuses the
+undefined symbol; with inline function entry/exit the symbol is used and the link passes. A pass defect outside every
+record configuration (each has inline entry/exit beside the hit test, or gets the test through the verified
+elimination); to be fixed in the pass.
 
 **Open, disclosed beside any figure with the inline hit test:** E8 (two unexplained server deaths in 104 MySQL
 runs under the inline hit test, none in 319 without it, no recurrence in 80 later runs) was never resolved.
