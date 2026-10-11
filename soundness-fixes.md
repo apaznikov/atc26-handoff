@@ -526,8 +526,8 @@ statement; the lock-ownership and SWMR premises of 6a are.
 
 **Shadow eviction can hide a race deterministically (11 Oct; not a defect of the inline hit test).** Chromium's
 crashpad race (the main thread's write of a one-byte flag in WorkerThread::Stop against a worker's read; the flag
-shares its 8-byte granule with an atomic flag) is reported by stock and CR1 in 26 of 26 runs and by the hit-test
-builds in 11 of 19 (CR1+N1) and 3 of 4 (S56); in five missing runs the process exits normally without entering the
+shares its 8-byte granule with an atomic flag) is reported by stock and CR1 in 27 of 27 runs and by the hit-test
+builds in 10 of 19 (CR1+N1) and 3 of 4 (S56); in five missing runs the process exits normally without entering the
 report function. A standalone program of that shape shows why, in the unmodified runtime: the granule's four slots
 are full, the writer's own preceding read (a DCHECK) has no slot of its own to update and evicts one, and if that
 one held the other thread's read the write finds nothing to conflict with. Per build and program variant the race is
