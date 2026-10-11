@@ -532,7 +532,9 @@ report function. A standalone program of that shape shows why, in the unmodified
 are full, the writer's own preceding read (a DCHECK) has no slot of its own to update and evicts one, and if that
 one held the other thread's read the write finds nothing to conflict with. Per build and program variant the race is
 reported in 0 % or 100 % of 120 runs, stock included (stock loses it in three of seven variants), and in every
-variant a hit-test build equals its base build (stock + hit test = stock, CR1+N1 = CR1). What changes the outcome is
+variant a hit-test build equals its base build (stock + hit test = stock, CR1+N1 = CR1). The victim slot is
+(trace_pos / 8) mod 4: with J extra trace events before the write, stock reports in 30 of 30 runs except at the two J
+of eight where the position is 0 (0 of 30), and the hit-test-only build gives the same row. What changes the outcome is
 which records occupy the slots, which a sound removal also changes: CR1's escape analysis removes the constructor's
 checks, so the granule starts with one allocation record instead of two one-byte writes, and CR1 loses this race
 in the base variant and gains it in another. This is the eviction-only loss accepted on 1 Oct; for the paper it adds
