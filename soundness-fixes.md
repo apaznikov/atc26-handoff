@@ -527,7 +527,7 @@ statement; the lock-ownership and SWMR premises of 6a are.
 **Shadow eviction can hide a race deterministically (11 Oct; not a defect of the inline hit test).** Chromium's
 crashpad race (the main thread's write of a one-byte flag in WorkerThread::Stop against a worker's read; the flag
 shares its 8-byte granule with an atomic flag) is reported by stock and CR1 in 26 of 26 runs and by the hit-test
-builds in 11 of 18 (CR1+N1) and 3 of 4 (S56); in two missing runs the process exits normally without entering the
+builds in 11 of 19 (CR1+N1) and 3 of 4 (S56); in five missing runs the process exits normally without entering the
 report function. A standalone program of that shape shows why, in the unmodified runtime: the granule's four slots
 are full, the writer's own preceding read (a DCHECK) has no slot of its own to update and evicts one, and if that
 one held the other thread's read the write finds nothing to conflict with. Per build and program variant the race is
@@ -542,7 +542,7 @@ that such a loss need not be probabilistic, and that an optimised build can lose
 without any check on the racing accesses being removed. Rows that carry inline hit tests: explicitly FFmpeg ffn/ffk
 (s1, s4, k2), Redis rcy, Chromium CR1+N1, K4, S56, s1; through `-tsan-de-verified` (covered checks become inline
 tests at fewer sites) memcached mcf and mcy, SQLite zg6/zgB, MySQL rpf, Redis. Owed: the slot dump inside Chromium's
-handler (why 11 of 18 there against CR1's 26 of 26), and check-tsan with `-tsan-inline-hit-test` injected.
+handler (why 11 of 19 there against CR1's 26 of 26), and check-tsan with `-tsan-inline-hit-test` injected.
 
 **Open, disclosed beside any figure with the inline hit test:** E8 (two unexplained server deaths in 104 MySQL
 runs under the inline hit test, none in 319 without it, no recurrence in 80 later runs) was never resolved.
