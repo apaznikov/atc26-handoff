@@ -541,8 +541,12 @@ in the base variant and gains it in another. This is the eviction-only loss acce
 that such a loss need not be probabilistic, and that an optimised build can lose or gain a report against stock
 without any check on the racing accesses being removed. Rows that carry inline hit tests: explicitly FFmpeg ffn/ffk
 (s1, s4, k2), Redis rcy, Chromium CR1+N1, K4, S56, s1; through `-tsan-de-verified` (covered checks become inline
-tests at fewer sites) memcached mcf and mcy, SQLite zg6/zgB, MySQL rpf, Redis. Owed: the slot dump inside Chromium's
-handler (why 11 of 19 there against CR1's 26 of 26), and check-tsan with `-tsan-inline-hit-test` injected.
+tests at fewer sites) memcached mcf and mcy, SQLite zg6/zgB, MySQL rpf, Redis. Confirmed slot by slot inside
+Chromium's handler (one run per arm): in CR1 the DCHECK read's victim is slot 0, the main thread's own old record
+(trace index mod 4 = 0), and the race is reported; in CR1+N1 it is slot 3, the worker's read (index mod 4 = 3), and
+nothing is left for the write to race with. Not measured: why the trace position at that point varies from run to
+run in the hit-test build and not, so far, in stock and CR1. Owed: check-tsan with `-tsan-inline-hit-test` and
+CR1's flags injected (never run; queued for 11 Oct evening).
 
 **Open, disclosed beside any figure with the inline hit test:** E8 (two unexplained server deaths in 104 MySQL
 runs under the inline hit test, none in 319 without it, no recurrence in 80 later runs) was never resolved.
