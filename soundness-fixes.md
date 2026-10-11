@@ -505,6 +505,16 @@ statement; the lock-ownership and SWMR premises of 6a are.
   that differs is v8's platform-posix.o, where escape analysis uses the row "`localtime_r` keeps no pointer to its
   arguments" to drop the check of one read of a local struct after the call. So CR1 does read a row whose callee is
   Chromium's own body (the sandbox's interceptor), through escape analysis, not through the dominance elimination.
+  The whole program, same day (CR1 rebuilt with the table off, all 487 files compared after removing debug sections
+  and the build id; control: CR1 against itself, 487 of 487 equal): 469 files identical, the executable among them
+  byte for byte; 18 libraries differ, in 33 functions, 27 of which carry 1 to 7 more checks with the table off, about
+  70 checks of 12.8 million. All 27 are one shape: a local handed to a library call and read or written around it,
+  which escape analysis keeps thread-local across the call (sleep loops over `nanosleep`; time conversion through
+  `localtime_r`, `gmtime_r`, `mktime`; path lookups). Where the callee is libc's own the premise holds; where it is
+  Chromium's (`localtime_r` and siblings) the body was read: it fills the caller's struct on the calling thread and
+  neither keeps nor passes the pointer, so the fact used is true of it and no race is lost. The row that is false of
+  that body (not synchronising) is read only by the dominance elimination; the no-peeling build of 11 Oct carries
+  the table off. The table-off CR1 is timed beside the arm of record as its own arm.
 - A5 in a component build reads: every exported symbol defined in two loaded objects has ODR-equivalent
   definitions, and nothing is preloaded. A6 is not "LTO only": libc++'s extern templates give
   `available_externally` bodies in ordinary units (escape analysis refuses them; lock ownership's release summaries
