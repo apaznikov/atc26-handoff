@@ -524,6 +524,14 @@ statement; the lock-ownership and SWMR premises of 6a are.
 - Names of the library-facts table (422 names) that Chromium's own libraries define: 27 exported and 9 local. With a body that is Chromium's and a "does not synchronise" fact: `localtime`, `localtime_r` (the sandbox's interceptors, which call `pthread_once`), `strlcpy` (Chromium's own), `pthread_equal` (an inline copy, harmless). With only the thread, lock-release or argument-memory facts: `getaddrinfo`, `close` (in base), libevent's `event_add`, `event_base_set`, `event_del`, `event_set`, BoringSSL's 16 `EVP_*` and `OpenSSL_version`, libva's three `va*Str`. The rest are libc's own static wrappers (`stat64` and siblings) and the C++ ABI library's `__cxa_*`, whose facts describe those very bodies. Which analysis reads which column for these names is not yet tabulated against the code.
 - Exported strong function symbols defined in more than one of the 487 files: 17,501. Three are in 483 files (the sanitizer options source linked into every component), `crashpad::CaptureContext` in 33, and the bulk is generated mojom code in 18 files each, compiled from one source with one set of flags. So A5 in its component-build wording is a premise about thousands of symbols, true if those copies are ODR-equivalent. No LD_PRELOAD is set by the harness or its container.
 
+**Open since 11 Oct, inline hit test:** Chromium's crashpad race (the main thread's write of a one-byte flag in
+WorkerThread::Stop against a worker's read; the flag shares its 8-byte granule with an atomic flag) is reported by
+stock and CR1 in 26 of 26 runs and by the hit-test builds in 11 of 18 (CR1+N1) and 3 of 4 (S56); in two missing runs
+the process exits normally without entering the report function. Being separated: eviction of the worker's read
+record by the main thread's own preceding read (victim slot from the trace position; stock then equally exposed) or
+a defect of the inline test. No hit-test configuration is called race-preserving until then; the record rows that
+carry the inline hit test are being listed.
+
 **Open, disclosed beside any figure with the inline hit test:** E8 (two unexplained server deaths in 104 MySQL
 runs under the inline hit test, none in 319 without it, no recurrence in 80 later runs) was never resolved.
 
