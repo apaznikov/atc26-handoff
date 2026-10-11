@@ -64,3 +64,11 @@ are unchanged.
 
 ### DD-STATIC (6 Oct): skip the lock-order detector's bookkeeping on lock classes no static cycle can reach
 - **Status:** DD-STATIC: not pursued, out of the paper's scope (6 Oct). Lock-order detection is a different task from race detection.
+
+### HIT-PSEUDO (12 Oct 2026): the inline hit test as a backend pseudo-instruction with a register-preserving miss entry
+
+- **What:** A compile-time idea, not a speed one. The inline hit test costs the compiler 2-3 extra basic blocks and a 4-argument call per site; every block-wise back-end phase pays for them. Emitting the test as one X86 pseudo-instruction expanded at emission, with an in-function cold tail (as HWASan emits its checks), removes the blocks while the report keeps the access's pc. The cold tail needs a miss entry in the runtime that preserves registers.
+- **Status:** **idea only (12 Oct): needs an X86 back-end change and a new runtime entry; the runtime is not to be touched without a go.** Nothing built.
+- **Owner:** tsan-dev
+- **Evidence:** on three heaviest units of Redis and FFmpeg the pass is 1 % of the time the test adds and the back end the rest; an inline-assembly test with the blocks kept saves 10 % of code generation; with the miss edge deleted (a bound, not a correct program) 24 % (Redis) and 37 % (FFmpeg), i.e. about -21 % and -33 % of the units' total compile time. Notes: `../optimization-results.md`, "Compile time".
+- **Next:** if the runtime track is reopened and compile time still matters: the pseudo-instruction, the entry, and a speed leg showing the hit path unchanged.
