@@ -1,351 +1,426 @@
 # TSan instrumentation optimizations: results
 
-State: 7 Oct 2026. Longer earlier versions: 90a735e, f02509d, b8d5c56. Premises: `soundness-fixes.md` §6.
+State: 12 Oct 2026. This is the short form. The full ledger with every leg, control and dead end is the previous
+version of this file, commit `9126669`. Soundness, premises and audits: [`soundness-fixes.md`](soundness-fixes.md).
 
-## Table 1. Summary (AMD, 2 × EPYC 9115)
+Contents: [1. Summary](#summary) · [2. Chromium](#chromium) · [3. Single optimizations](#single) ·
+[4. No gain](#nogain) · [5. Compile time](#compile) · [6. What each optimization does](#explain) ·
+[7. Method](#method)
 
-Speedup = stock TSan's run time over the optimized build's, same leg, geometric mean over 4 code offsets. The stock
-build is by the same compiler and runtime unless the cell says "over upstream" (upstream = LLVM at the fork point
-plus two upstream ThreadSanitizer.cpp commits, `tsan-pristine-up59b2-0f1aed148576`). Our stock and upstream stock
-differ by -4 to +1.5 % across the apps (measured separately). Every figure is the best sound one measured (no race stock TSan reports is lost,
-under the premises of §6).
+<a name="summary"></a>
+## 1. Summary
 
-| app | workload | submitted paper | (1) no annotations, static | (2) no annotations, run-time checked | (3) spec generated from the program's assertions | (4) our annotations |
+Speedup = stock TSan's run time over the optimized build's. Every figure is sound: no race that stock TSan reports is
+lost, under the premises of `soundness-fixes.md` §6. Compile time is over stock TSan's build.
+
+| app | workload | submitted paper | no annotations, static | no annotations, checked at run time | generated spec or annotations | compile time |
 |---|---|---|---|---|---|---|
-| SQLite | threadtest3: stress2 | 1.71× | ≈ 1.0× (the paper's analyses; 0.98× over same-compiler stock, inside the A/A) | **1.26× measured, not yet a claim** (record leg zvl4, quiet half; LO-MARK v1: lock markers in shadow, no assertions and no annotations; see the note) | **1.19×** (LO-OBJ-G, spec gen9b = sqgen16's output; run-time lock guard); **1.27×** with the parser parameters derived and bounds checked at run time (gen19j, rests on premise B2); **1.24×** with B2 replaced by run-time owner checks (gen19n / gen19o; leg zha4, see the note) | **1.25×** (LO-OBJ-G, spec v7; run-time guarded) |
-| FFmpeg | four transcodes of one film | 1.57× | — | **1.29×** (DynSTC-RT + N1 + N1-ST) | — | — |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× (FE-INL + N1) | **1.54×** (FE-INL + N1 + quiet threads derived from the whole program) | — | 1.40× over upstream (hand-written quiet-thread lines; superseded by (2)) |
-| MySQL | Release, sysbench insert / update / delete, 24 connections | 1.16× | **1.13×** over upstream (FE-INL) | — | — | — |
-| memcached | pipelined 32-key gets, 190-byte keys (V4) | 1.07× | **1.02×** (the analyses + EA-CONTENTS + SWMR-ROOTS + FE-INL + MEMINTR) | **1.80×** over upstream (EVCONF-CHECKED: ownership candidates found by the analysis, checked at run time; repaired runtime, leg kmg6) | — | **1.81×** (EVCONF line of 7 fields, compiler-checked, run-time guarded) |
-| Chromium | blink_perf, 49 sampled stories of six suites; component build with DCHECKs on (not the build Chromium's own TSan builders use); no code offsets; TSan reporting off in timed runs; see the note | 1.39× (212 rows of seven suites; 1.46 on these 49 rows) | **1.06× (AMD, N=3) / 1.10× (Intel, N=3)** (CR1: the four analyses + SWMR thread roots + inlined function entry/exit + one-sided memory intrinsics; code 1.18 of stock's); with the inline hit test added (CR1+N1; code 3.0 of stock's): **1.08× (AMD, N=3) / 1.29× (Intel, N=3)** on the first sample but **1.02× (AMD) / 1.25× (Intel)** on a hold-out sample, i.e. below CR1 on AMD; CR1 on the hold-out: 1.06× / 1.10×; the reviewed analyses with dominance elimination and peeling (AllOpt, N=1 per host, one unit compiled without the elimination): **1.00×**. CR1's and N1's levers are not in the reviewed paper. Largest process's peak RSS over stock: CR1 +10 %, CR1+N1 +80 % (mapped code; allocated memory unchanged) | — | — | — |
+| SQLite | threadtest3 stress2 | 1.71× | ≈ 1.0× ([the paper's analyses](#paper)) | 1.26× ([LO-MARK](#lo-mark); measured, not yet a claim) | **1.19×** ([LO-OBJ-G](#lo-obj-g), generated spec); 1.24× with run-time owner checks; 1.25× hand-written spec | +28 % |
+| FFmpeg | four transcodes of one film | 1.57× | — | **1.29×** ([DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st)); **1.23×** with the hit test placed by a [static rule](#n1-place) | — | +97 %; static rule +36 % |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× ([FE-INL](#fe-inl) + [N1](#n1)) | **1.54×** (+ [quiet threads](#quiet); a fresh build on 12 Oct read 1.49×) | — | +168 % |
+| MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** ([FE-INL](#fe-inl)) | — | — | +16 % |
+| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.02×** (analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr)) | **1.80×** ([EVCONF-CHECKED](#evconf-checked)) | 1.81× ([EVCONF](#evconf), 7 annotated fields) | +11 %; with EVCONF +35 % |
+| Chromium | blink_perf, 49 + 48 stories | 1.39× | Intel: **1.10×** ([CR1](#cr1)), **1.16×** ([S56](#n1-place)), **1.25×** ([CR1+N1](#cr1)); AMD: 1.06× / 1.05× / 1.02× (hold-out sample) | — | — | CR1 +1 %; CR1+N1 +10 % |
 
-- SQLite (3), preliminary 1.29×: leg zcf4 (8 Oct, root tsan-carve-ad1ae6e3aa43, 4 offsets × N=4, A/A 1.012). Over same-root stock: gen9b 1.255×, gen19f 1.292× (1.226-1.346); gen19f over gen9b 1.030 (1.017-1.042, above the A/A at 3 of 4 offsets). gen19f derives the three parser parameters without hand lines and replaces the sub-array premise by a run-time carve check (39.6-53.3 thousand carvings per run, no void; its cost is not measurable). Preliminary because that binary narrows the carve check per parameter, which audit A73 found unsound in general; the confirm leg runs the final form (root tsan-carve-b575340c1ee8: carve checked whole, member-array bounds tested). gen9b reads higher on this compiler line than on 8345a (1.255 against 1.19) because stock is slower there (leg zrc4).
-- SQLite (3), confirm leg zdc4 (8-9 Oct, the final check form: root tsan-carve-b575340c1ee8, carve checked whole, member-array bounds tested): over same-root stock gen9b 1.200×, gen19j 1.260×, gen19j with bound tests on the cursor's two arrays as well 1.230×; gen19j over gen9b 1.050. Another user's load on the leg's half retired 29 of 80 cells; the clean cells cover every arm at all four offsets, but at N = 2-3 the A/A is 0.986 with one offset at 0.906, so this leg confirms the direction, not the digit. The cursor-array bound tests read 0.976 of gen19j on the mean (inside that wide A/A): no resolved cost, no proof of none; the cursor arrays therefore stay a named premise for now. A quiet re-run decides the figure of record. Every run logged carvings and no void.
-- SQLite (3) with premise B2 replaced by run-time checks (9 Oct, root `tsan-carve-da51c2dd8b3c`). AMD, quiet half, leg zha4, clean (0 of 80 cells retired, 4 rounds x 4 offsets, A/A 1.000, 0.977-1.023), over stock: gen19j 1.268 (1.269 / 1.305 / 1.259 / 1.242); gen19n 1.244 (gen19j + four owner checks: the two page producers, the cursor's page in insert and delete; B2 (ii) gone for the six cell parameters); gen19o 1.241 (+ two field checks on the read path; B2 (ii) gone for the pInfo parameters too). gen19n over gen19j 0.981, gen19o over gen19n 0.998: the owner checks cost about 2 %, the read-path checks nothing measurable. Intel, leg zhf4 (1 of 80 retired): 1.155, 1.116, 1.134, A/A 1.008 (0.944-1.080); the cost is not resolved there, more than 5 % is excluded. 0 voids in every run. Owed before the 1.24× is quoted as premise-free: a short audit of the last generator and pass deltas (gen19o's switch, the per-load gate) and the preservation run for these arms.
-- SQLite (3) on the Intel host (9 Oct, leg zdf4, same root, clean: 0 of 80 cells retired, 4 rounds x 4 offsets): over stock gen9b 1.093×, gen19j 1.109×, gen19j with the cursor-array bound tests 1.131×; A/A 1.003 with a per-offset range of 0.93-1.10. The three specs are not separated there, and the cursor-array tests read 1.020 of gen19j against 0.976 on the AMD leg: their cost is not resolved on either machine. Gains on Intel are about half the AMD ones for every SQLite spec.
-- SQLite (3), (4): leg zgb4 (4 offsets × N=6, A/A 1.005; gen6, the earlier (3), reads 1.17× in the same leg). (3) names no SQLite struct, field or function except `BtShared.mutex`; the generator also names the sqlite3_mutex_* API, malloc/free and __assert_fail (audits A61h-A61m; premise PM, §6). (3) leaves ~5 % against the hand-written spec (0.951); three parser parameters written by hand recover ~3/4 of it (diagnostic leg zgp4: 1.048× over (3)), but deriving them needs at least three further generator rules and one premise, so they are not in (3). Preservation for the parser-parameter spec (gen19f with the carve check, root tsan-carve-ad1ae6e3aa43; 8 Oct): the full 15-test suite, 10 stock against 10 runs, no site lost (4 sites at the finest level, all kept; three are WAL-index races that stock itself reports in 1-7 of 10 runs); 64-219 thousand carvings per run, no void. create_drop_index_1 is not quoted: its A/A reads 1.18× (the same binary varies 0.92-1.36×). Measured on half A (CPUs 8-15,40-47: socket 0, local to the NVMe, 16 hardware threads). Roots: the same flags read 4-5 % lower in absolute speed on the e52d compiler line than on 8345a, for stock and line alike (leg zrc4: stock 0.934, line 0.955, A/A 0.998; compiled code identical), while the ratio over same-root stock holds (1.20 and 1.23). The cause is open. The compiled code is identical, and the runtime's access entries are no longer on e52d. One measurement on half A pointed at code placement (8345a's stock with its runtime padded by e52d's extra 26,080 bytes of text, so every program symbol sits at e52d's address, ran like e52d's stock: 0.903 against 0.899; 8 + 8 + 4 runs, 8 Oct). A second run on half B did not reproduce it (the same padded binary read 1.014 of the unpadded one; six page-scale pads, 4 runs each, run-to-run noise 8 %, an identical pair 4.6 % apart). The two are not reconciled; it needs 10 or more runs per pad on a quiet half A with e52d's stock in the same rotation. Until then the gap is not attributed, and SQLite legs keep the four byte-level offsets. On half B (socket 1, 32 threads) stock's stress2 runs ~3.5 % faster while gen6's does not, so gen6 reads 1.10-1.12× there instead of 1.17×.
-- Redis (2): leg rcs4. memcached (1): leg mcnf4 (N1 off: it costs ~5 % here); (2) **was repaired on 8 Oct and re-timed on 9 Oct** (leg kmg6, root `tsan-ecc-b54ce0196884`, 4 offsets, two on each half: 1.798× over upstream, per offset 1.825 / 1.814 / 1.817 / 1.737; A/A 1.001; the fourth offset's lower value is that binary's placement, reproduced by its A/A arm; 0 voids in 32 runs; preservation PASS). What was repaired: a code reading found that the run-time's lazy clear of a released owner marker lets any ordered access replace the marker, also a read or a write narrower than the granule; a later access unordered with the owner's elided write can then pass where stock would report (audit A77b D1, confirmed in the EVCONF-CHECKED code; no test covered the shape, and preservation saw no lost site in the measured runs). The fix keeps the marker unless a whole-granule write replaces it; a second hole of the same family (a new key marking over another key's released marker without an ordering test, reproduced on both timed runtimes) is fixed with it. Screening leg kmg5 on the first fix: 1.815× (1.799-1.825) against 1.806× for the old runtime, fixed/old 1.005, A/A 1.001; in memcached every one of the 46 million lazy clears observed at paper scale is a whole-granule write, so the repaired rule changes nothing there. The figure of record will come from a frozen one-commit root (tsan-ecc-b54ce0196884, leg kmg6). Until then: leg kmg, 1.801× (1.792-1.812) over upstream stock, root `tsan-ecc-9c656c7b6d62` with the marker gate (`experiment/evconf-markergate` 3a37f1be3df6; audit A70g; gate record `evconf-checked.md` §14: check-tsan ×12, preservation PASS). Without the gate the same line reads 1.757× (leg kcn record, reproduced in kmg); the gate moves EVCONF's marker handling out of the shadow-check fast path, which had made plain stock on that root ~10 % slower (now ~4 %). Over stock of its own root the line reads 1.96×, which counts that regression and is not quoted. Residual L-1'; the earlier root without the loop-hoisted check read 1.34× (kcj4); (4): leg mct4.
-- FFmpeg (2): the record line ffk reads 1.285× over same-compiler stock (root 744, leg fft4b; ffb4 1.283×), copy_passthrough 2.68×, encoders ~1.00×; the shipping-compiler line reads 1.290× over stock of its own root; upstream stock lies within 1 % of ours. Of the 1.29×, 1.085× is DynSTC-RT's runtime option alone (stock TSan run with dynstc_rt=1 gains the same; leg fft4b), and the instrumentation 1.18×. FFmpeg's record workload reports no race in stock, so preservation rests on seeded races (8 Oct, `ffmpeg-seeded-design.md`): 8 seeds, one per mechanism the line changes (DynSTC-RT transitions, N1 inline test, N1-ST skip, copy_passthrough's hot path, DE-covered accesses), each reported 10/10 by stock and by ffk and s1; seeds off, 0 reports.
-- One compiler configuration and runtime serves all apps; where it builds without -wp (SQLite, MySQL, FFmpeg) it costs nothing by construction (a few hundred start-up hook calls at most in short probes, none after the first thread), and on Redis and memcached its cost is inside the A/A and −1.6 %.
+- Hosts: AMD = 2 × EPYC 9115 (all rows except Chromium's Intel figures); Intel = Xeon w9-3495X.
+- SQLite's figure is completed statements per 60 s of a lock-contended mix dominated by integrity checks (33-36 %) and
+  schema statements; the write loops are 7-9 % of it. It is a throughput ratio, not a speedup of write work.
+- SQLite's row is being re-recorded without dominance elimination and peeling (same speed in a screening leg, 1.185
+  against 1.187; compile time +20 % against +37 % by CPU time).
+- FFmpeg: of the 1.29×, 1.085× is the runtime option of DynSTC-RT alone; the instrumentation gives 1.18×.
+- memcached's 1.80× and MySQL's 1.13× are over upstream LLVM's TSan; ours and upstream's stock differ by -4 to +1.5 %.
+- The submitted paper's figures do not reproduce on the camera-ready compiler with the soundness fixes: the paper's
+  analyses alone give about 1.0× on SQLite, memcached and Chromium.
 
-**Chromium on the camera-ready compiler (state 10 Oct; audit A86 of the method: `audit-a86-chromium-methodology.md`).** *Set-up.* Chromium 127.0.6533.119, compiler `tsan-cr-8345a0396fa5` ("stock" is this compiler with the flags off), component build (486 shared libraries, so every out-of-line runtime entry is a PLT call), DCHECKs on, symbol_level=2. Chromium's own TSan builders use a static build (CI also without DCHECKs); static builds have not been measured, and the difference favours inlined paths, so every figure below is for this build only. Stories: 49 of the 192 blink_perf stories, every fourth of each suite, fixed on 9 Oct before the first build (on the March data this start reads 1.358 against 1.30-1.33 for the other three starts and 1.389 for all stories); speedometer3 was in the registered sample and is reported apart, because one binary against itself varies by about 9 % on its score. Runs pinned (AMD: 16 threads in a container; Intel: 48 threads on the host), arms rotated inside each suite in one cyclic order, a second run of stock (A/A) in every leg, adjacent to the base, so it bounds consecutive-run noise only; ratio per story against the same repetition's stock; geomean over stories. TSan options from 10 Oct: Chromium's defaults plus atexit_sleep_ms=200 report_bugs=0 (reporting off); before that the harness's own flush_memory_ms=2000 was in every run, as in March; the ratios are the same either way (AMD one repetition each way within 0.007; Intel 17 stories within 0.02). The metric is each story's in-page metric; the wall time of the same Intel runs, start-up and teardown included, reads 1.05 for CR1 and 1.18 for CR1+N1 where the in-page metric reads 1.10 and 1.28. *Arms.* AllOpt = the four analyses + dominance elimination + peeling (the submitted Chromium figure came from a build without peeling; one of 40,165 units, v8 maglev-ir.cc, is compiled without the elimination, which did not finish on it in 35 minutes). CR1 = the four analyses + SWMR thread roots + inlined function entry/exit + one-sided memory intrinsics. CR1+N1 = CR1 + the inline hit test at every plain access. These levers are new since submission. *AMD, N=3* (three separately started legs, same arm order in each; original binaries): CR1 1.063 (1.070 / 1.059 / 1.062; t interval 1.050-1.078), CR1+N1 1.077 (1.085 / 1.070 / 1.074; 1.057-1.096), A/A 1.000 (1.004 / 0.998 / 0.998). By suite dom | image_decoder | layout | paint | parser | svg: CR1 1.053 | 1.023 | 1.079 | 1.067 | 1.026 | 1.050; CR1+N1 1.046 | 1.056 | 1.065 | 1.653 | 1.043 | 1.040. Without the two paint stories (both multicol pages through one accessor whose reads are DCHECKs): CR1 1.063, CR1+N1 1.057, i.e. the hit test is below CR1 there; as a geomean of the six suite figures: 1.049 and 1.132. In the middle leg the parser and paint runs overlapped a file copy. *Intel, N=3* (three legs, two rotation indices; the third with the A/A in the middle of the order): CR1 1.102 / 1.105 / 1.104, CR1+N1 1.282 / 1.285 / 1.292, A/A 0.996 / 1.000 / 1.004; S56 at N=2: 1.186 / 1.186. Third leg, bootstrap over the 49 stories: CR1 1.085-1.125, CR1+N1 1.235-1.354, S56 1.147-1.231; without paint 1.105, 1.280, 1.173; 48 of 49 stories above 1 for CR1+N1. By suite dom | image_decoder | layout | paint | parser | svg (third leg): CR1 1.145 | 1.008 | 1.110 | 1.088 | 1.098 | 1.099; CR1+N1 1.320 | 1.045 | 1.327 | 1.601 | 1.178 | 1.249; S56 1.270 | 0.974 | 1.198 | 1.524 | 1.144 | 1.118. Wall time of the runs, stock over arm: CR1 1.067, CR1+N1 1.177, S56 1.142. *Placement bound.* A layout twin of CR1 (same flags and compiler, other path strings compiled in, so every file's code layout shifts) reads 1.013 over CR1 on the 49 rows (interval 1.005-1.022) and up to 6 % on a suite of two stories. So a difference between arms below about 1.5 % on the whole set, or 6 % on a two-story suite, is inside what code layout alone does; on AMD every gap between CR1 and the hit-test arms is of that size. *Crashes.* Per-process sanitizer logs kept from 11 Oct: no fatal signal, CHECK failure or crashed helper in any arm of any leg read so far, apart from one hung renderer in a stock run. The two hosts differ in pinned threads, container against host run and memory cap as well as in the processor. *Thread-count control (Intel, 11 Oct, N=1):* the first sample with every run pinned to 16 threads (8 cores and their siblings, as on AMD; checked on a live renderer; 30 runs, none failed) reads CR1 1.099 (1.081-1.121), CR1+N1 1.287 (1.229-1.348), S56 1.184 (1.146-1.228), A/A 0.996, against 1.104, 1.292 and 1.186 at 48 threads; CR1+N1 over CR1 1.170 (1.129-1.213) at both; without the two paint stories 1.101, 1.275, 1.171. By suite dom | image_decoder | layout | paint | parser | svg: CR1 1.145 | 1.021 | 1.104 | 1.071 | 1.097 | 1.093; CR1+N1 1.321 | 1.054 | 1.316 | 1.605 | 1.183 | 1.246; S56 1.267 | 0.991 | 1.194 | 1.527 | 1.142 | 1.115. The runs' wall times are within 1 % of those at 48 threads; largest process's RSS over stock CR1 1.099, S56 1.278, CR1+N1 1.820; whole-tree anonymous + shared peak 1.019, 1.052, 1.053. So the thread allowance is not what separates the hosts in the hit test's value (+17 % over CR1 on Intel at either thread count; +1.2 % on AMD's first sample, -3.8 % on its hold-out); *Container control (AMD, 11 Oct, N=1):* the first sample directly on the AMD host under xvfb-run (no container, the host's 87 font families instead of the image's 6, host paths; 30 runs, none failed) reads CR1 1.064 (1.054-1.074), CR1+N1 1.077 (1.040-1.121), S56 1.080 (1.048-1.116), A/A 1.000, against the container's N=3 figures 1.068, 1.081, 1.086; CR1+N1 over CR1 1.013 against 1.012 (0.995 against 0.994 without the two paint stories); by suite dom | image_decoder | layout | paint | parser | svg: CR1 1.040 | 1.038 | 1.081 | 1.052 | 1.028 | 1.050; CR1+N1 1.054 | 1.046 | 1.062 | 1.630 | 1.047 | 1.061; S56 1.050 | 1.036 | 1.091 | 1.549 | 1.024 | 0.996; stock's wall time per suite within 4 % of the container's. So the container, the font set and the paths are ruled out together, the container figures stand, and the host difference in the hit test's value follows the processor (the machines differ in nothing else that was varied; which property of the processor is not measured). AMD legs from here on run on the host. *Hardware counters, AMD half (11 Oct; one svg story, SvgCubics, where the hosts disagree most: CR1+N1 over CR1 1.21 on Intel, 0.92 on AMD; 2 runs per arm; user-space events of the whole benchmark process tree, the harness's Python included in every arm alike; ten events multiplexed):* stock | CR1 | CR1+N1: story time 71.3 | 64.0 | 71.8 ms; instructions 1025.8 | 1010.4 | 966.4 e9; cycles 350.8 | 339.9 | 365.5 e9; instructions per cycle 2.92 | 2.97 | 2.64; per 1000 instructions: L1 instruction-cache misses 4.15 | 4.00 | 5.48, iTLB misses 0.012 | 0.014 | 0.024, dTLB misses 0.092 | 0.100 | 0.166, branch misses 1.01 | 1.02 | 1.07, cache misses 1.14 | 1.20 | 1.97. On these whole-tree counts the inline hit test removes instructions on AMD (-4.4 % against CR1) while front-end and cache misses rise (a reading the renderer-only counts below do not confirm as the cause): instructions per cycle fall 11 %, cycles rise 7.5 % over CR1, matching the story's time. *Intel half (12 Oct, same story, arms and events):* story time 120.1 | 105.2 | 89.8 ms; instructions 981.8 | 972.6 | 972.1 e9; cycles 402.0 | 388.9 | 393.4 e9; instructions per cycle 2.44 | 2.50 | 2.47; per 1000 instructions: L1 instruction-cache misses 6.78 | 8.40 | 16.83, iTLB misses 0.018 | 0.020 | 0.040, dTLB misses 0.099 | 0.099 | 0.136, branch misses 2.06 | 1.75 | 1.37. What holds on both hosts: with the hit test branches per instruction fall alike (151 to 131), instruction-cache misses per instruction rise (x2.0 over CR1 on Intel, x1.37 on AMD) and iTLB misses double; on AMD instructions per cycle fall 11 %, on Intel they stay (2.50 to 2.47), and branch misses per instruction fall 22 % on Intel where they rise 5 % on AMD. What these counts cannot say: they are of the whole benchmark command (browser start-up, the harness, idle processes), in which the story is a small part, and Intel's run-to-run spread of the total (4-6 %) exceeds the effect; the story is 15 % faster with the hit test on Intel while the tree shows equal instructions and 1 % more cycles. So that the instruction saving is the same on both hosts is not established; *Renderer main threads only (12 Oct; sampling with symbols, the three renderers of a run, 2 runs per arm; cycles only: sampled cycles agree with the counted ones on both hosts, sampled instructions lose half their samples on Intel and are not used):* cycles e9, stock | CR1 | CR1+N1: Intel total 206.7 | 196.5 | 199.3, inside the runtime 188.1 | 171.2 | 135.7 (91 | 87 | 68 %), outside it 18.6 | 25.4 | 63.6; AMD total 196.4 | 187.7 | 197.2, inside the runtime 183.1 | 167.3 | 138.9 (93 | 89 | 70 %), outside it 13.4 | 20.5 | 58.4. CR1+N1 against CR1: runtime cycles -35.5e9 on Intel and -28.4e9 on AMD; cycles outside the runtime +38.2e9 and +37.9e9; net +1.4 % on Intel, +5.1 % on AMD. L1 instruction-cache misses per 1000 cycles of the thread: Intel 23.2 | 29.1 | 56.2; AMD 17.1 | 16.0 | 18.5. So on both hosts the inline test moves about a fifth of the renderer main thread's cycles out of the runtime into inline code, the inline code costs the same on both, and the runtime saving is a fifth smaller on AMD, in the direction of the timing result. Two limits stand: the thread's whole-run cycles do not follow the story's metric (on Intel 110 to 90 ms with +1.4 % cycles), so the timed iterations are not isolated; and the instruction-cache explanation suggested by the whole-tree counts above is not supported here, since on this thread the misses double on Intel, where the test wins, and rise 16 % on AMD, where it loses. The host difference is therefore reported as measured (thread count, container, fonts and paths excluded) with its mechanism not established. *AllOpt, N=1 per host:* 1.012 (AMD), 0.995 (Intel). Why the submitted figure does not reproduce is not established: the compiler was corrected since, and the March measurement was one unpinned run per story with the two builds measured two days apart and no A/A; the two explanations have not been separated. *The reviewed analyses on Intel (11 Oct, N=1, first sample, seven arms in one leg, 42 runs, none failed; over stock, bootstrap over stories):* Sound (the four analyses) 1.012 (1.006-1.019); + dominance elimination, no peeling (the configuration of the submitted figure) 1.014 (1.005-1.023); AllOpt (+ peeling) 0.995 (0.988-1.003); CR1 1.101 (1.080-1.124); CR1 with the library-facts table off 1.102 (1.078-1.126); A/A 1.003. Pairs: table-off CR1 over CR1 1.001 (0.991-1.009), so the table adds nothing measurable on Chromium; no-peeling over Sound 1.003 (0.991-1.013), so neither does the dominance elimination; AllOpt over no-peeling 0.981 (0.973-0.991): peeling costs 1.9 %. By suite dom | image_decoder | layout | paint | parser | svg: Sound 1.004 | 1.009 | 1.014 | 0.988 | 1.000 | 1.027; no-peeling 1.014 | 1.014 | 1.015 | 1.039 | 1.010 | 1.008; AllOpt 0.983 | 1.010 | 0.995 | 1.001 | 1.000 | 0.989; CR1 1.145 | 1.003 | 1.118 | 1.045 | 1.091 | 1.065; table-off CR1 1.146 | 1.022 | 1.114 | 1.050 | 1.087 | 1.087. Largest process's RSS over stock: Sound 1.001, no-peeling 0.998, AllOpt 1.044, CR1 1.091. At N=2 under two arm orders (12 Oct, 84 runs, none failed): Sound 1.006 [1.012 1.000] (0.998-1.015), no-peeling 1.012 [1.014 1.009] (1.004-1.018), AllOpt 0.994 [0.995 0.992] (0.989-0.998), CR1 1.102 [1.101 1.104] (1.083-1.124), table-off CR1 1.102 [1.102 1.102] (1.081-1.124), A/A 1.001; table-off CR1 over CR1 1.000 (0.991-1.006); AllOpt over no-peeling 0.982 [0.981 0.983] (0.975-0.989), so peeling costs 1.8 % on Intel in both repetitions and gains 1.1 % on AMD in all three: its sign is a property of the host. So on Intel the analyses of the submitted paper give +0.6 to +1.2 % on Chromium against the submitted 1.39 (1.358 on this sample in the March data); *The same seven arms on the AMD host (11 Oct, N=1, no container, 42 runs, none failed):* Sound 0.991 (0.980-1.004); no-peeling 1.002 (0.994-1.011); AllOpt 1.013 (1.005-1.022); CR1 1.071 (1.059-1.082); table-off CR1 1.072 (1.061-1.084); A/A 1.004. Pairs: table-off CR1 over CR1 1.002 (0.998-1.006); no-peeling over Sound 1.011 (1.000-1.020); AllOpt over no-peeling 1.011 (1.006-1.017), so peeling gains 1.1 % on AMD where it costs 1.9 % on Intel. By suite: Sound 0.984 | 1.038 | 0.976 | 1.003 | 0.993 | 1.052; no-peeling 0.980 | 1.052 | 1.000 | 0.990 | 0.994 | 1.020; AllOpt 1.004 | 1.054 | 1.009 | 1.037 | 1.002 | 1.027; CR1 1.053 | 1.055 | 1.079 | 1.082 | 1.034 | 1.085; table-off CR1 1.054 | 1.060 | 1.083 | 1.085 | 1.032 | 1.077. Provenance: Sound's layout run overlapped the receiving side of a file copy, so Sound's 0.976 on layout and its 0.991 carried that flag; the second repetition (12 Oct, another arm order, clean) reads 0.995, so the flag did not matter. At N=3 under three arm orders (126 runs, none failed): Sound 0.995 [0.991 0.995 0.997] (0.987-1.004), no-peeling 0.999 [1.002 0.998 0.999] (0.995-1.004), AllOpt 1.011 [1.013 1.010 1.009] (1.005-1.016), CR1 1.069 [1.071 1.067 1.068] (1.059-1.079), table-off CR1 1.070 [1.072 1.071 1.067] (1.060-1.081), A/A 1.003; table-off CR1 over CR1 1.002 (0.999-1.004); no-peeling over Sound 1.005 (0.995-1.012); AllOpt over no-peeling 1.011 [1.011 1.012 1.010] (1.007-1.016); CR1 on the host equals the container's 1.068. RSS over stock: Sound 0.997, no-peeling 0.999, AllOpt 1.059, CR1 1.113. So on neither host do the reviewed analyses, with or without the elimination and peeling, move Chromium by more than the placement bound (AMD 0.991 / 1.002 / 1.013, Intel 1.012 / 1.014 / 0.995), and the library-facts table makes no difference on either. *speedometer3, N=1, AMD, default options:* CR1 1.092, CR1+N1 0.965, AllOpt 1.024 against an A/A of 1.016 with rows from 0.73 to 1.24: not readable at this N. *Placement variants of the inline hit test, in-sample* (the size cap was chosen from a sampled story's profile; a hold-out sample is running). K4 = the test only in loops of at most 20 checked accesses (existing flag): 1.062 and 1.065 on AMD, 1.106 on Intel, N=1, i.e. equal to CR1. S56 = the test only in functions of at most 56 IR instructions; s1 with cap 20000 = by static block frequency; both need compiler root `tsan-cr2-429bd8cf76b9` (pass file and IR tests only; runtime archives byte-identical to 8345a's; nine hand-picked Chromium units identical after stripping debug sections, under CR1's flags and under the hit test's; audit A85). AMD, N=3, the same three rotations for all arms (the third at another rotation index with the A/A in the middle): CR1 1.068 (1.069 / 1.075 / 1.059), CR1+N1 1.081 (1.083 / 1.073 / 1.086), S56 1.086 (1.087 / 1.087 / 1.084), s1 1.075 (1.080 / 1.069 / 1.076), A/A 1.002; bootstrap over stories: 1.058-1.078, 1.041-1.127, 1.052-1.127, 1.039-1.118; without the two paint stories: 1.067, 1.060, 1.066, 1.056. By suite dom | image_decoder | layout | paint | parser | svg: S56 1.046 | 1.021 | 1.090 | 1.698 | 1.036 | 1.012; s1 1.041 | 1.023 | 1.072 | 1.647 | 1.060 | 0.996. So on AMD every hit-test variant is within 1.7 % of CR1 on the 49 rows and at CR1 without the two paint stories, inside the placement bound; S56 equals the full test there (1.005, interval 0.990-1.020). On svg every hit-test arm is 3-7 % under CR1 on AMD, on both compiler roots. Intel: S56 1.186 twice (N=2), s1 1.207 (N=1); S56 is 8 % behind the full test there (0.918). Largest process's RSS over stock on AMD, N=3: CR1 1.108, S56 1.292, s1 1.440, CR1+N1 1.791; the whole tree's allocated peak is within 3 % of stock for every arm outside the paint suite, whose allocated peak is noisy by itself (its A/A reads 1.136 in one rotation). *Hold-out sample* (48 stories disjoint from the first sample: every fourth story from the third, file and hash fixed before it ran; AMD N=3 under three arm orders, Intel N=3). AMD (A/A 1.000 [1.002 1.000 0.998]; per repetition in brackets): CR1 1.057 [1.064 1.047 1.060] (1.044-1.070), CR1+N1 1.017 [1.018 1.017 1.015] (0.992-1.045), S56 1.054 [1.059 1.053 1.052] (1.034-1.081); CR1+N1 over CR1 0.962 [0.957 0.971 0.957] (0.939-0.986), S56 over CR1 0.997 [0.995 1.005 0.992] (0.981-1.019); the same to 0.002 without the two paint stories. Provenance: a stray two-minute grep of the timing lane overlapped the stock layout run of the third repetition; without that repetition (N=2) the figures are CR1 1.056, CR1+N1 1.017, S56 1.056, within 0.003 of the full ones. By suite at N=2, dom | image_decoder | layout | paint | parser | svg: CR1 1.078 | 1.019 | 1.064 | 1.054 | 1.021 | 1.057; CR1+N1 1.092 | 1.017 | 1.026 | 1.059 | 0.979 | 0.965; S56 1.113 | 1.034 | 1.069 | 1.078 | 1.006 | 1.016. Wall time of the runs in repetition 1, stock over arm: CR1 1.035, CR1+N1 0.968, S56 1.112. Intel at N=3 under three arm orders (102 runs, none failed; A/A 0.999 [0.999 0.996 1.002]): CR1 1.101 [1.098 1.102 1.103] (1.086-1.116), CR1+N1 1.248 [1.246 1.245 1.253] (1.200-1.300), S56 1.157 [1.156 1.155 1.160] (1.132-1.182); CR1+N1 over CR1 1.134 [1.135 1.130 1.135] (1.102-1.168), S56 over CR1 1.051 [1.053 1.048 1.051] (1.038-1.065); within 0.002 without the two paint stories; run-to-run CV of raw values 0.5-0.7 %. CR1 with the library-facts table off, N=2: 1.106 [1.102 1.110], over CR1 1.003 (1.001-1.005). RSS of the largest process over stock: CR1 1.095, S56 1.264, CR1+N1 1.773; the whole tree's anonymous + shared peak 1.009, 1.002, 1.035. The figures by suite and the wall times that follow are of the first repetition. By suite: CR1 1.067 | 1.001 | 1.122 | 1.076 | 1.045 | 1.099; CR1+N1 1.257 | 1.041 | 1.310 | 1.210 | 1.070 | 1.248; S56 1.189 | 1.014 | 1.184 | 1.143 | 1.064 | 1.172. Wall time, stock over arm: CR1 1.044, CR1+N1 1.077, S56 1.075. AMD hold-out directly on the host (12 Oct, no container, N=1, 30 runs, none failed; the container's N=3 after the slash): CR1 1.060 (1.045-1.077) / 1.057, CR1+N1 1.019 (0.993-1.050) / 1.017, S56 1.048 (1.026-1.076) / 1.054, A/A 1.000; CR1+N1 over CR1 0.960 (0.936-0.987) / 0.962, S56 over CR1 0.989 (0.971-1.011) / 0.997; suites dom | image_decoder | layout | paint | parser | svg: CR1 1.075 | 0.983 | 1.079 | 1.025 | 1.022 | 1.044; CR1+N1 1.106 | 0.999 | 1.031 | 0.999 | 0.981 | 0.966; S56 1.106 | 0.983 | 1.070 | 1.022 | 1.001 | 0.995; largest process RSS over stock 1.091 / 1.769 / 1.273 (CR1 / CR1+N1 / S56). The host reproduces the container within 0.006 on every arm, so the container is excluded for the hold-out as well as for the first sample. Hold-out beside the first sample (N=3), Intel hold-out | Intel first | AMD hold-out | AMD first: CR1 1.101 | 1.104 | 1.057 | 1.068; CR1+N1 1.248 | 1.286 | 1.017 | 1.081; S56 1.157 | 1.186 | 1.054 | 1.086. So on stories not seen before: CR1 generalises on both hosts (within 1.2 %); the unrestricted hit test generalises on Intel (+13.5 % over CR1) and is a loss on AMD (-3.8 %, all three repetitions below CR1, interval excluding 1; its lead on the first sample was the two sampled paint stories); the small-function rule is never below CR1 (+5.3 % on Intel, equal to it on AMD), about 2.5-3 % under its in-sample figures on both hosts, as selecting its cap in-sample would give. *The paint suite whole* (all 8 stories, N=1): CR1 | CR1+N1 | S56 over stock: Intel 1.078 | 1.310 | 1.232 (A/A 1.010); AMD 1.050 | 1.152 | 1.142 (A/A 0.991); AMD at N=2 (container runs, two arm orders): 1.062 (1.050 1.074) | 1.160 (1.152 1.167) | 1.169 (1.142 1.196), A/A 0.998, bootstrap over the 8 stories 1.038-1.087 | 1.018-1.358 | 1.035-1.366; without the two multicol stories 1.048 | 1.030 | 1.044; two stories (containment-resize, transform-changes) are below stock for CR1+N1 in both repetitions (0.96, 0.97). The two stories of the first sample are the suite's outliers: the two multicol stories gain 50-75 % with the hit test on both hosts, the other six 13-37 % on Intel and -5 to +9 % on AMD (three of them below CR1 there). *Code and sites* (chrome + 486 libraries): text 737.9 MB stock, 733.9 the reviewed analyses with dominance elimination and no peeling ("AllOpt-nopeel", built 11 Oct with the library-facts table off), 762.1 AllOpt, 867.1 CR1, 1033.9 K4, 1144.9 S56, 1428.4 s1, 2205.1 CR1+N1. Linked read/write call sites against stock's 12,938,970: Sound -0.85 %, CR1 -0.81 %, AllOpt-nopeel -2.80 % (12,577,070; its 119,159 keep-form entries counted, since they still check), AllOpt +3.61 %: the dominance elimination removes about 2 % of Chromium's sites beyond the analyses, and peeling is what turned AllOpt's count positive. The submitted "28 % of sites removed" is not approached by any configuration (2.8 % at most) and has no data behind it. The no-peeling build took 3513 s, the same as CR1's. A profile of two stories under stock: access checks about 40 % of the browser's CPU, atomics and mutexes 26-39 %, function entry/exit 3.5-4.3 % (0.3-0.4 % under CR1). *Memory.* Peak RSS of the largest browser process (from `time -v`, in every leg; A/A 1.000-1.003; the same in every suite and on both hosts): stock 1.27-1.29 GiB; CR1 1.39 (+9-11 %); K4 1.52 (+19-21 %); S56 1.63 (+28-29 %); s1 1.81 (+41-44 %); CR1+N1 2.25 (+79-81 %). It follows code size: the growth is resident file-backed pages, i.e. the larger code mapped from the binaries, not memory the processes allocate: the whole process tree's sampled peak of anonymous + shared memory, over stock on the Intel leg of 11 Oct: CR1 1.039, S56 1.039, CR1+N1 1.065, A/A 1.009 (paint is the one suite where every optimised arm, the layout twin included, allocates about 20 % more). Both quantities are reported from here on. The earlier figures from the run's cgroup peak ("+6-14 %", "+5.5 %", "+57-63 % on svg") were artefacts of page-cache accounting and are withdrawn; an anonymous-memory figure for the whole process tree comes with the next legs. *Sensitivity (the two seven-arm looks re-read on one story set, N=1).* Without the two paint stories (47 rows), AMD: CR1 1.069, CR1+N1 1.063, S56 1.066, s1 1.060, K4 1.062, so on AMD the hit test's whole lead over CR1 is those two stories; Intel: CR1 1.106, CR1+N1 1.274, S56 1.174, s1 1.196, so there it does not depend on them. Bootstrap 95 % interval over the 49 stories: AMD CR1 1.059-1.081, CR1+N1 1.043-1.130, S56 1.051-1.130; Intel CR1 1.085-1.126, CR1+N1 1.229-1.347, S56 1.147-1.229. Wall time of the whole runs, stock over arm: AMD CR1 1.012, CR1+N1 1.052, S56 1.066; Intel CR1 1.043, CR1+N1 1.166, S56 1.133. *Race preservation* (a third host, default options, reports on; 10 runs of the 49 blink stories and 2 of speedometer3 per arm; runs reporting each race): the perfetto start-up race on paint (PopulateTlsInst against MaybeAdoptStartupTracingInDataSource): stock 0 of 30, CR1 4 of 20, CR1+N1 3 of 10 over three sessions to 11 Oct, one of them with stock and CR1 interleaved run by run (0 of 10 and 2 of 10); under the reset option earlier stock 4 of 9, Sound 3 of 10, so stock can report it. Stock 0 of 30 against CR1 4 of 20 is one-sided Fisher p = 0.021: the optimised arms report it more often, not less, so nothing is lost; the cause is not measured (the bounded per-granule history shown below for the crashpad race is a candidate); the crashpad WorkerThread::Stop race on speedometer3: 2 of 2 in every arm; a PartitionAlloc slot-span bit-field race on speedometer3 (a read-only bit read without the lock in the same word as counters written under it; real for the tool): over all runs to 11 Oct stock 7 of 15, CR1 5 of 10, CR1+N1 2 of 18, S56 2 of 4, so it is in every arm's union; the full hit test shows it at a lower observed rate, cause not established. One run per arm with counting breakpoints inside the unmodified runtime's report function (the renderer under a debugger; the stock control's counts equal its printed text): stock 13 detected races, 10 matched by Chromium's suppressions, 3 reached output, 1 printed (this race), 0 dropped for a stack that could not be restored; CR1+N1 1205 detections, of which 913 are the granules of one 8 KB object accessed by a thread on a freshly restarted slot against one old full-granule write whose trace part was gone (the first failed its stack restoration, the rest were dropped by the runtime's own spurious-race filter: bounded history at work, no named race), 281 matched by suppressions, 9 dropped for an unrestorable stack, 3 reached output and were suppressed, none printed, and no detection at all in slot-span metadata in that run. The rates are not comparable between arms: in the one session where the three arms were interleaved run by run stock itself showed it in 0 of 4 runs (CR1 1 of 4, CR1+N1 1 of 4), after 6 of 10 in separate streams some hours earlier on the same host, so host conditions move the rate of the baseline as far as any gap between arms. A reproducer of the access shape (400 runs per cell, with a locked twin as control) reports under the inline hit test at stock's rate or above in every variant. **The crashpad race and the shadow's four slots (11 Oct).** The crashpad race (WorkerThread::Stop: the main thread's write of a one-byte flag against a worker's read), which stock and CR1 report in every run (27 of 27), is reported in 10 of 19 CR1+N1 runs and 3 of 4 S56 runs. With the handler under a debugger: in a run that reports, both arms enter the runtime's report function 0.06 s after the browser is gone, print 0.2 s later and exit with code 0; in five CR1+N1 runs that do not report, the handler receives no signal, never enters the report function and exits with code 0: the race is not detected. A standalone program of the same shape (a plain flag and an atomic flag in one 8-byte granule; 120 runs per cell; builds: stock, CR1's flags, CR1+N1's flags, stock with only the inline hit test) shows the mechanism, and it is the unmodified runtime's: the granule's four shadow slots are full, the main thread's own read before its write (the DCHECK) finds no slot of its own to update and evicts one, and when that one holds the worker's read, the write has nothing left to conflict with. The outcome is 0 % or 100 % per build and program variant, and stock loses the race too: base program stock 120 | CR1 0 | CR1+N1 0 | hit test only 120; with 1000 unrelated lock pairs before the stop 0 | 120 | 120 | 0; with two unrelated functions added to the program, 0 of 40 in all four. The victim slot follows the thread's trace position, as the runtime's code says ((trace_pos / 8) mod 4): with J extra single trace events on the main thread before the stop (J = 0..7, 30 runs per cell) stock reports in 30 of 30 runs except at J = 2 and 6, where it reports in 0 of 30, exactly the two J at which the printed position is 0, period four; the build with only the hit test gives the same row at the same positions; CR1 and CR1+N1, identical to each other, lose at J = 4 (position 0) and at J = 0 (one cell not explained: the position is printed a few events before the evicting read). So one trace position in four hides the race, in every build, and a build is deterministic for a given event history; a history that varies from run to run, as in Chromium, gives a partial rate. In every cell the hit-test build equals its base build (hit test only = stock, CR1+N1 = CR1), so the inline test and its miss entry are not the cause; what moves the outcome is whatever changes which records sit in which slots (CR1's escape analysis removes the constructor's checks, so the granule starts with one allocation record instead of two one-byte writes). So this is the bounded-shadow loss the paper accepts, with a property worth stating: it can be deterministic, a race invisible in every run of one build and visible in every run of another, and an optimised build both loses and gains reports against stock. *Seen slot by slot in Chromium's own handler* (one run per arm, the prune worker's flag; the debugger prints the granule's four slots through Stop). CR1, which reports: at entry [main write, whole granule] [worker atomic write, byte 1] [main write, byte 1] [worker read, byte 0]; the main thread's DCHECK read replaces slot 0, its own old record (trace index 356, mod 4 = 0); the write then meets the worker's read and the race is reported. CR1+N1, which does not: at entry [main write, whole granule] [main write, byte 0] [worker atomic write, byte 1] [worker read, byte 0]; the DCHECK read replaces slot 3, the worker's read (trace index 387, mod 4 = 3); the write updates the main thread's own slot and nothing of the worker is left to compare. In both arms the read reaches the runtime and is stored; the runtime's victim choice drops the one record the write could race with. So the crashpad row reads: reported in 27 of 27 stock and CR1 runs, 10 of 19 CR1+N1, 3 of 4 S56, in every arm's union; the unreported runs are the unmodified runtime's bounded per-granule history. Not measured: why the main thread's trace position at Stop varies between runs in the hit-test build and apparently not in stock and CR1. In the pair's CR1+N1 run the Speedometer story failed: one renderer disappeared 1650 s into the story with no sanitizer output and no exit summary (the first failed Speedometer story in 45 runs of all arms). Three further runs with every renderer, the network service and the handler recorded and memory sampled each second completed: every recorded process ended with exit code 0 and no signal, and the container peaked at 10.4-10.7 GB against the 48 GB limit of the failed run (a debugger with full symbols holds at most 2.3 GB). So the memory limit is not a plausible cause, the death did not recur, and it stands as one failed story in 19 CR1+N1 Speedometer runs, unexplained. One CR1+N1 run in 15 logged a network service that exited 1.7 s into its life and was restarted (0 in 29 runs of the other arms). A V8 race (TypedSlots::EnsureChunk against TypedSlots::Merge) appeared for the first time in the interleaved session: stock 2 of 4, CR1 0 of 4, CR1+N1 1 of 4. For the perfetto and PartitionAlloc races the IR of the units involved shows both accesses and every synchronising operation instrumented alike in all arms (over the whole program CR1 has 74 more linked atomic call sites than stock, 274,651 against 274,577: on the five units of a 400-unit sample where such counts differ, the IR after the pass has the same atomic, memset and vptr calls in every function under both flag sets, so the difference is the back end duplicating or merging a block that holds the call, not a lost or added check). No other suite has a report in any arm. So under default options stock reports no race on the blink stories in this table; on speedometer3 stock shows the crashpad race (9 of 9; CR1 6 of 6; CR1+N1 5 of 6) and the PartitionAlloc race. Two layout stories never complete in stock. *Table of record with all five arms* (11 Oct; default options; 10 runs of the blink stories and 2 of speedometer3 per arm; runs reporting, stock | Sound | AllOpt | CR1 | CR1+N1; per session in `chromium-preservation-tables.txt`): dom, image_decoder, layout, parser, svg: no report in any arm; the perfetto race on paint 0/10 | 1/10 | 2/10 | 2/10 | 3/10; the crashpad race 2/2 in all five; the PartitionAlloc race 0/2 | 1/2 | 2/2 | 2/2 | 0/2 (all sessions: stock 7/15, CR1 6/12, CR1+N1 2/19, S56 2/4); the V8 TypedSlots race 0/2 | 0/2 | 1/2 | 0/2 | 0/2 (all sessions: stock 2/15, CR1+N1 1/19). No arm loses a race that stock reports in the record. Story runs completed of 492: 472 | 472 | 472 | 486 | 488: the two layout stories that never complete in stock, Sound and AllOpt complete under CR1 in at least 5 of 10 runs and under CR1+N1 in at least 8, and are excluded from the timing comparison either way. The crashpad count of CR1+N1 was traced file by file on 12 Oct: 10 of 19 completed Speedometer runs (an earlier 11 of 19 was an addition slip that counted a void run); stock and CR1 together 27 of 27. A runtime-only fast path for acquire-order atomic loads (ALS) was tried on 10 Oct and is parked in the runtime track, outside these tables (`runtime/als.md`).
+<a name="chromium"></a>
+## 2. Chromium
 
-**What the SQLite figure measures (read from the test source and existing logs, 9 Oct).** Every SQLite figure in this file is stress2's sum, over 13 statement-loop threads, of statements that returned SQLITE_OK in 60 s. It counts completed statements only, and the completed share of attempts is the same in every arm (0.25-0.27), so failures do not inflate it. But the sum is dominated by a few statements: PRAGMA integrity_check 33-36 %, CREATE TABLE IF NOT EXISTS and DROP TABLE IF EXISTS 15-17 % each, PRAGMA journal_mode 15 %, the SELECTs 10 %; the seven write loops (INSERT, UPDATE, DELETE, VACUUM) are 7-9 %, because 96-97 % of their statements return SQLITE_LOCKED. The gain sits in the readers and schema statements: on AMD those four read 1.27-1.30 for gen9b, 1.29-1.33 for LO-MARK v1 and 1.34-1.42 for v2, while the write loops complete fewer statements than under stock (gen9b 0.91-0.98, v1 0.83-0.89, v2 0.80-0.87; per-statement A/A 0.98-1.05); on Intel gen9b reads 1.10-1.19 on those four and 0.99-1.02 on the writers. With the 13 statements weighted equally the figures are: AMD gen9b 1.06, v1 1.02, v2 1.01; Intel gen9b 1.056, v1 1.003, v2 1.020. v2's lead over v1 on AMD is more integrity checks and fewer completed writes; equally weighted it is gone, so no gain of v2 over v1 is claimed. So the column reads "completed statements per 60 s of a lock-contended mix dominated by integrity checks": a valid throughput ratio, not a speedup of write work. A fixed-work measurement (time for a fixed number of statements per loop) is owed.
+Chromium 127.0.6533.119, component build (486 libraries) with DCHECKs on, compiler `tsan-cr-8345a0396fa5`
+(`tsan-cr2-429bd8cf76b9` for S56). First sample: 49 Blink stories of six suites, used during development. Hold-out
+sample: 48 other stories, fixed before they ran. Speedup over stock TSan, N=3 unless noted.
 
-**SQLite column (2), LO-MARK v1, first timing (9 Oct, leg zvf4, Intel host, stress2, 4 offsets x 4 rounds, same root `tsan-lomark-718c7520052c`).** LO-MARK over stock 1.058 (per offset 1.047 / 1.045 / 1.056 / 1.082); gen9b over stock 1.095 on the same root; LO-MARK over gen9b 0.966; A/A 0.986. Another user's job disturbed 38 of 64 cells; on the clean cells alone: 1.054, 1.100, 0.981, A/A 0.988 (LO-MARK then has three offsets at N <= 2). Second leg (zvl6b, AMD host, the noisier half, 6 rounds, 121 cells, none void): LO-MARK over stock 1.140 (1.214 / 1.145 / 1.104 / 1.101); gen9b over stock 1.174; LO-MARK over gen9b 0.971; A/A 0.993. Record leg (zvl4, AMD host, the quiet half, 4 rounds, clean: 81 of 81 cells, none void): LO-MARK over stock 1.260 (1.237 / 1.246 / 1.283 / 1.274); gen9b over stock 1.233; LO-MARK over gen9b 1.021; A/A 1.008. Over the three legs LO-MARK v1 against the generated spec reads 1.021, 0.971 and 0.966: the two are not separated, and the sign follows the machine. v1 matches column (3)'s gen9b without assertions. LO-MARK v2 (cursors added; root `tsan-lomark-81ba6b17fd4d`, audits A80 and A81, preservation PASS), first leg on the Intel host (z8f4, 9 Oct, 76 of 80 cells clean): over stock gen9b 1.105, v1 1.075, v2 1.086; v2 over v1 1.011 with A/A 1.017, although v2 elides 6.4 times as many checks (74.8 M held hits against 11.6 M per run). All LO-MARK figures up to here carry a defect found on 9 Oct: always-on shared atomic counters on the marker paths (about 750 ns per access under contention in a micro-benchmark against 28 ns without them); v2 passes them 175 M times per run and v1 12 M. Second v2 leg, AMD host, the quiet half but 34 of 80 cells retired for another user's load (z8a4, same root, clean cells / all cells): over stock gen9b 1.196 / 1.181, v1 1.185 / 1.178, v2 1.237 / 1.219; v2 over v1 1.044 / 1.034; A/A 1.001. There v2 is the first LO-MARK variant above the generated spec, at 3 of 4 offsets above the A/A range. Stated limit: on the other subtest, create_drop_index_1 (not the readout), v2 runs at 0.72-0.80 of stock on AMD and 0.92 of v1 on Intel (that subtest's A/A is 0.90-0.95): with the shared counters the cursor version costs heavily on the index workload. The counters are per thread on root `tsan-lomark-913cae99c263`; First leg on it, Intel host, clean (z9f4, 0 of 80 cells retired, 4 rounds x 4 offsets), stress2 | create_drop_index_1 over stock: gen9b 1.134 | 1.061; v1 1.109 | 1.033; v2 1.099 | 0.957; A/A 1.004 | 0.995. So without the shared counters v2 still equals v1 on stress2 there (0.991), and the index-subtest loss is v2's alone and remains: 0.926 of v1 at every offset, 0.957 of stock. AMD leg on the same root (z9a4, the quiet half, 34 of 96 cells retired, clean / all cells): over stock gen9b 1.224 / 1.222, v1 1.243 / 1.240, v2 1.308 / 1.296 (per offset 1.317 / 1.298 / 1.281 / 1.288); v2 over v1 1.052, over gen9b 1.069, at every offset outside the A/A (1.000, 0.977-1.027); v1 on the old root with the shared counters in the same leg 1.237, so the counters do not show on stress2. So on AMD v2 is resolved above v1 and above the generated spec; on Intel it is not (0.991). The index subtest is not readable in the AMD leg (its A/A there is 1.13-1.20), so its clean reading stays the Intel one: v2 at 0.926 of v1 and 0.957 of stock. v2 is not entered in the table while that subtest stands below stock. Correction, 9 Oct, after reading the metric: create_drop_index_1 counts ATTEMPTS (an iteration is counted even when its script stops at the first SQLITE_LOCKED; about 90 % of counted iterations are such failures in stock, v1 and v2 alike), so every statement above about that subtest describes attempts, not work; by completed scripts v2 is level with v1 and stock. That subtest is out of every readout. Preservation on this root (full 15-test suite, 20 runs per arm, 0 voids): no site lost in v1 or v2. Stated with it: both LO-MARK arms report the WAL-index races in fewer runs than stock (walRestartHdr: stock 13 of 20, v2 8, v1 5; walIndexRecover: 10, 6, 4), and two low-frequency keys that stock shows in 4 and 2 of 20 runs did not appear in v1's 20. None of those accesses is marked or elided (same instrumentation as stock in the final IR, no marker outside the heap), so the reading is a shifted interleaving in a time-bounded test; that reading is not tested. A per-run detection rate, if quoted, is these numbers and not the union verdict. Follow-up the same day: a second stock batch of 20 runs differs from the first by as much as the marker arms do (walRestartHdr 13 then 6 of 20; the second key 10 then 4), and gen9b and v2 sit between the two stock batches on every key, v1 at or just below the lower one. So the lower rates are within stock's own batch-to-batch spread (the batches also ran under different host load), and at 20 runs these rates carry no per-arm claim beyond "reported at all". All 16 + 24 LO-MARK runs: 0 voids; one run has 10.7 M held hits, 10.7 k marks, 317 k accesses stored beside a marker. v1 covers MemPage, the page image, the temp space and BtShared (about 61 % of what gen9b elides); cursors are v2, built and audited (A80, A81), not timed. The figure is a measurement: the six premises of v1 await a decision, and the record leg on the quiet AMD half is not done.
-
-## Table 2. Optimizations that gain
-
-Rows above EA-CONTENTS: single levers over P1-v3 (the paper's analyses with every soundness fix). Below: on top of their app's configuration.
-
-Kind: S static · R run-time checked, no annotation · G generated from the program's assertions · A hand-written annotation (A+R: run-time guarded) · RT runtime-only · U unsound, ceiling only. Markers: 🟢 gain beyond the A/A (the base run twice) · 🟡 1-2 % or unresolved · ⚪ within ±1 % · 🔴 loss · — not measured. `f` = Intel Xeon w9-3495X, otherwise AMD. Aliases in parentheses.
-
-| optimization | kind | what it is | SQLite | memcached | Redis | MySQL | FFmpeg |
-|---|---|---|---|---|---|---|---|
-| **DynSTC-RT** | R | single-thread mode in the runtime: nothing recorded while one thread is alive | ⚪ +0.4 | ⚪ −0.3 | `f` 🔴 −2.2 | ⚪ +0.1 | `f` 🟢 **+12.0** |
-| DynSTC (compile-time guard); DYNSTC-DIRECT | R | the paper's guard; both forms together | — | ⚪ −0.5 | 🔴 −5.5 | ⚪ −0.7 | `f` 🟢 +10.1; both +31.9 |
-| **N1** | S | TSan's "already recorded?" test inlined; the runtime called only on a miss | ⚪ −0.8 | ⚪ +0.3 (🔴 −5 on the record line) | `f` 🟡 +2.5 | 🟡 −1.7 | `f` 🟢 **+5.0** |
-| **N1-ST** | R | N1's test skipped in single-thread mode (over N1 + DynSTC-RT) | ⚪ +0.2 | ⚪ −0.2 | `f` 🟡 −1.4 | 🟡 −1.8 | `f` 🟢 **+16.9** |
-| **FE-INL** | S | TSan's shadow call stack push and pop inlined | ⚪ −0.7 | ⚪ +0.8 | `f` 🟢 **+4.8** | 🟢 **+3.6** | `f` ⚪ 0.0 |
-| **FE-INL + VWIDE-loops** (DE-VERIFIED-WIDE) | R | plus check removal inside loops, verified at run time | ⚪ +0.1 | ⚪ +0.6 | `f` 🟢 **+7.2** | 🟢 **+4.6** | `f` 🟡 +1.8 |
-| **FE-SINK** | S | function entry moved to the first point that needs the frame (nothing on top of FE-INL) | 🟡 +1.1 | 🟡 −1.7 | `f` 🟢 **+4.1** | 🟢 **+2.8** | `f` 🟡 −1.2 |
-| **N1-L** | S | N1 only in loops with at most 20 checks | ⚪ +0.3 | ⚪ −0.9 | `f` 🔴 −2.5 | ⚪ −0.1 | `f` 🟢 **+3.0** |
-| **MEMINTR** (MEMINTR-SRC, one-side) | S | a memcpy from a constant or private source checks only its destination | 🟡 +2.5 | ⚪ +0.9 | `f` 🔴 −2.5 | ⚪ +0.3 | `f` ⚪ 0.0 |
-| **EA-CONTENTS** | S | a pointer read from a container no longer makes the container shared | — | 🟢 **+1.4** | — | — | — |
-| **SWMR-ROOTS** (SWMR-1) | S | no checks on reads of a global whose only write precedes every reader thread | — | 🟢 **+0.9** | — | — | — |
-| **EVCONF** | A+R | objects owned by one event-loop thread unchecked while a run-time guard holds | — | 🟢 **+31.1** with the two rows above | — | — | — |
-| **EVCONF-RANGES** | A+R | the guard on memset/memcpy of an owned object | — | 🟢 **+18.5** | — | — | — |
-| **EVCONF-ARGS** | A+R | the confinement carried into the hash function's key argument | — | 🟢 **+7.3** | — | — | — |
-| **EVCONF-INTERCEPT** | A+R | the guard around memchr, strlen, bcmp on the confined read buffer | — | 🟢 **+7.5** | — | — | — |
-| **Quiet threads** (QUIET-THREADS, REDIS-MAIN, AUTO-BIO: silent-thread mode, the Redis phase guard) | R | Redis's main thread skips its checks (ranges included) while every other thread is quiet since a release it acquired | — | — | 🟢 **+31.9** | — | — |
-| **LO-OBJ-G**, generated spec (gen6, gen8) | G+R | objects protected by their owner's lock unchecked while the thread holds it; over stock | 🟢 **+15.7** | — | — | — | — |
-| **LO-OBJ-G**, spec v7 | A+R | the same, hand-written spec; over stock | 🟢 **+25.0** | — | — | — | — |
-
-## Table 3. No gain
-
-| idea | kind | what it is | result |
-|---|---|---|---|
-| Removal-mode DE (DE-REMOVAL), DE-3R, DE-2R | S | covered checks deleted; one range check per loop; adjacent fields merged | ⚪ MySQL +0.3 %, SQLite 0, memcached 0, FFmpeg −0.3 %; 🔴 Redis −3.8 % |
-| All-paths DE + cycle cut (DE-ALLPATHS, DE-5) | S | covered if every path has a cover; covers kept around loops | ⚪ Redis +1.0 %, SQLite −0.6 %, MySQL +0.1 %, memcached 0 |
-| EA-SEND, typed indirect calls | S | `transmit()`'s msghdr writes unchecked | ⚪ memcached 0 (mse4) |
-| Loop guard (T8, DE-LC), T10 package | S | a loop-invariant access checked once per sync-free stretch; the older lever package | ⚪ Redis +2.2 / +3.1 %, memcached 0 / +1.6 %, MySQL −0.1 / −4.2 %, FFmpeg +1.4 % |
-| Levers on top of SQLite's LO-OBJ-G | S | N1, N1-L, MEMINTR, FE-INL | ⚪ FE-INL +4.5 %, MEMINTR +3.5 % (wide A/A); 🔴 N1 −18.5 % |
-| The old "same location" rule (SAME-LOCATION, DSL) | U | fields (S), elements (A), narrow-covers-wide (Z) | 🔴 S loses a memcached race stock reports (`do_item_link` / `clock_handler`); bounds in table 5 |
-| LO-OBJ-ARGS; LO-OBJ-RANGES | A+R | LO-OBJ-G into SQLite's record comparison; its guard on memcmp and VDBE memcpy | ⚪ ceiling 1.023; reaches neither site |
-| EA interceptor toggle in per-unit builds | S | without the whole-program definitions list | ⚪ SQLite 0.977, MySQL 1.003 |
-| memcached's flag globals (SWMR-FIELD) | S | unlocked reads of `settings`, `expanding`, `hashpower` | U ceiling +4.5 %; no sound route; field rule ≈ 0.13 %, dropped 6 Oct (audit A68) |
-| Redis I/O threads' client buffers | — | their checks on the buffers they drain | ⚪ ≈ 0: their cycles are a spin |
-| Quiet mode beyond Redis | R | the phase guard on the other four apps | ⚪ ≤ 0.4 % of checks in quiet intervals |
-| MySQL THD owner reads (THD-READS, X3) | S | a connection's own THD fields | ⚪ ≤ 2.35 % of checks |
-| Run-time owner tag for one-thread objects | U | skip the owner's accesses | unsound: no record for a later foreign access |
-| N1-ATOMIC | S | inline test for relaxed atomics | ⚪ SQLite, MySQL ≤ 0.65 % of cycles; Redis +1.6 %, unresolved |
-| nosync census, DE-5…DE-8, IPA-DE | S | finer cover-breaking rules; callee check covers caller | ⚪ ≤ 2.08 % of checks; −0.8…+1.4 % |
-| VWIDE, VWIDE-loops alone | R | run-time verified removal where no check dominates | ⚪ −0.9…+1.3 % |
-| FE-hot, hot-list N1 (PGO-PLACE), N1-S, N1-LOOPS-∞ | S | FE-INL or N1 only at hot sites | 🔴 none beats the full version |
-| FE-PM, N1-PM, N1b | S | out-of-line entries saving fewer registers | 🔴 MySQL −2 %, SQLite −2…−4 % |
-| FE-LAZY, FE-INL-CSE, N1-CSE, LIBCALL-INLINE, N2 | S | lazy entry, shared thread-state load, compact/libc-call/batched checks | ⚪ ±1 %; N2 as built loses races |
-| SUBS, SUBS-SEL | RT | a covering record of the same thread counts as a hit | 🔴 −2…−18 %; SUBS-SEL unsound |
-| STC-SUM, STC-TS, STC-WL, libfacts | S | closed-world facts for STC and SWMR | ⚪ < 1 % of checks |
-| LTO, Attributor, XPASS, XP2 | S | more optimization before instrumentation | ⚪ nothing; the Attributor miscompiles |
-| CLONE-ESC, EA-SLOT (EA-SLOT-CONTENTS), ICALL-A2, returns-fresh, field chase | S | finer escape analysis | ⚪ each < 2 % of checks |
-| MYSQL-WP, TOPDOWN-FACTS | S | MySQL summaries; cross-unit argument facts | ⚪ ≤ 0.14 % of checks |
-| SWMR-G, PUBLISH-ONCE, thread roles, THREAD-IDS | S | finer may-happen-in-parallel facts | ⚪ each < 3 % of checks |
-| NOALIAS, CUSTOM-SYNC, MySQL sysvars, INNODB-LATCH, ODR-TRUST | S | language and library facts | ⚪ each < 3.2 % of checks |
-| RT-SYNC, SLOT-CHURN (SID-ALIAS), RANGE-OVERWRITE, RANGE-OWN-FASTPATH | RT | runtime-only changes | ⚪ no effect; RANGE-OWN-FASTPATH ≤ 0.3 %, not pursued 6 Oct |
-| LO-F, LO-W, LO-B1/B2, sound loop ranges, DE-1, DE-2, DE-4, DE-9 | S | further LO and DE rules | ⚪ ≤ 1.4 % of checks, or unsound |
-
-## Table 4. Open
-
-| item | kind | app | status |
-|---|---|---|---|
-| **EVCONF-CHECKED**: analysis proposes ownership candidates; run-time owner checks and a shadow marker make each elision sound (a failed check voids the run) | R | memcached | root `tsan-ecc-9c656c7b6d62` + marker gate, audits A70-A70g; **1.80×** over upstream (kmg; 1.76× without the gate); the one check per walked loop (A70e/A70f) took it from 1.34× |
-| **SQGEN-AUTO**: the generator derives the lock API | G | SQLite | gen8 derives enter/leave and predicates; audit A61f; same code as gen6 |
-| **EVCONF-FIELDS**: the owner's reads of its connection's fields | A+R | memcached | +3.6 % on the EVCONF line; needs the wider P-X86-FD |
-| QUIET-FE: entry/exit not recorded while Redis's main thread skips | R | Redis | FE 10.3 % of the main thread's cycles; not built |
-| DE-AV (SAME-PTR, DE-10): covers checked at run time where no dominance holds | R | SQLite | U ceiling +8-11 %; ≈ +2-4 % expected; parked |
-| LO-OBJ-G under `db->mutex` | A+R | SQLite | U ceiling +5.8 %; 0 % reachable in this harness; parked |
-| Camera-ready legs | — | all | compiler `tsan-cr-8345a0396fa5` (audits A42-A58b); held for the go |
-
-## Table 5. Where the analyses are conservative (shares of executed checks)
-
-| analysis | what it cannot prove | SQLite | memcached | Redis | MySQL | FFmpeg |
-|---|---|---|---|---|---|---|
-| DE, dominance | same address twice, no acquire between, both kept | 3.35 % | 0.04 % | 3.44 % | 5.45 % | 5.92 % |
-| of which: a call between | callee not proven sync-free (external or indirect / local) | 1.67 / 0.69 % | 0.04 / 0 % | 3.38 / 0.00 % | 2.78 / 1.06 % | 3.53 / 0.57 % |
-| of which: the address question | only address equality unproven | 1.0-1.7 % | 0 | 0.06 % | 1.6-2.7 % | 1.8-2.4 % |
-| DE, post-dominance | a call breaks it / ceiling with calls allowed | 0.28 / 0.37 % | 0 / 0 % | 0.30 / 0.92 % | 0.02 / 0.53 % | 0.21 / 0.53 % |
-| DE, availability | neither check dominates | 4.36 % | 0.08 % | 5.79 % | 1.00 % | 8.56 % |
-| DE, all paths / cycle cut | a cover on every path; a cover lost around a loop | 0.22 / 0.92 % | 0 / 0.71 % | 0.82 / 0.14 % | 0.07 / 0.08 % | 0.5 / 0.89 % |
-| DE, stronger alias analysis (DE-AA) | must-alias from SCEV or points-to | 0 | 0 | 0 | — | 0 |
-| EA, all (EA-TL) | one-thread or consistently ordered memory | 72 % | 55 % | 63 % | 49 % | 70 % |
-| EA, pointer parameter | share of the row above | 53-75 % | 53-75 % | 53-75 % | 76 % | 53-75 % |
-| EA, heap reachable from shared structures (EA-HEAP) | not provable statically; freed in the allocating call ≤ 0.6 % | 78.7 % | 34.0 % | 41.9 % | — | 7.5 % |
-| EA, cross-unit parameter facts | upper bound | 0.04 % | 0.05 % | 0.00 % | 0.14 % | 0.01 % |
-| EA, own stack | the thread's own stack | 4.9 % | 5.9 % | 12.5 % | 14.8-24 % | 5.8 % |
-
-The old "same location" rule (U; removal mode, over exact DE):
-
-| variant | Redis (`f`) | SQLite | memcached (`f`) | MySQL | FFmpeg, checks removed |
-|---|---|---|---|---|---|
-| S: fields of one struct | +8.4 % | +11.9 % | +1.7 % | +4.1 % | 13.7 % |
-| A: elements of one array | +5.9 % | +12.8 % | +3.9 % | +1.1 % | 22.1 % |
-| S + A | +11.5 % | +27.3 % | +6.6 % | +6.0 % | 34.4 % |
-| S + A + Z (narrow covers wide) | +10.6 % | +31.2 % | +6.8 % | +7.9 % | 35.4 % |
-
-## Table 6. Every other optimization tried
-
-| optimization (aliases) | kind | what it is | result | standing |
+| configuration | Intel, first | Intel, hold-out | AMD, first | AMD, hold-out |
 |---|---|---|---|---|
-| **DE** | | | | |
-| DE package (T4, T4+E), DE-B selective peeling | S | merge + loop ranges + selective peeling | with exact DE: memcached `f` +3.6 %, MySQL +3…+6 %, Redis −2.6 %, others ±1 % | superseded |
-| N3, N4, N8 | S | DE path flags; covers across iterations; trimmed entry/exit | ≤ 1 % each | closed |
-| DE-8b | U | C allocation functions as sync-free | 0 % | dropped |
-| shadow-proxy rule (RedCard) | U | a cover reports a different race than stock | 0.1-1.1 % of checks | not adopted |
-| relaxed-atomic rule (`-tsan-de-relaxed-atomic-nosync`) | S | relaxed atomics do not break a cover (A8) | SQLite loop-guard skips 0.74 → ≈ 9.2 % | on in every build |
-| pure-asm rule; anticipation, acquire tolerance, available-checks dataflow | S | further cover placements | ≈ 0; ≤ 0.56 % | closed |
-| POSTDOM-TERM | S | post-dominance with proven termination | ≤ 0.27 % | in the tree |
-| **EA** | | | | |
-| U2 | U | named arguments never escape | 0.963-0.996 over T1 | closed |
-| integer-copy closure off (A7) | U | pointers copied as integers not followed | memcached +0.9, Redis +1.0, MySQL −2.7 % | closure kept on |
-| EA-7; record-compare chain | U | arguments of external or address-taken functions | ≈ 5.6 % of SQLite's checks | shelved |
-| EA-WP | S | whole-program summaries | 0 % of the heap mass | closed |
-| EA call-site flags (MAAP-style), OWN-STACK-ENTRY (X2) | S | per-call-site pointer-parameter facts | MySQL 0.01 %, bound 3.01 %; entry ceiling 24.4 %, unsound | parked 5 Oct |
-| **STC, SWMR, LO** | | | | |
-| STC-1…STC-4, join-aware STC, STC-CALLEE, STC-STRONG (i) (O-STC), DYN-1 | S | finer STC rules | ≤ 2.44 %, mostly ≈ 0 | closed |
-| MAIN-ONLY (STC-STRONG (ii)) | S | Redis's reads only on the main thread, statically | impossible statically; taken at run time by the quiet threads | closed |
-| DYN-2 | R | where DynSTC's guard skips | only FFmpeg's stream copy | closed |
-| LO-unwind; LO-C | S | unwind edges; POSIX calls transparent to LO | refuted; no gain | closed |
-| SQLITE-CW | S | closed world for SQLite | 0.02 % | closed |
-| SWMR-H | S | written only before publication | ceiling ≤ +0.2 %; 14 lost-race paths | parked |
-| SWMR-ROOTS on SQLite, MySQL, Redis | S | memcached's rule elsewhere | ≈ 0-1.3 % reachable | closed 5 Oct |
-| G-EA | A+R | EA under LO-OBJ-G's guard | −3.7 % | closed |
-| LO-OBJ-G spec completion; SQLITE-KEY | A+R | unnamed BtShared fields; comparator key and payload | ≈ 1.2 % / ≈ 3 % of checks | not built; parked |
-| LO-OBJ-G Pager/Wal roots | A+R | Pager and Wal under the b-tree's mutex | 12.7 % of the locked mass | declined (P-PAGER) |
-| SQLite sharable guard; PERELEM | R; S | per-object shared-cache guard; per-element locksets | cannot reach the mass; provable ≈ 0 | closed; parked |
-| TLS-rooted escape analysis (LO-TID) | S | objects reachable only from a `thread_local` root | MySQL ≈ 0.8 % | parked |
-| **N1, FE and other inline paths** | | | | |
-| N1-ST =miss; N1-ST (b), (c) =fs | R | flag read on a miss; hoisted; in the fast state | FFmpeg −6.6 %; equal | front kept |
-| N1-ST-WORKER; N1-SPLIT, N1-PAIR; N1-CSE across calls | S | inline-test variants | 0; subsumed by DE-2R; ≤ 1 % expected | closed; not built |
-| SQLite path B: lock-held elision without assertions, unheld accesses recorded and checked at run time (candidates by static coverage, C-COVER) | R | BtShared's lock; root `tsan-lob-fbe442ec2e2c`, audit A71 | the coverage rule keeps 4 BtShared fields: 0.41 % of executed checks elided against 21 % for the generated spec; unsound ceiling for 34 fields 1.031× (leg zgf4, A/A 0.995). The gain is in the page bytes, which static coverage cannot reach | stopped 8 Oct; superseded by the lock-marker design (LO-MARK, in progress) |
-| N1 placement for compile time: profile hot list (PGO-PLACE q=0.99, 0.999); static frequency (N1-S s1, s4, K=2) | S | the inline hit test only at profile-hot or statically hot checks (block frequency per function entry ≥ 1, ≥ 4; top 2 per function), to cut FFmpeg's compile time | FFmpeg compile overhead +97 % → +46 / +36 / +20 % (static, final table); speed over stock 1.285× → 1.241× / 1.227× (fft4b), k2 ≈ 1.09× (screening); profile 0.963 / 0.989 of full inline. All of the loss is in copy_passthrough | closed |
-| FE-INL exit-max=1; unified exit | S | FE-INL variants | MySQL −5.2 %; identical | dropped |
-| FE oracle; TSan-aware inlining | U | entry/exit removed | Redis +23.5 pp, MySQL +13.6, SQLite +4.4 | ceiling |
-| call-cost ceiling (N1/N2-real) | U | time in runtime calls of hitting checks | SQLite 21 %, FFmpeg 17.5 %, Redis 25 %, memcached ≈ 0 | bounds N1, N2 |
-| FE-NOFRAME | S | no entry/exit without accesses | — | not taken: changes report stacks |
-| MEMINTR-INLINE | S | small memcpy/memset inlined | ≤ 1 % | not recommended |
-| **Ownership variants** | | | | |
-| EVCONF-INTERCEPT write side (X5) | A+R | the guard on sendmsg/writev iovecs | ceiling +0.7 % | closed |
-| fresh item until linked; `_nosrc` copies | A+R | memcached's new item; covered-source copies | ≤ 1.1 %; ≤ 0.8 % | not built |
-| quiet-thread refinements | R | skip bit in the fast state; re-read after sync calls | ≤ 0.3 % | parked |
-| R1-R7 | — | full-connection claim, allocation stacks, stats mutex, SQLite latch, refcount readers, DOM-FS, guard hoist | unsound, report-changing, or ≤ 0.3 % | rejected 4 Oct |
-| OWN-HANDOFF | A | skip while the program's hand-off protocol says one thread holds a buffer | Redis +13.9 % | replaced by the quiet threads |
-| OWN-CONN | A+R | owner guard on SQLite's private connections | ≈ +21 % estimated | withdrawn (P-CONN) |
-| OWN-STACK; SPIN-ACQ | R; RT | own-stack skip; spin acquires only on a change | ≈ −1 %; Redis ≤ +14 % ceiling | parked |
-| FFmpeg heap hand-off | A | buffers handed between threads | program-protocol premise | closed |
-| **Runtime-only track** (parked from the paper) | | | | |
-| DD-EXACT (DD-COST; DD-CHEAP, DD-BIG), DD-STATIC | RT | TSan's deadlock detector | DD-CHEAP null; DD-BIG memcached +21.7 % but drops lock-order reports; DD-STATIC out of scope | parked |
-| RT-SYNC-LF | RT | lock-free acquire loads | unresolved | parked |
-| RT-RANGE, RANGE-HIT-SKIP, RANGE-VEC, RANGE-UNIFORM | RT | faster range checks | ≤ 0.5-2 % | closed or parked |
-| RT-ALLOC | RT | faster allocation bookkeeping | Redis ≈ 11 % of cycles (mass) | parked |
-| RT-SLOT, SLOT-PREF, empty-epoch elision, early reset | RT | slot preemption, global resets | ≤ 1.7 % | closed |
-| ALLOC-COVER, RANGE-COVER | RT | allocation and range records as covers | 5.6-7.0 % (proxy) | out of scope |
-| sendmsg batching, interceptor bypass, EA-P1's out-parameter cost, EA precision counts | — | — | no result yet | — |
+| [Sound](#cr1) (the four analyses) | 1.006 (N=2) | — | 0.995 | — |
+| [AllOpt](#cr1) (+ dominance elimination, peeling) | 0.994 (N=2) | — | 1.011 | — |
+| [CR1](#cr1) | 1.104 | 1.101 | 1.068 | 1.057 |
+| CR1 without the library-facts table | 1.102 (N=2) | 1.106 (N=2) | 1.070 | — |
+| [S56](#n1-place) | 1.186 | 1.157 | 1.086 | 1.054 |
+| [CR1+N1](#cr1) | 1.286 | 1.248 | 1.081 | 1.017 |
 
-## History: superseded results
+- **The paper's analyses give about 0 on Chromium** on both hosts. The gain comes from the form of the
+  instrumentation (CR1's inlined entry/exit and the inline hit test), which is not in the reviewed paper.
+- **CR1 holds on unseen stories**: 1.10× on Intel, 1.06× on AMD.
+- **The inline hit test pays only on Intel**: +13 to +17 % over CR1. On AMD's hold-out it is 4 % below CR1 (four
+  readings of the same sign). S56 equals CR1 on AMD.
+- **Why the hosts differ is not established.** Excluded: thread count (Intel pinned to 16 threads reads the same),
+  the container, fonts and paths (AMD on the host reproduces the container within 0.006). Counters show the hit test
+  removing cycles in the runtime and adding about as many outside it on both hosts.
+- **Peeling** costs 1.8 % on Intel and gains 1.1 % on AMD; each sign is stable on its host.
+- **The library-facts table is not needed**: CR1 without it reads the same everywhere.
+- **Whole `paint` suite** (AMD, N=2): CR1 1.062, CR1+N1 1.160, S56 1.169; without the multicol stories 1.048, 1.030,
+  1.044.
+- **Code and memory**: code 1.18× stock's for CR1 and 3.0× for CR1+N1. Largest process's peak RSS: CR1 1.09×, S56
+  1.27×, CR1+N1 1.77× (mapped code; allocated memory unchanged).
+- **Race preservation** (10 runs of the Blink stories per build): no build loses a race that stock reports. The
+  crashpad race is reported in 10 of 19 CR1+N1 runs against 27 of 27 for stock and CR1; this is shadow-cell eviction.
+  The perfetto race is reported by the optimized builds (CR1 4 of 20, CR1+N1 3 of 10) and never by stock (0 of 30).
+- **compiler-rt TSan tests with the flags** (391 tests run): CR1, CR1+N1 and S56 pass all. The hit-test flag alone
+  fails one test at -O0 (a link error from an unused declaration; fix approved 12 Oct).
+- **Open**: one CR1+N1 Speedometer story failed in 19 runs (a renderer disappeared, no sanitizer output; it did not
+  recur). Speedometer 3 at three repetitions is running on both hosts.
 
-| item | was | now | why |
-|---|---|---|---|
-| Redis quiet threads, hand-written lines | 1.39-1.40× | 1.54× derived (AUTO-BIO) | lines derived from the whole program, 5 Oct |
-| Redis quiet threads, local rule only (AUTO) | 0.946-0.962 of the best | AUTO-BIO | AUTO cannot prove the background thread's start |
-| Redis, derived lines on the earlier root | 1.45× | 1.54× (rcs4) | the one configuration, 6 Oct |
-| SQLite spec v5, v6 | +18.8 %, +23.5 % | v7 1.25× (zg64b) | v7 carries the latch; audited |
-| SQLite generated spec gen5 | 1.14× (zg5st4) | gen6/gen8 1.16× | gen6 adds 64 nocopy lines |
-| memcached EVCONF line (cwn) | +80.3 % | 1.81× (mct4) | the one configuration, 6 Oct |
-| memcached without annotations | 1.01× | 1.02× (mcnf4) | + FE-INL, MEMINTR; N1 off |
-| memcached spec derived from the program (EVCONF-DERIVE, zma) | 1.010 over the hand spec (zma4) | parked 7 Oct; EVCONF-CHECKED | audit A59e: unsound; the fixed derivation derives 0 fields |
-| memcached one configuration with the inline hit test (mcq) | 0.922 over zmr | without it, −1.6 % | N1 costs ~5 % on memcached |
-| FFmpeg, MySQL, SQLite one configuration with -wp | 0.991 (ffr4); 0.994 / 0.987 (myr4); unresolvable (sqxy4) | no -wp | -wp rule, 7 Oct |
-| Removal-mode DE on FFmpeg | +10.2 % (screening) | −0.3 % (full leg) | did not reproduce |
-| Compile time, per unit | SQLite +20 %, memcached +8 %, Redis +9 %, FFmpeg +16 % | table below | omitted the -wp summary step |
-| SQLite zgB with its spec generator (8 Oct) | sqgen16d 529.7 s; line 576.7 s, 17.3× stock (gen0.sh, g0time.txt) | sqgen16e 49.3 s; 96.2 s, 2.89× | sqgen16e, byte-identical output |
-| Compile time, first rows on 744024407b56 | Redis +324 %, memcached +121 % | table below | method fixed 7 Oct |
-| Compile time on 744024407b56, before P0, P1a, P1c (cct/btime.txt) | mcf +81 %, mcy +141 %, Redis +353 %, SQLite +27 %, FFmpeg +80 %, MySQL +17 % | mcf +11 %, mcy +35 %, Redis +231 %, SQLite +28 %, FFmpeg +97 %, MySQL +16 % (final table) | P0 in the compiler; P1a and P1c in the harness, all identity-gated |
+<a name="single"></a>
+## 3. Single optimizations
 
-## Compile time
+Change of speed in percent from adding one optimization. Rows down to MEMINTR: over the paper's analyses with every
+soundness fix. Rows below: on top of their app's configuration.
 
-**Chromium (9-10 Oct, compiler `tsan-cr-8345a0396fa5`, Intel host).** One ninja invocation each from an empty out dir, 76 jobs on all CPUs, host otherwise idle, same night, 40,165 compile edges in each; one build per configuration and no repeat, so no variance is known. Stock TSan 3456 s wall (249,461 s summed over compile edges); CR1 3513 s (253,221 s): ratios 1.017 and 1.015, to be read as "one build each", not as an overhead with an error bar: a single unit's time differs between the two builds by -29 % to +44 % (10th to 90th percentile; median 1.013). The sampled per-unit measurement (11 Oct; 400 units drawn with a fixed seed from the 39,875 compile edges, list hashed before any compile; each compiled once per pinned CPU, 3 repetitions per flag set, median per unit; non-timed host; CPU seconds summed over the sample, ratio to stock with a bootstrap 95 % interval over units): **CR1 1.011 (1.004-1.018)**; CR1 with the library-facts table off 1.012 (1.006-1.018); **CR1+N1 1.104 (1.076-1.142)** (per unit: median 1.050, 10th-90th percentile 0.999-1.261). S56, s1 and AllOpt are not in the sample. Indicative, not clean pairs: K4 3545 s, S56 3654 s, s1 3679 s, CR1+N1 3916 s (other work ran beside it). AllOpt has no clean figure: the dominance elimination did not finish on one unit (v8 maglev-ir.cc) in 35 minutes; with that unit compiled without the elimination the build summed 252,319 s against stock's 249,461 s (+1.1 %, two invocations). That unit compiles in 74 s under stock, 90 s under CR1 and 124 s under CR1+N1. The stock binary rebuilt for this pair is byte-identical to the first one.
+Kind: S static · R checked at run time, no annotation · G spec generated from the program's assertions · A
+hand-written annotation (A+R: guarded at run time). `f` = measured on Intel, otherwise AMD. **Bold** = gain beyond
+the A/A (the same binary run twice); "—" = not measured.
 
-**Control of 11 Oct (same method: fresh trees, no ccache, -j8 on CPUs 28-35, stock alternating, medians of 3; rows `wt-dev-cct2/btime.txt`).** The record lines rebuilt on root `tsan-cr2-429bd8cf76b9`, or on `tsan-n1s-e52d8787b59e` for the two lines that need the phase derivation, which the 8345a line lacks, reproduce the table below within about ten points: memcached mcf +24 % (cr2; +1.4 s), memcached mcy +38 % (e52d; record +35 %; 8.30 s against stock's 6.04 s) (for memcached the split into "summary step" and "build" is a reporting artefact: the 6-7 s booked to the summary step is mostly configure, which runs once inside it and which stock pays too, and in a program this small configure is two thirds of the total; the overhead is the difference of the totals, and it is work the method does on every build: a second compile of the 26 units to uninstrumented IR, the link, and the three whole-program analyses in one run, 0.79 s), Redis rcy +208 % (e52d; record +231 %; summary step 7.8 s, build 9.8 s against stock's 5.7 s), SQLite zg6 +29 % (cr2; record +28 %), FFmpeg ffn +86 % (cr2; record +97 %). FFmpeg with the inline hit test placed by static frequency, on cr2: s1 +43 % (speed on record 1.241× against ffn's 1.285×), s4 +28 % (1.227×), k2 +17 % (about 1.09×; a static sizing of ten FFmpeg units on 11 Oct finds no placement that keeps the hot locations and drops the bulk: s1 keeps 48 % of the profile's hot locations for 23 % of the hit test's code growth, s4 24 % for 10 %, function-size caps of 56 / 200 / 1000 instructions 2 / 7 / 13 % for 2 / 12 / 35 %, FFmpeg's hot checks being in large functions; so these counts of locations do not predict speed, s4 keeping 1.227× of 1.285×, and the size caps are closed for FFmpeg); the plain call sites left are identical to the record's to the last site, so the ported placement rule places exactly as the original. Three repetitions are thin: one repetition in several arms is an outlier upward. MySQL not rerun.
-
-**Redis, where the compile time goes (11 Oct; each of the 89 units compiled once per flag set, pinned, 3 repetitions, medians, CPU seconds summed; non-timed host; the record's flags without the phase derivation, which that compiler lacks; the plain sites left equal the record's, 3,187).** Over stock's 34.0 s: the four analyses with summaries +1.5 %; with dominance elimination and peeling +15 %; with inline entry/exit +23 %; with the inline hit test +154 % (text 1.78 MB to 6.99); the record line +166 % (text 7.50 MB, 38,720 inline tests). The record without the hit test: +23 %; without inline entry/exit: +157 %. The hit test at static sites instead: s4 +39 % (4,190 tests), k2 +42 % (5,213), s1 +69 % (12,437). A size cap on inline entry/exit changes nothing. The same table on the record's own compiler (`tsan-n1s-e52d8787b59e`, with the phase derivation; stock 32.8 s): analyses +1.6 %; + elimination and peeling +16.6 %; + verified elimination +14.9 %; + inline entry/exit +23.6 %; + hit test +156.5 %; the record +173.5 % (text 7.62 MB against 1.78); the record without the hit test +26.1 %; s4 +42.0 %; k2 +46.0 %; s1 +73.3 %; the record without inline entry/exit +164 %: the same picture, the phase derivation adding a few points. The arm without the hit-test flag keeps 468 inline tests, because the verified elimination emits the test at its verified sites by itself (two units: 0 / 12 / 2,019 and 0 / 32 / 2,144 miss calls without it / with it / with the hit-test flag too). *Where the hit test's compile time goes* (12 Oct; non-timed host, compiler e52d, -ftime-report, three heaviest units per application, medians of 3, seconds; stock / record without the hit test / record): Redis total 7.4 / 10.0 / 23.7, FFmpeg 8.0 / 10.5 / 34.9. Of the time the test adds (13.6 s and 24.4 s): the instrumentation pass itself 1 %; instruction selection 46 % (Redis) and 27 % (FFmpeg); the other machine passes 19 % and 24 %; emission 12 % and 14 %; debug-value tracking 7 % and 14 %; register allocation 7 % and 11 %; IR passes of code generation 7 %. Per test about 1.4-2.1 ms and 133-140 bytes of code. So the cost is the back end working over the enlarged code, not the pass; only fewer or smaller machine blocks per test can lower it, and debug information on the test's blocks is 20-28 % of the added time. Prototypes by rewriting the final IR and timing code generation alone (12 Oct): the test's instructions already carry one line location and no variable locations, so nothing can be removed there (dropping all of the application's variable locations would save 8-16 %, not ours to change); replacing the vector compare by an intrinsic gives byte-identical code and no saving; loading the thread-state pointer once per function saves 1-2 %; the test as one inline-assembly instruction with its blocks kept saves 10 % of code generation and enlarges the code by 1.5-1.9 %, and even with the miss edge deleted (a bound, not a correct program) 24 % (Redis) and 37 % (FFmpeg). So the cost is the 2-3 extra blocks and the miss call per test, and no change of the pass alone lowers it; the one design that would (a back-end pseudo-instruction with a register-preserving runtime entry) is recorded as an idea in `runtime/ideas.md` and not built. *Speed of the cheaper Redis lines* (AMD, 11 Oct, the record's protocol, compiler e52d, 4 runtime offsets x 2 timed passes, all runs clean; composite of the seven workloads over stock, min-max of the 8 paired passes; compile cost from the table above): the record line 1.492 (1.393-1.557) at +166 %; hit test by static frequency s1 1.344 (1.296-1.393) at +69 %, k2 1.322 (1.281-1.357) at +42 %, s4 1.288 (1.263-1.343) at +39 %; no hit test 1.283 (1.249-1.301) at +23 %; A/A 0.999. Per workload LRANGE_100 | 300 | 500 | 600 | MSET | ZADD | ZPOPMIN: record 1.456 | 1.417 | 1.612 | 1.619 | 1.863 | 1.341 | 1.232; no hit test 1.245 | 1.204 | 1.264 | 1.268 | 1.603 | 1.248 | 1.191; s1 1.316 | 1.279 | 1.361 | 1.358 | 1.701 | 1.250 | 1.202. So on Redis the inline hit test is worth 16 % (record over no hit test 1.163) and no static placement keeps it: s4, k2 and s1 recover 0.4 %, 3 % and 5 % of it. Every cheaper line loses 10-14 % of the record's speed; the choice is 1.49x at +166 % or 1.28x at +23 %. The anchor here is a fresh build of the record's flags, not the binary of the table row. *The summary step trimmed* (12 Oct, quiet host, the record's method: fresh tree per build, 8 jobs, 3 repetitions, medians, wall seconds, compiler e52d; summary step / build / sum; these rows replace a run of 11 Oct that a file copy overlapped and that read about 2 % higher): stock - / 5.37 / 5.37 (repetitions 5.89, 5.37, 5.12); the record 7.86 / 9.91 / 17.75 (+230 %); the record with a generator that does not rerun `make -n` and the dependency build for the external list, which a build system has anyway, 5.17 / 9.86 / 15.03 (+180 %); the same with the whole-program analyses as three parallel runs 4.55 / 9.79 / 14.38 (+168 %); the trimmed generator without the hit test 5.09 / 6.28 / 11.43 (+113 %); with s4 5.17 / 6.70 / 11.86 (+121 %). The kept-inputs + parallel form is the recording method from 12 Oct (harness commit f8c332d on branch `redis-summary-kept-parallel` of the experiments repository, not on main; `GEN_CACHE_DIR` set and warmed by one untimed run, `GEN_PAR=1`; gate SG3 on the non-timed host: old generator = new cold = new warm in the summary files, .text and .data, with and without the phase flags, and a twin with the external list cut differs; the committed key logic was gated there and not timed on the Intel host, whose figure is from an arm with the same two edits and a fixed kept directory). The three record forms give the same summaries, program digest and server code in all three repetitions; no phase-guard refusal in any of the 15 optimised builds. Both generator changes are in the measuring harness's summary script only. So Redis's measured points are 1.49x at +168 % and 1.28x at +113 %; the summary step (4.6-5.1 s: a second compile to IR, link and whole-program analyses) is what keeps even the cheapest line above +100 %. So the build half of Redis's overhead is the inline hit test (131 of the 166 points), uniformly over the units. The other half is the summary step, a constant 7.8 s on the record's host (a second compile of the units to IR, the link, 2.0 s of analyses): without the hit test the line would read about +160 % by the record's method instead of +208 %. Speed of the four cheaper lines is not measured yet. *Starting the instrumented build from the IR the summary step saved* (tested 11 Oct on all 89 units): it runs and gives the same number of runtime call sites in every unit, but no object is byte-identical to the direct compile (the saved IR is the output of the whole pipeline, and the pass's module setup differs outside the compiler driver), so it is a different build that would need its own gate, not adopted. It would save about a third of the overhead, not a large factor: for the line without the hit test, CPU seconds, stock 34, today about 72 (+110 %), with reuse about 59 (+75 %). The large factor belongs to a build mode the harness does not implement: one compile per unit to bitcode, the analyses on the linked bitcode, then the pass and code generation from that bitcode, where the cost would be the analyses plus the pass's own +23 %; the measurement behind that statement is the back half alone, 27.3 s against stock's whole 34.0 s.
-
-**SQLite, where the compile time goes (11 Oct; the harness's three files with the amalgamation, each compiled pinned, 3 repetitions, medians, CPU seconds summed; non-timed host; the record's site count 66,882 reproduced exactly).** Over stock's 40.8 s: the four analyses +6.2 %; with dominance elimination +11.5 %; with peeling +22.0 %; with the verified mode +23.3 %; with the owner-check spec, the record line zg6, +37.0 % (text 1.86 MB to 2.36; 4,910 owner checks), which is the +29 % wall of the record's method, where configure and the amalgamation step are timed too. By part: analyses 6 points, dominance elimination 5, peeling 10, verified mode 1, owner checks 14. zg6 without peeling: +26.9 %; without dominance elimination and peeling: +20.2 %. Nothing brings SQLite under about +20 %, since the owner checks that carry its speedup and the analyses are 20 of the points. *Speed of the two cheaper lines* (AMD host, 12 Oct, the record's protocol, compiler `tsan-cr2-429bd8cf76b9`, 4 runtime offsets x 4 timed passes, all runs clean, stress2, min-max of the 16 paired passes): over stock the record's flags 1.187 (1.111-1.266), without peeling 1.204 (1.076-1.302), without dominance elimination and peeling 1.185 (1.084-1.284), A/A 0.995 (0.922-1.076); over the record's flags: without peeling 1.014 (0.929-1.091; per offset 1.047, 0.985, 1.027, 0.997), without both 0.998 (0.928-1.061; 1.021, 0.966, 0.992, 1.014); run CV 2.7-4.4 %. So both cheaper lines keep the record line's speed on SQLite, inside the A/A's spread with offsets on both sides of 1: the gain is the analyses and the ownership spec, and the elimination and peeling add nothing measurable there. SQLite can be built at +20 % (CPU time over the units; the record's flags +37 %) with the same speed. The anchor here is a fresh build of the record's flags and reads 1.187 where the row has 1.157. Checked 12 Oct: this is a readout and leg difference, not a build one. Per-function disassembly of threadtest3 against the 6 Oct record build: 2,406 program functions with the same 557,563 instructions, differing only in 295 `__LINE__` constants shifted by 4 (four more files listed in the amalgamation header comment); call counts per TSan entry equal; 2,799 runtime functions identical; same for the stock pair; flag strings, spec, test source and patch identical (base trees compared, offset trees not). The row's 1.157 is the two-subtest composite; stress2 alone read 1.166 in that leg, and this leg reads stress2 only. The remaining 1.166 to 1.187 is leg-to-leg spread (A/A 1.016 and 0.995, per-offset ranges overlap). Compare inside one leg.
-
-**Final table (7 Oct).** Root `tsan-n1s-e52d8787b59e`: 744024407b56 plus P0 (a0c3b51bbe07) plus the two N1-S commits, which only the FFmpeg variants s1, s4 and k2 switch on. Its runtime is byte-identical to `tsan-cc-a0c3b51bbe07`'s. Freeze gates: IR 196 passed, tsan 410 passed.
-
-Method:
-- The harness carries P1a (memcached configures once) and P1c (the summary step links bitcode).
-- Stock is built from the same tree in the same run, alternating with the line in each rep.
-- Compile = -wp summary step + build, timed by build.sh's ns timer. Fresh trees, no ccache, CPUs 28-35, medians of 3.
-- Overhead = median of the line / median of stock.
-- Rows: `$EXTRA/wt-dev2-r/cctf/btime.txt`; driver cctf.sh (`$EXTRA` = the lab host's `/extra/<user>`).
-
-| app | line of record (tree) | -j | stock | line | overhead | of which summary step |
+| optimization | kind | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|---|
-| memcached | no annotations (mcf) | 8 | 7.25 s | 8.03 s | +11 % | 6.74 s (configure included, P1a) |
-| memcached | one configuration + EVCONF (mcy) | 8 | 6.47 s | 8.71 s | +35 % | 7.38 s (configure included, P1a) |
-| Redis | one configuration (rcy) | 8 | 5.53 s | 18.31 s | +231 % (with P1d: +212 %, CPU +158 %) | 8.23 s |
-| Redis | rcy, summary generator with kept inputs and parallel analyses (adopted as the recording method, decided 12 Oct; same binary) | 8 | 5.37 s | 14.38 s | **+168 %** | 4.55 s |
-| SQLite | LO-OBJ-G gen6 (zg6) | 8 | 33.23 s | 42.57 s | +28 % | (no -wp) |
-| SQLite | LO-OBJ-G gen9b (zgB), build only | 8 | 33.27 s (CPU 34.1) | 43.28 s (CPU 43.1) | +30 % | (no -wp) |
-| SQLite | zgB with its spec generator (sqgen16e), no profile (once per program version) | — | 33.27 s | 96.2 s (CPU ~98.6) | 2.89× | generator 52.9 s |
-| FFmpeg | ffn = ffk, full inline hit test | 8 | 76.10 s | 149.88 s | +97 % | (no -wp) |
-| MySQL | Release, FE-INL (rpf) | 6 | 874.75 s | 1015.13 s | +16 % | (no -wp) |
+| [DynSTC-RT](#dynstc-rt) | R | +0.4 | −0.3 | `f` −2.2 | +0.1 | `f` **+12.0** |
+| [DynSTC](#dynstc) (the paper's guard) | R | — | −0.5 | −5.5 | −0.7 | `f` **+10.1** |
+| [N1](#n1) | S | −0.8 | +0.3 | `f` +2.5 | −1.7 | `f` **+5.0** |
+| [N1-ST](#n1-st) (over N1 + DynSTC-RT) | R | +0.2 | −0.2 | `f` −1.4 | −1.8 | `f` **+16.9** |
+| [N1-L](#n1-place) | S | +0.3 | −0.9 | `f` −2.5 | −0.1 | `f` **+3.0** |
+| [FE-INL](#fe-inl) | S | −0.7 | +0.8 | `f` **+4.8** | **+3.6** | `f` 0.0 |
+| [FE-INL + VWIDE-loops](#vwide) | R | +0.1 | +0.6 | `f` **+7.2** | **+4.6** | `f` +1.8 |
+| [FE-SINK](#fe-sink) (nothing on top of FE-INL) | S | +1.1 | −1.7 | `f` **+4.1** | **+2.8** | `f` −1.2 |
+| [MEMINTR](#memintr) | S | +2.5 | +0.9 | `f` −2.5 | +0.3 | `f` 0.0 |
+| [EA-CONTENTS](#ea-contents) | S | — | **+1.4** | — | — | — |
+| [SWMR-ROOTS](#swmr-roots) | S | — | **+0.9** | — | — | — |
+| [EVCONF](#evconf) (with the two rows above) | A+R | — | **+31.1** | — | — | — |
+| [EVCONF-RANGES](#evconf) | A+R | — | **+18.5** | — | — | — |
+| [EVCONF-ARGS](#evconf) | A+R | — | **+7.3** | — | — | — |
+| [EVCONF-INTERCEPT](#evconf) | A+R | — | **+7.5** | — | — | — |
+| [EVCONF-CHECKED](#evconf-checked) (over upstream stock) | R | — | **+80** | — | — | — |
+| [Quiet threads](#quiet) | R | — | — | **+31.9** | — | — |
+| [LO-OBJ-G](#lo-obj-g), generated spec (over stock) | G+R | **+15.7** | — | — | — | — |
+| [LO-OBJ-G](#lo-obj-g), hand-written spec (over stock) | A+R | **+25.0** | — | — | — | — |
 
-**SQLite zgB rows (8 Oct, separate runs; same root and harness).** Stock and zgB are built from zgB__ in the same
-run, 3 reps, medians. SQLite compiles one unit, so its CPU is close to its wall. The rows and generator times are in
-`$EXTRA/wt-dev2-r/cczgb/` (btime.txt; generator g0time.txt; drivers cczgb.sh, cczgb23.sh, gen0.sh).
+<a name="nogain"></a>
+## 4. No gain
 
-- **The generator, per run, with no profile (wall; CPU), 3 reps** (gen1.sh, the record run for column 3's provenance;
-  `g1time.txt`):
-  - **IR:** sqlite3.c to IR at -O0 twice, a dbg build with -DSQLITE_DEBUG (assertions live) and a rel build, each
-    with mem2reg, in parallel: 3.6 s; ~6.3 CPU-s.
-  - **sqgen16e.py** (9e08d7dd499d1de1), which writes the spec, with an empty executed-function list: 49.3 s on one
-    thread.
-  - Total 52.9 s.
-  - **Every rep's spec has fe95d761's directives exactly**, and its body equals sqgen16d's from the same IR byte for
-    byte. The files differ only in the header, which names that rep's input paths.
-  - **The line's own build needs none of it.** The two -O0 IR builds are the generator's alone, including the dbg
-    build, which no benchmark build uses.
-  - It runs once per program version: the spec is a file, reused by every later build.
-  - **Not needed: the coverage step** (a native coverage build and a 120 s workload run, 137.7 s). The function list
-    only chooses latch against exclude, and on SQLite it does not change the spec.
-- **Identity of the build:** the line built with a generated spec has the same code as one built with
-  `sqlite3-gen9b.spec`, 6/6 objects, compared in trees whose names have the same length. The host tools jimsh,
-  lemon and mkkeywordhash embed absolute source paths, so a shorter tree name shifts their `.rodata`; the first
-  control differed for that reason.
+Tried and closed; one row per family. Shares are of executed checks. Details of each: commit `9126669`, tables 3 and 6.
 
-FFmpeg variants: inline hit tests at statically chosen sites (N1-S), same run and stock. Speed is over stock TSan as shipped (no runtime options), from leg fft4b (AMD, 4 offsets × N=1, balanced order; per-offset range in brackets).
+| family | what was tried | result |
+|---|---|---|
+| Dominance elimination, further rules | covered checks deleted instead of [verified](#de); one range check per loop; adjacent fields merged; a cover on every path; covers across loop iterations; post-dominance with proven termination; stronger alias analysis | within ±1 % on every app (Redis −3.8 % for deletion); each rule reaches ≤ 2 % of checks |
+| Loop guard | a loop-invariant access checked once per sync-free stretch | Redis +2 to +3 %, others ≈ 0; rejected as imprecise |
+| Escape analysis, finer | whole-program summaries; per-call-site parameter facts; slots and field chains; fresh return values; thread-local roots | each < 2-3 % of checks; the mass is heap reachable from shared structures, which no static rule reaches |
+| STC, SWMR, LO, finer | closed-world facts; join-aware STC; thread roles; publish-once; written-before-publication; POSIX calls transparent to LO | each < 3 % of checks; two variants lost races and were withdrawn |
+| [N1](#n1) variants | compact or batched tests; shared thread-state load; test for relaxed atomics; out-of-line entries saving fewer registers | ±1 %, or −2 to −4 %; the batched form loses races |
+| [N1](#n1) placement for speed | profile hot list; static frequency; loops only | none beats the full version in speed; they trade speed for compile time ([section 5](#compile)) |
+| [FE-INL](#fe-inl) variants | lazy entry; only hot functions; one exit; no entry/exit in functions without accesses | ±1 %, MySQL −5 % for one exit; the last changes report stacks and was not taken |
+| N1, FE-INL, MEMINTR on top of SQLite's LO-OBJ-G | — | FE-INL +4.5 %, MEMINTR +3.5 % inside a wide A/A; N1 −18.5 % |
+| More optimization before instrumentation | LTO; Attributor; extra passes | nothing; the Attributor miscompiles |
+| Ownership, further | owner tags without a record; memcached's flag globals; MySQL connection fields; SQLite private connections; pager and WAL under the b-tree's mutex; quiet mode on the other four apps | unsound, or needs a premise that was declined, or ≤ 2.4 % of checks |
+| The old "same location" rule | fields of one struct or elements of one array cover each other | unsound: loses a memcached race stock reports (ceiling +7 to +31 %) |
+| Runtime-only changes | covering records count as hits; cheaper range checks; cheaper acquires; deadlock-detector cost; allocation bookkeeping | separate track, not in the paper: [`runtime/ideas.md`](runtime/ideas.md) |
 
-| variant | flags beyond ffn | line | compile overhead | (paired per-rep median) | speed over stock |
+Where the analyses stay conservative (share of executed checks they cannot remove):
+
+| what cannot be proven | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|
-| ffk (ffn) | — | 149.88 s | +97 % | +88 % | **1.285×** (1.266-1.305) |
-| s1 (ffu) | static-hot=1e6 min-freq=1 max-insts=0 | 110.77 s | +46 % | +44 % | **1.241×** (1.237-1.246) |
-| s4 (ffv) | min-freq=4 | 103.53 s | +36 % | +33 % | 1.227× (1.220-1.234) |
-| k2 (ffw) | static-hot=2 | 91.09 s | +20 % | +15 % | ≈ 1.09× (screening: 0.845 of ffk) |
+| DE: same address twice, no acquire between, both kept | 3.4 % | 0.04 % | 3.4 % | 5.5 % | 5.9 % |
+| DE: neither check dominates the other | 4.4 % | 0.08 % | 5.8 % | 1.0 % | 8.6 % |
+| EA: memory that is in fact one-thread or consistently ordered | 72 % | 55 % | 63 % | 49 % | 70 % |
+| of it: heap reachable from shared structures | 79 % | 34 % | 42 % | — | 7.5 % |
 
-- All of the speed difference is in copy_passthrough (ffk 2.68×, s1 2.34×, s4 2.27× over stock); the encoders are at 0.98-1.02.
-- Of ffk's 1.285×, 1.085× is the runtime option dynstc_rt=1, which speeds stock TSan by the same 8.5 % when stock runs with it; the instrumentation line itself gives 1.184× (leg fft4, 1.190×). A/A on the same half in fft4: 0.994.
-- FFmpeg's rep 2 ran at load ~10, and its stock build took 94.4 s against 75.1 and 76.1 s; the paired column divides each rep's line by its own stock.
-- Overlaps:
-  - The first 18 rows (rep 1, and rep 2 through Redis st) overlapped this lane's own SQLite preservation run on CPUs 52-59 (gpresb).
-  - f1ffk2j8r2 overlapped a 4-minute offset relink on 52-59 (ffsoff2).
-  - Both are logged in each row's `others=`.
-- **Static placement remains a negative for speed** (Table 6). It trades compile time against speed; s1 halves FFmpeg's compile overhead (+97 % → +46 %) for 1.285× → 1.241× speed over stock, and the choice among s1, s4 and k2 is a trade-off, not a fix.
+<a name="compile"></a>
+## 5. Compile time
 
-- **Where Redis rcy's time goes (8 Oct, measured on the final table's setup; `$EXTRA/wt-dev2-r/rct/RESULTS.txt`).**
-  - The cost driver is the inline fast paths, mostly in instruction selection. Over the 89 units the build takes
-    +34.0 CPU-s over stock (20.4 → 54.5); the inline fast paths account for 30.5 of them (instruction selection
-    19.4 CPU-s across all units). The analyses add 5.9 and the phase flags 3.3; the variants overlap.
-  - The TSan pass itself costs 1.75 CPU-s, 0.91 of it in module.c.
-  - The summary step takes 8.1 s wall: make -n 1.9, IR emission 1.6, link 1.0, deps 0.8, opt 2.0 (parse 0.75,
-    EA 0.76, phase summary 0.33).
-  - The build's wall time is also set by order: module.c, the longest unit (5.9 s), starts 58th of 89 in make's order.
-- FFmpeg: N1's inline hit tests give 3.8× stock's .text; on 40 units the analyses add 17 % compile CPU, the hit test ×1.96. MySQL: FE-INL grows .text ×1.86.
-- Fixed: the phase-summary pass on FFmpeg 249.8 → 37.5 s (510cbba6ec58, identical records).
-- **Lock-scope memo (P0, a0c3b51bbe07, root `tsan-cc-a0c3b51bbe07`; gate passed 7 Oct).** The phase derivation now computes the set of functions that may release a mutex once per round, not once per function. Old root vs new root, the same tree, alternated in each rep, CPUs 12-19, -j8, medians of 3:
+Fresh trees, no ccache, 8 jobs (MySQL 6), stock and the line alternating, medians of 3, wall seconds. For Redis and
+memcached the line includes the whole-program summary step.
 
-  | line | old root | P0 root | summary step |
-  |---|---|---|---|
-  | memcached mcf | 12.70 s | 12.62 s | (no phase pass) |
-  | memcached mcy | 15.58 s | 13.02 s | 8.98 → 6.04 s |
-  | Redis rcy | 24.66 s | 21.50 s | 13.98 → 11.01 s |
+| app | configuration | stock | line | overhead |
+|---|---|---|---|---|
+| memcached | no annotations | 7.25 s | 8.03 s | +11 % |
+| memcached | with EVCONF | 6.47 s | 8.71 s | +35 % |
+| Redis | record (summary generator with kept inputs and parallel analyses, adopted 12 Oct; same binary) | 5.37 s | 14.38 s | **+168 %** |
+| SQLite | LO-OBJ-G, generated spec | 33.23 s | 42.57 s | +28 % |
+| FFmpeg | hit test everywhere (1.285×) | 76.10 s | 149.88 s | +97 % |
+| FFmpeg | hit test by static rule s1 (1.241×) | 76.10 s | 110.77 s | +46 % |
+| FFmpeg | hit test by static rule s4 (1.227×) | 76.10 s | 103.53 s | +36 % |
+| MySQL | Release, FE-INL | 874.75 s | 1015.13 s | +16 % |
+| Chromium | CR1 (400 sampled units, CPU time) | — | — | +1.1 % (1.004-1.018) |
+| Chromium | CR1+N1 (same sample) | — | — | +10.4 % (1.076-1.142) |
 
-  - **Identity:** 12 pairs, covering memcached mcf and mcy and Redis rcy × 3 reps, plus SQLite zg6, FFmpeg ffn and MySQL rpf × 1.
-    - Every linked binary has the same code bytes and allocated section sizes.
-    - Redis's one exception is by design: the phase guard's program-hash constant at 90 constructor sites. The program digest folds in each unit's recorded compile line, which names the compiler.
-    - The summaries are the same, apart from the digest and the phase record that holds it. Given the old build's own IR, the new root re-derives every summary file byte for byte, the digest included.
-  - Rows, gate and scripts: `$EXTRA/de-recovery-gate/degen/ctime/p0/` (btime.txt, gate.txt, ctp0.sh, elfcmp.py, sumcmp.py, rederive.sh).
-  - These rows are a separate run from the table above, so compare within this table only.
-- **Configure once for memcached (P1a, 7 Oct).** The gate passed: 6 pairs with identical linked code, summaries and configure outputs. Base flow against P1a flow on the P0 root, CPUs 28-35, -j8, medians of 3:
-  - mcf 11.44 → 8.06 s (−29.6 %);
-  - mcy 12.53 → 9.08 s (−27.5 %).
-  - Rows: `$EXTRA/de-recovery-gate/degen/ctime/p1a/btime.txt`. These rows are a separate run, with no stock row.
-  - Per-module summaries and compile-once remain deferred.
-- **Bitcode link in the summary step (P1c, 7 Oct).** The modules' IR is still emitted as text, so the recorded compile flags and the program digest do not change. llvm-as assembles each module in parallel, then llvm-link and opt read bitcode, which avoids re-parsing about 45 MB of text for Redis. Gate passed: 9 pairs (Redis rcy, memcached mcy and mcf, 3 reps each) with identical linked code and summaries, the digest included.
-  - One exception, by design: ST's `# tsan-summary-link:` comment names the file opt read, `.ll` before and `.bc` after. Readers skip it, and the gate masks only that extension.
-  - Base flow against P1c flow on the P0 root, CPUs 28-35, -j8, medians of 3, summary step / compile:
-    - Redis rcy: 10.62 → 8.00 s / 20.59 → 18.01 s (−12.5 %);
-    - mcy: 5.71 → 5.28 s / 12.15 → 11.80 s (−2.9 %);
-    - mcf: 4.84 → 4.57 s / 11.28 → 11.02 s (−2.3 %).
-  - Base and P1c alternated per rep. Another user's builds ran on the host during the run (load ~6).
-  - Rows, gate, patch: `$EXTRA/de-recovery-gate/degen/ctime/p1c/` (btime.txt, gate.txt, p1c-apply.py, ctp1c.sh, sumcmp.py).
-  - SQLite's generator still links text, so the same change applies there; FFmpeg and MySQL already link bitcode.
-- **Redis scheduling (P1d, 8 Oct).** The gate passed: 6 pairs (Redis stock and rcy × 3) with identical linked code;
-  for rcy the summaries and the summary step's compile lines are identical too. Two changes, both in the harness:
-  - **(a) No Makefile.dep remake in the summary step.** The step's `make -n` finds an empty `src/Makefile.dep` and
-    no longer remakes it. GNU make remakes included makefiles even under -n, by a one-thread `clang -MM` over every
-    source. Summary step 7.79 → 6.11 s.
-  - **(b) The ten largest objects first, as make goals.** Stock gets the same order in the same run. This gains
-    nothing in the harness (build 9.83 → 9.66 s): module.c alone takes about 6.6 s, the whole object phase, so it is
-    the critical path whatever the order. The 13.0 → 10.4 s seen in a standalone build from distclean did not
-    reproduce here. Keeping (b) is optional.
-  - **Rows (root e52d, harness P1a + P1c + P1d, CPUs 28-35, -j8, medians of 3; stock → rcy, both arms ordered):**
-    - wall 5.05 → 15.75 s (+212 %), CPU 44.5 → 115.0 s (+158 %);
-    - the same run without P1d: 5.06 → 17.58 s (+247 %), CPU 44.2 → 116.9 s;
-    - CPU is the children's user+sys of the whole legbuild call.
-  - Rows and gate: `$EXTRA/de-recovery-gate/degen/ctime/p1d/` (btime.txt, gate.txt, p1d-apply.py, ctp1d.sh).
-  - **What is left on the wall: module.c.** Its TSan pass takes 0.91 s (every other unit ≤ 0.08 s); an
-    identity-preserving fix there comes straight off the critical path. Its instruction selection (2.1 s) is the
-    inline fast paths' own cost.
-  - **Parked lever (8 Oct, not built): memoise classifySyncEffect in DE's scanPaths.** Each covering pair rescans
-    the same calls, 8.2 % of module.c's compile. Identical by construction (a pure function of the call, its callee
-    and read-only analyses). Expected gain about −0.4 s wall on rcy (+212 % → ~+204 %) and −0.5 CPU-s. Not worth a
-    root and a full gate now.
-- **FFmpeg's +85 %** comes from the inline fast path at every check, and its speed needs them. Static placement s1 cuts the compile overhead from +85 % to +45 % at a 1.7 % speed loss; it, the other static rules and the profile hot list are closed (Table 6). Rows: `$EXTRA/wt-dev2-r/cct/btime.txt` (s9ff*), root `tsan-n1s-bd979a775aa7`.
+- **The cost is the [inline hit test](#n1)**: about 25 machine instructions and 133-140 bytes per check. Redis by CPU
+  time over stock: analyses +1.6 %, + elimination and peeling +17 %, + inlined entry/exit +24 %, + hit test +157 %.
+  The pass itself is 1 % of the added time; the rest is the back end working over the larger code.
+- **No change of the pass lowers it**: prototypes of a smaller test gave at most 1-2 % (an assembly form −10 % with
+  1.5-1.9 % more code). The one design that would is a back-end pseudo-instruction, recorded as an idea in
+  [`runtime/ideas.md`](runtime/ideas.md) and not built.
+- **Fewer tests cost speed on Redis** (AMD, over stock): record 1.49×; [static rules](#n1-place) s1 1.34× (+73 % CPU
+  time), k2 1.32× (+46 %), s4 1.29× (+42 %); no hit test 1.28× (+26 %).
+- **FFmpeg**: no static rule separates the hot checks from the bulk (s1 keeps 48 % of the hot locations for 23 % of
+  the code growth; function-size caps keep 2-13 %). The whole speed difference is in the stream-copy transcode.
+- **SQLite** by CPU time: record +37 %; without peeling +27 %; without elimination and peeling +20 %, at the same
+  speed. The owner checks and the analyses are those 20 points.
+- **Redis's summary step** was 7.9 s of the 17.8 s (+230 %). Not rerunning `make -n` and the dependency build, and
+  running the whole-program analyses in parallel, brings it to 4.6 s. Summaries and server code are identical.
+- Being measured (12 Oct): where the hit-test hits concentrate on Redis and FFmpeg, to place the test by a profile
+  list or per unit.
 
-## Notes
+<a name="explain"></a>
+## 6. What each optimization does
 
-- Race preservation: 10 stock vs 10 optimized runs per app, no race-report site lost (memcached 4 kept, SQLite 3, MySQL 232-236, Redis all seeded; FFmpeg's stock reports none).
-- memcached's workload V4 was chosen among five (2 Oct): default +2.8 %, pipelining +3.5 %, 32-key gets +6.3 %, long keys +16.8 %, the mix +30.4 %.
-- Premises awaiting a ruling used by results of record: P-X86-FD (narrow), P-LIBEVENT, A5, A8, A9.
+The examples are schematic C. `__tsan_read4(p)` / `__tsan_write4(p)` stand for TSan's check of a 4-byte access; real
+entry names and the inlined code differ in detail.
+
+<a name="paper"></a>
+### The paper's analyses
+
+<a name="stc"></a>
+**STC, single-threaded context.** Code that runs only before the program creates its first thread needs no checks.
+
+```c
+int main(void) {
+    g_config.n = 4;                 // before: __tsan_write4(&g_config.n);  after: nothing
+    pthread_create(&t, 0, worker, 0);
+}
+```
+
+<a name="swmr"></a>
+**SWMR, single writer / multiple readers.** If every write to a variable happens in single-threaded mode, its reads
+need no checks: two reads cannot race.
+
+```c
+void *worker(void *a) {
+    int n = g_config.n;             // before: __tsan_read4(&g_config.n);   after: nothing
+}                                   // (g_config.n is written only in main, before the threads)
+```
+
+<a name="lo"></a>
+**LO, lock ownership.** If every access to a variable that can run in multi-threaded mode holds one common lock, none
+of them is checked.
+
+```c
+pthread_mutex_lock(&lock);
+g_counter++;                        // before: __tsan_write4(&g_counter);   after: nothing
+pthread_mutex_unlock(&lock);        // (every other access to g_counter also holds `lock`)
+```
+
+<a name="ea"></a>
+**EA, escape analysis.** An object whose address never leaves its thread is not checked.
+
+```c
+void handle(void) {
+    req_t req;                      // never stored to a global, a shared object or another thread
+    req.id = next_id();             // before: __tsan_write4(&req.id);      after: nothing
+}
+```
+
+<a name="de"></a>
+**DE, dominance elimination.** A second access to the same address needs no new check if a checked access dominates
+it and nothing between them can synchronize. In the builds of record the covered check is not deleted but *verified*:
+it becomes a short inline test that the earlier record is still in the shadow cell, and calls the runtime only if not.
+
+```c
+x = p->len;                         // __tsan_read4(&p->len)
+y = p->len + 1;                     // before: __tsan_read4(&p->len);  after: covered by the check above
+```
+
+<a name="peel"></a>
+**Peeling.** The first iteration of a loop is split off so that its check dominates, and so covers, the same access in
+the remaining iterations.
+
+```c
+for (i = 0; i < n; i++) s += *p;    // before: __tsan_read4(p) in every iteration
+// after:
+if (n > 0) { __tsan_read4(p); s += *p; }
+for (i = 1; i < n; i++) s += *p;    // covered
+```
+
+<a name="dynstc"></a>
+**DynSTC.** A guard compiled around the checks skips them while the program has one thread.
+
+```c
+if (__tsan_multithreaded) __tsan_read4(p);   // before: __tsan_read4(p) unconditionally
+x = *p;
+```
+
+### The form of the instrumentation
+
+<a name="fe-inl"></a>
+**FE-INL, inlined function entry and exit.** TSan keeps a shadow call stack for its reports and calls the runtime at
+every function entry and exit. FE-INL does the push and the pop in place.
+
+```c
+int get(obj *o) {
+    __tsan_func_entry(pc);          // after: *thr->shadow_stack_pos++ = pc;   (a few instructions)
+    ...
+    __tsan_func_exit();             // after: thr->shadow_stack_pos--;
+}
+```
+
+<a name="fe-sink"></a>
+**FE-SINK.** The entry is moved down to the first point that needs the frame, so early returns record nothing.
+
+```c
+int get(obj *o) {
+    if (!o) return 0;               // after: no entry/exit on this path
+    __tsan_func_entry(pc); ...
+}
+```
+
+<a name="n1"></a>
+**N1, inline hit test.** Most checks find that the same thread already recorded the same access in the shadow cell
+and return. N1 does that comparison in place and calls the runtime only on a miss. It costs code: about 25 machine
+instructions per check.
+
+```c
+x = p->field;
+// before:  __tsan_read4(&p->field);
+// after:   if (*shadow(&p->field) != expected_record_of_this_thread)
+//              __tsan_read4_miss(&p->field);
+```
+
+<a name="n1-place"></a>
+**Where the hit test is placed (N1-L, K4, s1, s4, k2, S56).** The same test at fewer checks, to save code and compile
+time; everywhere else the plain runtime call stays.
+
+| name | the test is inlined only |
+|---|---|
+| N1-L, K4 | in loops with at most 20 checked accesses |
+| s1, s4 | at checks whose block runs at least 1× / 4× per function entry by static frequency |
+| k2 | at the 2 statically hottest checks of each function |
+| S56 | in functions of at most 56 IR instructions (small accessors) |
+
+<a name="dynstc-rt"></a>
+**DynSTC-RT.** DynSTC's idea inside the runtime instead of the compiled code: while one thread is alive the runtime
+records nothing. It is a runtime option; the binary is unchanged.
+
+<a name="n1-st"></a>
+**N1-ST.** With DynSTC-RT on, the inline test itself is skipped while the program has one thread.
+
+```c
+// N1:     if (*shadow(p) != expected) __tsan_read4_miss(p);
+// N1-ST:  if (multithreaded && *shadow(p) != expected) __tsan_read4_miss(p);
+```
+
+<a name="vwide"></a>
+**VWIDE-loops.** [DE](#de)'s verified form extended to checks inside loops that no earlier check dominates: the check
+becomes an inline test that a covering record is present, and the full check runs only if it is not.
+
+```c
+for (i = 0; i < n; i++)
+    sum += a->total;                // before: __tsan_read4(&a->total) per iteration
+                                    // after:  inline test per iteration, runtime call only on a miss
+```
+
+<a name="memintr"></a>
+**MEMINTR, one-sided memory intrinsics.** A `memcpy` whose source is a constant or a private object checks only its
+destination.
+
+```c
+char buf[64];                       // private to this thread
+memcpy(shared->data, buf, 64);      // before: both ranges checked;  after: only shared->data
+```
+
+### Refinements of the analyses
+
+<a name="ea-contents"></a>
+**EA-CONTENTS.** Reading a pointer out of a private container and publishing that pointer no longer makes the
+container itself shared.
+
+```c
+item *slots[8];                     // private array
+publish(slots[i]);                  // the item escapes; the array does not
+slots[j] = 0;                       // before: __tsan_write8(&slots[j]);  after: nothing
+```
+
+<a name="swmr-roots"></a>
+**SWMR-ROOTS (SWMR thread roots).** SWMR with thread entry functions as roots: reads of a global need no checks if
+its only write happens before every thread that can read it is created, even if other threads already exist.
+
+```c
+settings.port = 11211;              // the only write
+pthread_create(&t, 0, worker, 0);   // worker and what it calls are the only readers
+// in worker:  use(settings.port);  // before: __tsan_read4(&settings.port);  after: nothing
+```
+
+### Ownership checked at run time
+
+<a name="evconf"></a>
+**EVCONF, event-loop confinement.** In an event-driven server each connection object belongs to one worker thread.
+Seven annotated fields name that ownership; the owner's accesses run unchecked while a run-time guard holds, and with
+the normal checks otherwise. EVCONF-RANGES extends the guard to `memset`/`memcpy` of an owned object, EVCONF-ARGS
+carries it into the hash function's key argument, EVCONF-INTERCEPT covers `memchr`, `strlen` and `bcmp` on the owned
+read buffer.
+
+```c
+void drive_machine(conn *c) {       // c is owned by this worker thread
+    // before: every access to *c checked
+    // after:
+    if (owner_of(c) == self) {      // guard
+        c->rbytes += n;             // unchecked
+        memset(c->resp, 0, sz);     // unchecked (EVCONF-RANGES)
+    } else { /* the same code with the checks */ }
+}
+```
+
+<a name="evconf-checked"></a>
+**EVCONF-CHECKED.** The same elision with no annotation: the analysis proposes the ownership candidates, and run-time
+owner checks plus a marker in the shadow make each elision sound. A failed check voids the run instead of losing a
+race silently.
+
+<a name="quiet"></a>
+**Quiet threads.** Redis's main thread does nearly all the work while the I/O and background threads sleep. The
+compiler derives from the whole program where the other threads are parked; while every one of them has been quiet
+since a lock release that the main thread acquired, the main thread skips its checks, range checks included.
+
+```c
+// main thread, per command:
+if (all_other_threads_quiet()) {    // guard
+    reply->len += n;                // unchecked
+    memcpy(reply->buf, s, n);       // unchecked
+} else { /* the same code with the checks */ }
+```
+
+<a name="lo-obj-g"></a>
+**LO-OBJ-G, objects owned by a lock.** LO per object instead of per variable: a spec says which lock protects which
+object, and accesses to the object are unchecked while the thread holds that lock (tested at run time). The spec is
+generated from the program's own assertions such as `assert(sqlite3_mutex_held(pBt->mutex))`, or written by hand.
+
+```c
+sqlite3_mutex_enter(pBt->mutex);
+pBt->nPage++;                       // before: __tsan_write4(&pBt->nPage)
+                                    // after:  if (!held(pBt->mutex)) __tsan_write4(&pBt->nPage);
+sqlite3_mutex_leave(pBt->mutex);
+```
+
+<a name="lo-mark"></a>
+**LO-MARK.** LO-OBJ-G without a spec and without assertions: an access made under a lock leaves a marker of that lock
+in the shadow, and later accesses under the same lock skip the check while the marker stands. Measured once (1.26× on
+SQLite); not adopted.
+
+<a name="cr1"></a>
+### Chromium configurations
+
+| name | what is switched on |
+|---|---|
+| Sound | [STC](#stc), [SWMR](#swmr), [LO](#lo), [EA](#ea) |
+| AllOpt | Sound + [DE](#de) + [peeling](#peel) |
+| CR1 | Sound + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) |
+| CR1+N1 | CR1 + [N1](#n1) at every check |
+| S56 | CR1 + [N1](#n1-place) only in functions of at most 56 IR instructions |
+| library-facts table | a list of facts about library functions for the analyses; CR1 reads the same without it |
+
+<a name="method"></a>
+## 7. Method
+
+- Applications: stock and the optimized line are built by the same compiler and run in the same leg, alternating;
+  the figure is the geometric mean over 4 code offsets. Each leg carries an A/A arm (the base binary twice).
+- Chromium: one build per configuration, no code offsets; arm order rotated between repetitions; intervals are
+  bootstrap over stories; TSan reporting off in timed runs.
+- Race preservation: 10 stock against 10 optimized runs per app, no race-report site lost (memcached 4 sites kept,
+  SQLite 3, MySQL 232-236, Redis and FFmpeg seeded races, since their stock runs report none).
+- Compilers: `tsan-cr-8345a0396fa5` (camera-ready root), `tsan-cr2-429bd8cf76b9` (the same plus the static placement
+  rules), `tsan-n1s-e52d8787b59e` (the same line with Redis's phase derivation).
+- Premises used by results of record: `soundness-fixes.md` §6.
