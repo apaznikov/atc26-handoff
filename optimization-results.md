@@ -43,7 +43,7 @@ lost except through [eviction](#evict).
 
 | app | workload | submitted paper | adopted figure | configuration | claim class | compile time |
 |---|---|---|---|---|---|---|
-| SQLite | threadtest3 stress2 | 1.71× | **1.23×** (1.28× with the other half of the host idle) | [LO-MARK](#lo-mark) v1 | (2) no annotations, run-time checked; configuration: the names of the mutex API and the object types to cover | not measured |
+| SQLite | threadtest3 stress2 | 1.71× | **1.23×** (1.28× with the other half of the host idle) | [LO-MARK](#lo-mark) v1 | (2) no annotations, run-time checked; configuration: the names of the mutex API and the object types to cover | +51 %, and 99 s of spec generation per source version |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** | [DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st) | (2) no annotations, run-time checked | +97 % |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.52×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % |
 | MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** | [FE-INL](#fe-inl) | (1) no annotations, static | +16 % |
@@ -144,7 +144,7 @@ it).
 - **compiler-rt TSan tests with the flags** (391 tests run): [CR1](#cr1), [CR1+N1](#cr1) and [S56](#n1-place) pass
   all. The [hit-test](#n1) flag alone fails one test at -O0 (a link error from an unused declaration; fix decided
   12 Oct, not yet in a frozen compiler).
-- **Open**: three CR1+N1 Speedometer runs (of about 32) died on the same V8 debug check in the garbage collector
+- **Open**: three CR1+N1 Speedometer runs (of about 35) died on the same V8 debug check in the garbage collector
   (`cppheap-pointer-table.cc:167`, compaction of the pointer table), with no sanitizer output. No other build shows
   it in about 5,700 run and story logs on three hosts, and no CR1+N1 run of the Blink stories (about 250) does. The
   compiled code of the 29 functions involved has the same checks in CR1+N1 as in CR1, each as an inline test that
@@ -269,6 +269,8 @@ For Redis and memcached the optimized build includes the summary step: a pass ov
 | memcached | [EVCONF](#evconf), 7 annotated fields ([EVCONF-CHECKED](#evconf-checked), 1.80×, was not timed) | 1.81× | 6.47 s | 8.71 s | +35 % |
 | Redis | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | 1.49× | 5.37 s | 14.38 s | **+168 %** |
 | SQLite | [LO-OBJ-G](#lo-obj-g), generated spec | 1.19× | 33.27 s | 43.28 s | +30 % |
+| SQLite | [LO-MARK](#lo-mark) v1 (adopted), 13 Oct | 1.23× | 24.86 s | 37.53 s | +51 %; spec generation 98.7 s on one CPU, once per source version (5.5× stock if counted into one build) |
+| FFmpeg | adopted line, by the method, 13 Oct | 1.285× | 73 s | 136 s | +86 % |
 | FFmpeg | [N1](#n1) at every check | 1.285× | 76.10 s | 149.88 s | +97 % |
 | FFmpeg | [N1 by static rule s1](#n1-place) | 1.241× | 76.10 s | 110.77 s | +46 % |
 | FFmpeg | [N1 by static rule s4](#n1-place) | 1.227× | 76.10 s | 103.53 s | +36 % |
