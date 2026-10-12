@@ -126,7 +126,10 @@ it).
 - **Speedometer 3** (AMD, N=3, Score over stock, range of the three repetitions): [CR1](#cr1) 1.082 (1.049–1.147),
   [S56](#n1-place) 1.053 (1.001–1.131), [CR1+N1](#cr1) 1.006 (0.983–1.048); the [A/A](#aa) twin reads 1.009
   (0.972–1.042). CR1 is above the twin's range in every repetition, S56 overlaps it, CR1+N1 is inside it. No story
-  failed in 15 runs. Intel: being measured.
+  failed in 15 runs. Intel (12 Oct, N=3, 14 of 15 runs valid): CR1 1.112 (1.082–1.158; 1.090 without the repetition
+  that was disturbed by file reads on the host), S56 1.153 (1.147–1.164), CR1+N1 1.225 (1.201, 1.250; N=2, the third
+  run died on the V8 debug check below), A/A 1.012 (0.994–1.044). Largest process's peak RSS over stock there: CR1
+  1.06×, S56 1.20×, CR1+N1 1.54×. No per-subtest claim: no subtest's A/A stays within 3 % in all repetitions.
 - **Code and memory**: code 1.18× stock's for CR1 and 3.0× for CR1+N1. Largest process's peak RSS: CR1 1.09×, S56
   1.27×, CR1+N1 1.77× (mapped code; allocated memory unchanged).
 - **compiler-rt TSan tests with the flags** (391 tests run): [CR1](#cr1), [CR1+N1](#cr1) and [S56](#n1-place) pass
