@@ -43,7 +43,7 @@ lost except through [eviction](#evict).
 
 | app | workload | submitted paper | adopted figure | configuration | claim class | compile time |
 |---|---|---|---|---|---|---|
-| SQLite | threadtest3 stress2 | 1.71× | **1.19×** | [LO-OBJ-G](#lo-obj-g) | (3) spec generated from the program's assertions, checked at run time | +30 % |
+| SQLite | threadtest3 stress2 | 1.71× | **1.28×** | [LO-MARK](#lo-mark) v1 | (2) no annotations, run-time checked; configuration: the names of the mutex API and the object types to cover | not measured |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** | [DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st) | (2) no annotations, run-time checked | +97 % |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % |
 | MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** | [FE-INL](#fe-inl) | (1) no annotations, static | +16 % |
@@ -53,7 +53,7 @@ lost except through [eviction](#evict).
 Claim classes, strongest first: (1) no annotations, decided at compile time; (2) no annotations, a condition
 tested at run time decides; (3) a spec generated from the program's own assertions, tested at run time; (4) a
 hand-written spec or annotations. Best figure per class where it differs from the adopted one: SQLite (1) ≈ 1.0×,
-(2) 1.06–1.26× ([LO-MARK](#lo-mark), not a claim), (4) 1.25×; Redis (1) 1.10×; memcached (1) 1.02×, (4) 1.81×;
+(3) 1.26× in the same leg, (4) 1.25×; Redis (1) 1.10×; memcached (1) 1.02×, (4) 1.81×;
 FFmpeg (1) 1.18×. The premises behind each figure: [section 8](#premises).
 
 Other measured configurations of the same applications:
@@ -63,8 +63,8 @@ Other measured configurations of the same applications:
 | SQLite | [the paper's analyses](#paper) with the soundness fixes | ≈ 1.0× | | |
 | SQLite | [LO-OBJ-G](#lo-obj-g), hand-written spec | 1.25× | | |
 | SQLite | LO-OBJ-G with parser parameters derived and owner checks at run time | 1.24× | | another compiler root; audit and preservation run owed |
-| SQLite | [LO-MARK](#lo-mark) | 1.06-1.26× | | three [legs](#leg); not separated from the generated spec (1.23× in the best leg); not a claim |
-| SQLite | [LO-MARK](#lo-mark) v1, quiet record leg 12 Oct | **1.276×** [1.230, 1.316] | | root `tsan-lomark-913cae99c263`, 4 offsets × N=4, 80 of 80 runs valid, 0 void; generated spec in the same leg 1.257× [1.221, 1.286] (v1 over it 1.011, inside the A/A); v2 1.307× (reported only); A/A 1.013 [0.976, 1.052]; peak RSS 60.0 MiB stock, 61.6 v1; row to be re-classed after the audit of the guarantee |
+| SQLite | [LO-MARK](#lo-mark) | 1.06-1.26× | | the three earlier [legs](#leg); superseded by the next row. The record leg's trees read 1.109× on the Intel host |
+| SQLite | [LO-MARK](#lo-mark) v1, quiet record leg 12 Oct | **1.276×** [1.230, 1.316] | | root `tsan-lomark-913cae99c263`, 4 offsets × N=4, 80 of 80 runs valid, 0 void; generated spec in the same leg 1.257× [1.221, 1.286] (v1 over it 1.011, inside the A/A); v2 1.307× (reported only); A/A 1.013 [0.976, 1.052]; peak RSS 60.0 MiB stock, 61.6 v1; audited 12 Oct (`audits/audit-a88-lo-mark-final.md`): quote with the wording of [LO-MARK](#lo-mark) |
 | FFmpeg | [N1 by static rule s4](#n1-place) instead of N1 everywhere | 1.23× | +36 % | one repetition per code offset |
 | Redis | [FE-INL](#fe-inl) + [N1](#n1), no quiet threads | 1.10× | | static only |
 | memcached | analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) | 1.02× | +11 % | static only |
@@ -632,7 +632,20 @@ whether the object's first shadow cell holds the marker of the lock this thread 
 that the thread holds the owner's lock and marks the object, else the accesses stay checked. The marker stays after
 unlock. A checked access by a thread that does not hold the lock and meets a marker voids the run, so an unprotected
 access is never lost silently. Measured in three legs (1.06× on Intel, 1.14× and 1.26× on AMD); not separated from
-[LO-OBJ-G](#lo-obj-g)'s generated spec; its premises are not decided; not adopted.
+[LO-OBJ-G](#lo-obj-g)'s generated spec. Adopted for SQLite on 12 Oct as v1 (root `tsan-lomark-913cae99c263`).
+
+Wording that the audit of 12 Oct supports: the program is not annotated and no assertion is read; given the names of
+its mutex API and the object types to cover, a specification is generated from the release IR. A check is elided only
+behind a run-time test that the object, or the buffer pointer used, is marked for a lock the thread holds, with no
+release possible between test and access; a checked access to marked memory by a thread that neither holds that lock
+nor is ordered after its end voids the run (exit 67). Under the stated premises
+([`notes/lo/lo-mark-guarantee.md`](notes/lo/lo-mark-guarantee.md)), and apart from eviction, a run that is not voided
+loses no race the baseline reports. On stress2 (AMD) 1.28× [1.23, 1.32]; the assertion-derived spec gives 1.26× in
+the same runs, so LO-MARK changes the class of the claim, not the speed. Beyond the two configuration items the
+generator also knows `sqlite3_config` by name, takes the list of the program's units, and its candidate rules are
+shaped on SQLite. Of the 16 premises about 5 are checked at run time, 2-3 at generation time and 8-9 are assumed.
+Open: the premises are not yet in `soundness-fixes.md` §6; the reading of the no-use-after-free premise that the
+guarantee needs (an access that races a free) has no decision; compile time not measured; v2 is not claimed.
 
 ```c
 sqlite3_mutex_enter(pBt->mutex);
@@ -667,7 +680,7 @@ pBt->nPage++;                       // before: __tsan_write4(&pBt->nPage)
 - Compilers: `tsan-cr-8345a0396fa5` (camera-ready root), `tsan-cr2-429bd8cf76b9` (the same plus the static placement
   rules), `tsan-n1s-e52d8787b59e` (the same line with Redis's phase derivation). Three figures of section 1 come
   from other roots: memcached's 1.80× (`tsan-ecc-b54ce0196884`), SQLite's 1.24× (`tsan-carve-da51c2dd8b3c`) and
-  LO-MARK (`tsan-lomark-718c7520052c`).
+  LO-MARK (`tsan-lomark-913cae99c263`).
 - Premises used by the adopted figures: `soundness-fixes.md` §6.
 
 <a name="premises"></a>
@@ -679,7 +692,8 @@ In a program that a premise excludes, a race may be lost. Full wording, dates an
 | figure | rests on |
 |---|---|
 | every figure | no use-after-free; no access outside the object its pointer was derived from; a race lost only through [eviction](#evict) is accepted; signal handlers that synchronise with other threads are outside the model |
-| SQLite, [LO-OBJ-G](#lo-obj-g) | every conflicting access holds the spec's lock or precedes publication, and the spec names the right lock (R3, P-OWN); holding the lock of one instance counts for every object of the protected type (B2); SQLite's configuration is fixed after initialization (PM); debug locations name the function an instruction came from |
+| SQLite, [LO-MARK](#lo-mark) | 16 premises in `notes/lo/lo-mark-guarantee.md`, about half of them assumed (closed program, default allocator, page-buffer length and range, fixed configuration, pass correctness); not yet in `soundness-fixes.md` |
+| SQLite, [LO-OBJ-G](#lo-obj-g) (not the adopted figure) | every conflicting access holds the spec's lock or precedes publication, and the spec names the right lock (R3, P-OWN); holding the lock of one instance counts for every object of the protected type (B2); SQLite's configuration is fixed after initialization (PM); debug locations name the function an instruction came from |
 | memcached, [EVCONF-CHECKED](#evconf-checked) | an indirect call reaches only functions of its type (A2). Pending: within one file table, freeing descriptor `n` happens before any later call returning `n` (G1) |
 | Redis, [quiet threads](#quiet) | closed world: nothing outside the program calls in or names its data (A12, A12-DATA); no member's address is used to reach another member (FIELD-ADDR); `dict.c` never reads or writes a stored value (P-DICT); A2. Pending: an `__attribute__((malloc))` function returns unaliased memory |
 | FFmpeg, [DynSTC-RT](#dynstc-rt) | no thread exists when `main` starts except from checked constructors; ignore-sync regions opened elsewhere are unseen (A10, A11) |
@@ -689,5 +703,5 @@ In a program that a premise excludes, a race may be lost. Full wording, dates an
 | [DE](#de) in removal mode (not the adopted, verified form) | a second race on an already reported cell may go unreported; a global shadow reset may hide a race (P-REPORT, P-RESET) |
 
 Soundness arguments still to be written for the paper: [quiet threads](#quiet), [LO-OBJ-G](#lo-obj-g),
-[EVCONF-CHECKED](#evconf-checked). [LO-MARK](#lo-mark)'s premises are not written up.
+[EVCONF-CHECKED](#evconf-checked), [LO-MARK](#lo-mark).
 
