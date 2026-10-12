@@ -64,6 +64,7 @@ Other measured configurations of the same applications:
 | SQLite | [LO-OBJ-G](#lo-obj-g), hand-written spec | 1.25× | | |
 | SQLite | LO-OBJ-G with parser parameters derived and owner checks at run time | 1.24× | | another compiler root; audit and preservation run owed |
 | SQLite | [LO-MARK](#lo-mark) | 1.06-1.26× | | three [legs](#leg); not separated from the generated spec (1.23× in the best leg); not a claim |
+| SQLite | [LO-MARK](#lo-mark) v1, quiet record leg 12 Oct | **1.276×** [1.230, 1.316] | | root `tsan-lomark-913cae99c263`, 4 offsets × N=4, 80 of 80 runs valid, 0 void; generated spec in the same leg 1.257× [1.221, 1.286] (v1 over it 1.011, inside the A/A); v2 1.307× (reported only); A/A 1.013 [0.976, 1.052]; peak RSS 60.0 MiB stock, 61.6 v1; row to be re-classed after the audit of the guarantee |
 | FFmpeg | [N1 by static rule s4](#n1-place) instead of N1 everywhere | 1.23× | +36 % | one repetition per code offset |
 | Redis | [FE-INL](#fe-inl) + [N1](#n1), no quiet threads | 1.10× | | static only |
 | memcached | analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) | 1.02× | +11 % | static only |
