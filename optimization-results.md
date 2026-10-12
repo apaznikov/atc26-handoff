@@ -306,12 +306,16 @@ records nothing. It is a runtime option; the binary is unchanged.
 
 <a name="vwide"></a>
 **VWIDE-loops.** [DE](#de)'s verified form extended to checks inside loops that no earlier check dominates: the check
-becomes an inline test that a covering record is present, and the full check runs only if it is not.
+becomes the inline hit test of [N1](#n1) where an earlier check of the same address in the same epoch is likely (a
+static estimate), and only in loop blocks. An unconditional access in a loop needs none of this: peeling and DE cover
+it.
 
 ```c
 for (i = 0; i < n; i++)
-    sum += a->total;                // before: __tsan_read4(&a->total) per iteration
-                                    // after:  inline test per iteration, runtime call only on a miss
+    if (v[i] > 0)
+        sum += a->total;            // conditional: no iteration's check dominates the next
+                                    // before: __tsan_read4(&a->total) each time
+                                    // after:  inline hit test, runtime call only on a miss
 ```
 
 <a name="memintr"></a>
@@ -337,10 +341,10 @@ slots[j] = 0;                       // before: __tsan_write8(&slots[j]);  after:
 
 <a name="swmr-roots"></a>
 **SWMR-ROOTS (SWMR thread roots).** SWMR with thread entry functions as roots: reads of a global need no checks if
-its only write happens before every thread that can read it is created, even if other threads already exist.
+every write to it precedes the creation of each thread that can reach it, even if other threads already exist.
 
 ```c
-settings.port = 11211;              // the only write
+settings.port = 11211;              // every write is before the create
 pthread_create(&t, 0, worker, 0);   // worker and what it calls are the only readers
 // in worker:  use(settings.port);  // before: __tsan_read4(&settings.port);  after: nothing
 ```
@@ -348,21 +352,19 @@ pthread_create(&t, 0, worker, 0);   // worker and what it calls are the only rea
 ### Ownership checked at run time
 
 <a name="evconf"></a>
-**EVCONF, event-loop confinement.** In an event-driven server each connection object belongs to one worker thread.
-Seven annotated fields name that ownership; the owner's accesses run unchecked while a run-time guard holds, and with
-the normal checks otherwise. EVCONF-RANGES extends the guard to `memset`/`memcpy` of an owned object, EVCONF-ARGS
-carries it into the hash function's key argument, EVCONF-INTERCEPT covers `memchr`, `strlen` and `bcmp` on the owned
-read buffer.
+**EVCONF, event-loop confinement.** In an event-driven server the buffers and response objects of a connection are
+used by one worker thread. Seven pointer fields named in a spec (the connection's read buffer and response pointers
+among them) mark that memory; accesses to the memory they point to run unchecked while a run-time guard holds, and
+with the normal checks otherwise. The connection's own fields stay checked. The guard is the spec's condition read at
+run time: a setting that is zero while no other thread may touch connections, and a latch set when a connection is
+lent to another thread. EVCONF-RANGES puts the same guard around `memset`/`memcpy` of that memory, EVCONF-ARGS clones
+a callee with the covered pointer argument, EVCONF-INTERCEPT covers `memchr`, `strlen`, `bcmp` and `memcmp` on it.
 
 ```c
-void drive_machine(conn *c) {       // c is owned by this worker thread
-    // before: every access to *c checked
-    // after:
-    if (owner_of(c) == self) {      // guard
-        c->rbytes += n;             // unchecked
-        memset(c->resp, 0, sz);     // unchecked (EVCONF-RANGES)
-    } else { /* the same code with the checks */ }
-}
+char *p = c->rcurr;                 // c->rcurr itself: checked as before
+n = p[0];                           // before: __tsan_read1(p)
+                                    // after:  if (settings.idle_timeout != 0 || evconf_latch) __tsan_read1(p);
+memset(c->resp, 0, sz);             // the same guard around the range check (EVCONF-RANGES)
 ```
 
 <a name="evconf-checked"></a>
@@ -396,9 +398,19 @@ sqlite3_mutex_leave(pBt->mutex);
 ```
 
 <a name="lo-mark"></a>
-**LO-MARK.** LO-OBJ-G without a spec and without assertions: an access made under a lock leaves a marker of that lock
-in the shadow, and later accesses under the same lock skip the check while the marker stands. Measured once (1.26× on
-SQLite); not adopted.
+**LO-MARK.** LO-OBJ-G without assertions or hand annotations; the object's lock is still known per type (where the
+object's owner pointer is and which field of the owner is the lock). A guard before the object's accesses tests
+whether the object's first shadow cell holds the marker of the lock this thread holds now; if not, the runtime checks
+that the thread holds the owner's lock and marks the object, else the accesses stay checked. The marker stays after
+unlock. A checked access by a thread that does not hold the lock and meets a marker voids the run, so an unprotected
+access is never lost silently. Measured once (1.26× on SQLite); not adopted.
+
+```c
+sqlite3_mutex_enter(pBt->mutex);
+pBt->nPage++;                       // before: __tsan_write4(&pBt->nPage)
+// after: if (shadow_marker(pBt) != my_lock_marker && !__tsan_lo_mark(pBt, owner, &desc))
+//            __tsan_write4(&pBt->nPage);
+```
 
 <a name="cr1"></a>
 ### Chromium configurations
