@@ -116,6 +116,10 @@ it).
 - **The [library-facts table](#cr1) is not needed**: CR1 without it reads the same everywhere.
 - **Whole `paint` suite** (AMD, N=2): [CR1](#cr1) 1.062, [CR1+N1](#cr1) 1.160, [S56](#n1-place) 1.169; without its
   multi-column layout stories 1.048, 1.030, 1.044.
+- **Speedometer 3** (AMD, N=3, Score over stock, range of the three repetitions): [CR1](#cr1) 1.082 (1.049–1.147),
+  [S56](#n1-place) 1.053 (1.001–1.131), [CR1+N1](#cr1) 1.006 (0.983–1.048); the [A/A](#aa) twin reads 1.009
+  (0.972–1.042). CR1 is above the twin's range in every repetition, S56 overlaps it, CR1+N1 is inside it. No story
+  failed in 15 runs. Intel: being measured.
 - **Code and memory**: code 1.18× stock's for CR1 and 3.0× for CR1+N1. Largest process's peak RSS: CR1 1.09×, S56
   1.27×, CR1+N1 1.77× (mapped code; allocated memory unchanged).
 - **compiler-rt TSan tests with the flags** (391 tests run): [CR1](#cr1), [CR1+N1](#cr1) and [S56](#n1-place) pass
