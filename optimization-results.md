@@ -133,10 +133,12 @@ it).
   all. The [hit-test](#n1) flag alone fails one test at -O0 (a link error from an unused declaration; fix decided
   12 Oct, not yet in a frozen compiler).
 - **Open**: two CR1+N1 Speedometer runs (of about 26) died on the same V8 debug check in the garbage collector
-  (`cppheap-pointer-table.cc:167`), with no sanitizer output. No other build shows that message in about 5,700 run
-  and story logs on three hosts, and no CR1+N1 run of the Blink stories (about 250) does. Whether it is a race in V8
-  that the changed timing exposes or an effect of the inline hit test is not established; a failure-rate run of
-  CR1+N1 against stock and an analysis of the compiled code are in progress.
+  (`cppheap-pointer-table.cc:167`, compaction of the pointer table), with no sanitizer output. No other build shows
+  it in about 5,700 run and story logs on three hosts, and no CR1+N1 run of the Blink stories (about 250) does. The
+  compiled code of the 29 functions involved has the same checks in CR1+N1 as in CR1, each as an inline test that
+  only reads shadow memory, and the failing comparison uses the real slot content; V8's table has no handling for a
+  slot that changes between marking and sweeping. So the evidence points to a timing-dependent condition in V8, not
+  to the hit test; a run of stock with forced compaction, to confirm it, is in progress.
 
 **Race preservation.** Runs that report the race, over all sessions (10 runs of the Blink stories and at least 2 of
 Speedometer per build in the main table):
