@@ -29,12 +29,14 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 |---|---|---|---|---|---|---|---|---|---|---|
 | SQLite | = stock | = stock | 1.26× [1.22, 1.31] | 0.97 [0.94, 1.00] | held (1.01) | 1.00 [0.96, 1.04] | 1.00 [0.96, 1.03] | 1.02 [0.97, 1.05] | 1.23× [1.20, 1.27] | final (record leg 12-13 Oct, stress2, AMD, 4 offsets × N = 4, 64 of 64 runs valid, A/A 1.000 [0.974, 1.021]; other half of the host busy in 47 of 65 cells. With the other half idle, same trees, three hours earlier: 1.28× [1.23, 1.32]. LO-MARK v1; the assertion-derived spec reads the same; Intel 1.11×) |
 | FFmpeg | | | | | | | | | 1.29× [1.28, 1.29] with N1 at every check; 1.24× [1.23, 1.25] with N1 placed statically | final (record leg 13 Oct, four transcodes, AMD, 4 offsets × N = 4, 80 of 80 valid, A/A 1.001 [0.994, 1.008]; other half of the host busy in 65 of 81 cells; which line is AllOpt: to be decided) |
-| Redis | | | | | | | | | 1.52× [1.49, 1.53] | final (record leg 13 Oct, composite of seven commands, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; other half of the host busy in every cell. Per command: LRANGE 1.41-1.61, MSET 1.87, ZADD 1.28, ZPOPMIN 1.43) |
+| Redis | 1.00 [0.99, 1.01] | 0.99 [0.99, 1.00] | = stock | 1.01 [1.00, 1.02] | 1.06 [1.05, 1.07] | 1.07 [1.05, 1.08] | 1.00 [1.00, 1.01] | 1.07 [1.06, 1.07] | 1.52× [1.49, 1.53] | final (record leg 13 Oct, composite of seven commands, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; other half of the host busy in every cell. Per command: LRANGE 1.41-1.61, MSET 1.87, ZADD 1.28, ZPOPMIN 1.43) |
 | MySQL | | | | | | | | | 1.13× | current |
 | memcached | | | | | | | | | 1.80× | current |
 
 Single configurations: 2 offsets × N = 2 (core arms 4 × 4), so their intervals are wide; the A/A of SQLite's
-singles leg reads 1.014 [0.938, 1.073], and every SQLite column but LO is inside it. "= stock": the build is
+singles leg reads 1.014 [0.938, 1.073], and every SQLite column but LO is inside it. Redis's singles leg: A/A 1.005
+[0.998, 1.012]; DE, DE+Peeling and FE-INL are above it, the rest within 1 %; its gain is in quiet threads, which
+only AllOpt contains (preservation of Redis's single configurations: pending). "= stock": the build is
 byte-identical to stock and was not timed. SQLite's DE is held: one race site reported by stock in 3 of 10 runs was
 reported in 0 of 10 (the checks at the site are identical to stock's; a 20-run recheck is running).
 
