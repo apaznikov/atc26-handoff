@@ -84,8 +84,7 @@ Other measured configurations of the same applications:
 - memcached's 1.80× and MySQL's 1.13× are over upstream LLVM's TSan; ours and upstream's stock differ by -4 to +1.5 %.
 - [The paper's analyses](#paper), with the soundness fixes, read about 1.0× on SQLite, memcached and Chromium on the
   camera-ready compiler; the adopted figures are the analyses with their extensions ([section 6](#explain)).
-- Still open beside the figures: five premises await a decision (`soundness-fixes.md` §6b; two of them are EVCONF's);
-  LO-MARK's premises are not written up there; two unexplained server deaths in 104 MySQL runs under the inline hit
+- Still open beside the figures: five premises await a decision (`soundness-fixes.md` §6b; two of them are EVCONF's);; two unexplained server deaths in 104 MySQL runs under the inline hit
   test (none in 319 runs without it, none in 80 later runs).
 
 <a name="chromium"></a>
@@ -644,7 +643,7 @@ loses no race the baseline reports. On stress2 (AMD) 1.28× [1.23, 1.32]; the as
 the same runs, so LO-MARK changes the class of the claim, not the speed. Beyond the two configuration items the
 generator also knows `sqlite3_config` by name, takes the list of the program's units, and its candidate rules are
 shaped on SQLite. Of the 16 premises about 5 are checked at run time, 2-3 at generation time and 8-9 are assumed.
-Open: the premises are not yet in `soundness-fixes.md` §6; the reading of the no-use-after-free premise that the
+Premises by class: `soundness-fixes.md` §6f. Open: the reading of the no-use-after-free premise that the
 guarantee needs (an access that races a free) has no decision; compile time not measured; v2 is not claimed.
 
 ```c
@@ -692,7 +691,7 @@ In a program that a premise excludes, a race may be lost. Full wording, dates an
 | figure | rests on |
 |---|---|
 | every figure | no use-after-free; no access outside the object its pointer was derived from; a race lost only through [eviction](#evict) is accepted; signal handlers that synchronise with other threads are outside the model |
-| SQLite, [LO-MARK](#lo-mark) | 16 premises in `notes/lo/lo-mark-guarantee.md`, about half of them assumed (closed program, default allocator, page-buffer length and range, fixed configuration, pass correctness); not yet in `soundness-fixes.md` |
+| SQLite, [LO-MARK](#lo-mark) | 16 premises in `notes/lo/lo-mark-guarantee.md`, about half of them assumed (closed program, default allocator, page-buffer length and range, fixed configuration, pass correctness); `soundness-fixes.md` §6f. Pending: the wide reading of no use-after-free (§6b) |
 | SQLite, [LO-OBJ-G](#lo-obj-g) (not the adopted figure) | every conflicting access holds the spec's lock or precedes publication, and the spec names the right lock (R3, P-OWN); holding the lock of one instance counts for every object of the protected type (B2); SQLite's configuration is fixed after initialization (PM); debug locations name the function an instruction came from |
 | memcached, [EVCONF-CHECKED](#evconf-checked) | an indirect call reaches only functions of its type (A2). Pending: within one file table, freeing descriptor `n` happens before any later call returning `n` (G1) |
 | Redis, [quiet threads](#quiet) | closed world: nothing outside the program calls in or names its data (A12, A12-DATA); no member's address is used to reach another member (FIELD-ADDR); `dict.c` never reads or writes a stored value (P-DICT); A2. Pending: an `__attribute__((malloc))` function returns unaliased memory |
