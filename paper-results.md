@@ -95,17 +95,20 @@ Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead aga
 
 Runs that report the site, of runs made; reporting on; stock and the configuration under the same load.
 
-SQLite, LO-MARK v1 (the candidate for the LO column), 12 Oct, 15 tests, no site lost, 0 voided runs of 20:
+SQLite, LO-MARK v1 (the adopted configuration), 12 Oct, 15 tests, 20 runs per arm, three independent stock arms;
+no site lost, no voided run:
 
-| site | stock | LO-MARK v1 |
-|---|---|---|
-| `walRestartHdr` (line 68035) | 8 of 10 | 4 of 10 |
-| `walRestartHdr` (line 68036) | 6 of 10 | 2 of 10 |
-| `walIndexRecover` (line 67451) | 3 of 10 | 4 of 10 |
+| site | stock A | stock B | stock C | LO-MARK v1 (95 % Wilson) |
+|---|---|---|---|---|
+| `walRestartHdr` (line 68035) | 10 of 20 | 4 of 20 | 10 of 20 | 4 of 20 [0.08, 0.42] |
+| `walRestartHdr` (line 68036) | 10 of 20 | 3 of 20 | 5 of 20 | 5 of 20 [0.11, 0.47] |
+| `walIndexRecover` (line 67451) | 8 of 20 | 9 of 20 | 6 of 20 | 8 of 20 [0.22, 0.61] |
+| `walIndexRecover` (line 67460) | 0 | 1 | 1 | 0 |
+| `sqlite3_enable_shared_cache` (line 7164) | 0 | 1 | 1 | 0 |
 
-Status: current. The lower rate at `walRestartHdr` is under test against stock's own spread (N = 20 per arm). The
-accesses there are instrumented identically in both builds. Seeded control: an unlocked write to a page buffer is
-reported by stock in 5 of 5 runs and voids the run in 5 of 5 under LO-MARK; never silent.
+Status: current (audit pending). Every rate of LO-MARK is inside the range of the three stock arms; stock against
+stock differs as much (one site 3 of 20 in one stock arm and 0 of 20 in the other two). Seeded control: an unlocked
+write to a page buffer is reported by stock in 5 of 5 runs and voids the run in 5 of 5 under LO-MARK; never silent.
 
 Chromium, runs reporting the race, all sessions:
 
