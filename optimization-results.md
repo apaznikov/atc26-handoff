@@ -145,13 +145,17 @@ Speedometer per build in the main table):
 
 | race (where it shows) | stock | [CR1](#cr1) | [CR1+N1](#cr1) | [S56](#n1-place) |
 |---|---|---|---|---|
-| crashpad `WorkerThread::Stop` (Speedometer) | 27 of 27, stock and CR1 together | | 10 of 19 | 3 of 4 |
-| perfetto start-up (`paint`) | 0 of 30 (4 of 9 with the shadow-reset option) | 4 of 20 | 3 of 10 | — |
-| PartitionAlloc bit-field (Speedometer) | 7 of 15 | 6 of 12 | 2 of 19 | 2 of 4 |
+| crashpad `WorkerThread::Stop` (Speedometer) | 33 of 33, stock and CR1 together | | 10 of 19 | 9 of 10 |
+| perfetto start-up (`paint`) | 4 of 40 (4 of 9 with the shadow-reset option) | 4 of 20 | 3 of 10 | 0 of 10 |
+| PartitionAlloc bit-field (Speedometer) | 11 of 21 | 6 of 12 | 2 of 19 | 5 of 10 |
+| V8 typed slots (Speedometer) | 3 of 21 | not tabulated | not tabulated | 0 of 10 |
 
-Every race that stock reports is reported by every build in at least one run. The crashpad runs without a report are
-[eviction](#evict) in the unmodified runtime (`soundness-fixes.md` §6e); the lower PartitionAlloc rate under CR1+N1 is
-not explained.
+Every race that stock reports is reported by CR1 and CR1+N1 in at least one run, for the first three rows. S56 has
+no report of the perfetto and the V8 typed-slots race in 10 runs each; stock reports them in 10 % and 14 % of its
+runs, so ten runs without one are expected by chance 35 % and 22 % of the time: neither a loss nor a proof of
+preservation. The perfetto rate moves between sessions in both directions (stock 0 of 30 before 12 Oct, 4 of 10 on
+12 Oct). The crashpad runs without a report are [eviction](#evict) in the unmodified runtime (`soundness-fixes.md`
+§6e); the lower PartitionAlloc rate under CR1+N1 is not explained.
 
 <a name="single"></a>
 ## 3. Single optimizations
