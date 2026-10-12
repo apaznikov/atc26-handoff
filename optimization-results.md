@@ -143,7 +143,7 @@ it).
   only reads shadow memory, and the failing comparison uses the real slot content; V8's table has no handling for a
   slot that changes between marking and sweeping. So the evidence points to a timing-dependent condition in V8, not
   to the hit test. Confirmed on stock (12 Oct, Speedometer with V8's `--stress-compaction`, untimed host): stock dies
-  on the same check, same file, line and condition, in 1 of its first 2 finished runs, and CR1 in 1 of about 5. So
+  on the same check, same file, line and condition, in 1 of 5 runs, and CR1 in 1 of 4. So
   the check fails without any of our changes. Still open: whether CR1+N1 hits it more often than stock without the
   stress flag (3 of about 27 runs so far, stock 0); a count of both in turn runs on the Intel host until 13 Oct.
 
