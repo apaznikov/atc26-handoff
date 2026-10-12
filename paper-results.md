@@ -27,7 +27,7 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 
 | app | STC | SWMR | LO | EA | DE | DE+Peeling | DynSTC | FE-INL | AllOpt | status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| SQLite | = stock | = stock | 1.26× [1.22, 1.31] | 0.97 [0.94, 1.00] | held (1.01) | 1.00 [0.96, 1.04] | 1.00 [0.96, 1.03] | 1.02 [0.97, 1.05] | 1.23× [1.20, 1.27] | final (record leg 12-13 Oct, stress2, AMD, 4 offsets × N = 4, 64 of 64 runs valid, A/A 1.000 [0.974, 1.021]; other half of the host busy in 47 of 65 cells. With the other half idle, same trees, three hours earlier: 1.28× [1.23, 1.32]. LO-MARK v1; the assertion-derived spec reads the same; Intel 1.11×) |
+| SQLite | = stock | = stock | 1.26× [1.22, 1.31] | 0.97 [0.94, 1.00] | 1.01 [0.96, 1.06] | 1.00 [0.96, 1.04] | 1.00 [0.96, 1.03] | 1.02 [0.97, 1.05] | 1.23× [1.20, 1.27] | final (record leg 12-13 Oct, stress2, AMD, 4 offsets × N = 4, 64 of 64 runs valid, A/A 1.000 [0.974, 1.021]; other half of the host busy in 47 of 65 cells. With the other half idle, same trees, three hours earlier: 1.28× [1.23, 1.32]. LO-MARK v1; the assertion-derived spec reads the same; Intel 1.11×) |
 | FFmpeg | 1.00 | 1.00 | 1.00 | 1.00 | 1.02 [1.02, 1.03] | 1.03 [1.03, 1.03] | 1.14 [1.13, 1.15] | 1.00 | 1.29× [1.28, 1.29] with N1 at every check; 1.24× [1.23, 1.25] with N1 placed statically | final (record leg 13 Oct, four transcodes, AMD, 4 offsets × N = 4, 80 of 80 valid, A/A 1.001 [0.994, 1.008]; other half of the host busy in 65 of 81 cells; which line is AllOpt: to be decided) |
 | Redis | 1.00 [0.99, 1.01] | 0.99 [0.99, 1.00] | = stock | 1.01 [1.00, 1.02] | 1.06 [1.05, 1.07] | 1.07 [1.05, 1.08] | 1.00 [1.00, 1.01] | 1.07 [1.06, 1.07] | 1.52× [1.49, 1.53] | final (record leg 13 Oct, composite of seven commands, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; other half of the host busy in every cell. Per command: LRANGE 1.41-1.61, MSET 1.87, ZADD 1.28, ZPOPMIN 1.43) |
 | MySQL | | | | | | | | | 1.13× | current |
@@ -39,8 +39,7 @@ singles leg reads 1.014 [0.938, 1.073], and every SQLite column but LO is inside
 only AllOpt contains (preservation of Redis's single configurations: pending). FFmpeg's singles leg: A/A 0.998 [0.991, 1.004]; STC, SWMR,
 LO, EA and FE-INL are inside 0.992-1.007; DynSTC is the run-time option on the stock binary (copy 1.79, h264 0.93);
 DE's gain is on mjpeg (1.10). AllOpt's compiled code adds 1.13 on top of the option, on the copy transcode. "= stock": the build is
-byte-identical to stock and was not timed. SQLite's DE is held: one race site reported by stock in 3 of 10 runs was
-reported in 0 of 10 (the checks at the site are identical to stock's; a 20-run recheck is running).
+byte-identical to stock and was not timed.
 
 FFmpeg, per transcode in the final leg (N1 at every check / N1 placed statically, over stock; stock's slowdown
 over native): copy 2.71 / 2.44; 5.1× (native takes 0.11 s on a 0.01 s clock, coarse); mjpeg 1.08 / 1.04; 6.3×;
@@ -143,6 +142,14 @@ Chromium, runs reporting the race, all sessions:
 | PartitionAlloc bit-field (Speedometer) | 11 of 21 | 6 of 12 | 2 of 19 |
 
 Status: current. The crashpad runs without a report are eviction in the unmodified runtime.
+
+SQLite, single configurations, 13 Oct, 10 runs per arm (stock | STC | SWMR | LO | EA | DE | DE+Peeling | FE-INL):
+`walRestartHdr` 68035: 9 | 7 | 6 | 9 | 6 | 8 | 7 | 8; 68036: 9 | 8 | 6 | 9 | 7 | 6 | 5 | 9; `walIndexRecover` 67451:
+3 | 3 | 3 | 2 | 2 | 0 | 3 | 5. DE's 0 of 10 was rechecked in one session of 20 runs: stock 6 of 20, DE 6 of 20
+(DE+Peeling 3 of 10); the checks at that site are identical in the three builds. No site lost in any arm. final.
+
+Redis, single configurations: stock reports no race in 10 runs on this workload and no arm reports any, so the
+comparison certifies nothing; seeded races are needed (pending).
 
 Other applications: 10 stock against 10 optimized runs each, no site lost (memcached 4 sites, MySQL 232-236;
 Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries).
