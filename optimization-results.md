@@ -66,6 +66,7 @@ Other measured configurations of the same applications:
 | SQLite | [LO-MARK](#lo-mark) | 1.06-1.26× | | the three earlier [legs](#leg); superseded by the next row. The record leg's trees read 1.109× on the Intel host |
 | SQLite | [LO-MARK](#lo-mark) v1, quiet record leg 12 Oct | **1.276×** [1.230, 1.316] | | root `tsan-lomark-913cae99c263`, 4 offsets × N=4, 80 of 80 runs valid, 0 void; generated spec in the same leg 1.257× [1.221, 1.286] (v1 over it 1.011, inside the A/A); v2 1.307× (reported only); A/A 1.013 [0.976, 1.052]; peak RSS 60.0 MiB stock, 61.6 v1; audited 12 Oct (`audits/audit-a88-lo-mark-final.md`): quote with the wording of [LO-MARK](#lo-mark) |
 | FFmpeg | [N1 by static rule s4](#n1-place) instead of N1 everywhere | 1.23× | +36 % | one repetition per code offset |
+| Redis | adopted line with [N1 placed statically](#n1-place) (`rk4`) instead of N1 everywhere | 1.39× [1.37, 1.41] | +128 % | 12 Oct, 4 offsets × N=2, A/A 1.002; the adopted line reads 1.51× [1.48, 1.53] in the same leg at +173 %; rule s4 1.31×. Not adopted: 8 % slower, resolved at every offset |
 | Redis | [FE-INL](#fe-inl) + [N1](#n1), no quiet threads | 1.10× | | static only |
 | memcached | analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) | 1.02× | +11 % | static only |
 | memcached | [EVCONF](#evconf), 7 annotated fields | 1.81× | +35 % | |
