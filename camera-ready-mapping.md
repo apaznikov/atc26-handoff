@@ -8,15 +8,15 @@ Terms: [end of file](#terms). Hosts: AMD, except Chromium (Intel).
 
 **In short.** Each new optimization is assigned to one of the paper's analyses and reported under its name.
 
-- **Four of the five analyses (STC, LO, EA, DE) get a variant checked at run time**, as STC has DynSTC in the
+- **Four of the five analyses ([STC, LO, EA, DE](#paper)) get a variant checked at run time**, as STC has DynSTC in the
   submitted paper. The analysis removes TSan's check where it can prove its condition at compile time (LO: "every
   access to the variable holds one lock"). The run-time variant leaves a short test of the same condition in the
-  code ("is the lock held now?") and calls TSan only if the test fails. These are DynSTC-RT, N1-ST and quiet threads
-  (STC); LO-OBJ (LO); EVCONF-CHECKED (EA); verified DE and N1 (DE).
-- **Four optimizations widen a static rule**: SWMR-ROOTS (SWMR), EA-CONTENTS and MEMINTR (EA), VWIDE-loops (DE).
-- **FE-INL** (inlined function entry and exit) belongs to no analysis and gets a paragraph of its own.
+  code ("is the lock held now?") and calls TSan only if the test fails. These are [DynSTC-RT](#dynstc-rt), [N1-ST](#n1-st) and [quiet threads](#quiet)
+  (STC); [LO-OBJ](#lo-obj) (LO); [EVCONF-CHECKED](#evconf) (EA); [verified DE](#verified-de) and [N1](#n1) (DE).
+- **Four optimizations widen a static rule**: [SWMR-ROOTS](#swmr-roots) (SWMR), [EA-CONTENTS](#ea-contents) and [MEMINTR](#memintr) (EA), [VWIDE-loops](#vwide) (DE).
+- **[FE-INL](#fe-inl)** (inlined function entry and exit) belongs to no analysis and gets a paragraph of its own.
 
-Almost all adopted figures come from the run-time variants. For quiet threads, LO-OBJ and EVCONF-CHECKED the
+Almost all adopted figures come from the run-time variants. For [quiet threads](#quiet), [LO-OBJ](#lo-obj) and [EVCONF-CHECKED](#evconf) the
 assignment is disputable; the objections are in their entries.
 
 Link: **direct** = the same rule, one condition changed; **idea** = the same property, established differently;
@@ -35,16 +35,17 @@ What carries each adopted figure:
 
 | app | submitted | adopted | carried by | reported under |
 |---|---|---|---|---|
-| SQLite | 1.71× | 1.19× | LO-OBJ | LO |
-| FFmpeg | 1.57× | 1.29× | DynSTC-RT, N1, N1-ST | DynSTC, DE |
-| Redis | 1.45× | 1.54× | quiet threads, N1, FE-INL | DynSTC, DE, FE-INL |
-| MySQL | 1.16× | 1.13× | FE-INL | FE-INL |
-| memcached | 1.07× | 1.80× | EVCONF-CHECKED | EA |
-| Chromium (Intel, hold-out) | 1.39× | 1.25× | N1, FE-INL, MEMINTR | DE, FE-INL, EA |
+| SQLite | 1.71× | 1.19× | [LO-OBJ](#lo-obj) | LO |
+| FFmpeg | 1.57× | 1.29× | [DynSTC-RT](#dynstc-rt), [N1](#n1), [N1-ST](#n1-st) | DynSTC, DE |
+| Redis | 1.45× | 1.54× | [quiet threads](#quiet), [N1](#n1), [FE-INL](#fe-inl) | DynSTC, DE, [FE-INL](#fe-inl) |
+| MySQL | 1.16× | 1.13× | [FE-INL](#fe-inl) | [FE-INL](#fe-inl) |
+| memcached | 1.07× | 1.80× | [EVCONF-CHECKED](#evconf) | EA |
+| Chromium (Intel, hold-out) | 1.39× | 1.25× | [N1](#n1), [FE-INL](#fe-inl), [MEMINTR](#memintr) | DE, [FE-INL](#fe-inl), EA |
 
-Quiet threads, EVCONF-CHECKED and LO-OBJ were each built for and measured on one application (Redis, memcached,
+[Quiet threads](#quiet), [EVCONF-CHECKED](#evconf) and [LO-OBJ](#lo-obj) were each built for and measured on one application (Redis, memcached,
 SQLite).
 
+<a name="paper"></a>
 ## 2. The paper's analyses
 
 | name | rule (paper) | scope |
@@ -69,7 +70,7 @@ A runtime option; the binary is unchanged. FFmpeg +12.0 % (the compiled guard: +
 The submitted DynSTC already keeps its counter in the runtime.
 
 <a name="n1-st"></a>
-**N1-ST** (direct). DynSTC's guard around the inline test of [N1](#n1). FFmpeg +16.9 % over N1 + DynSTC-RT.
+**N1-ST** (direct). DynSTC's guard around the inline test of [N1](#n1). FFmpeg +16.9 % over [N1](#n1) + [DynSTC-RT](#dynstc-rt).
 
 ```c
 // N1:     if (no_matching_record(p)) __tsan_read4_miss(p);
@@ -143,7 +144,7 @@ slots[j] = 0;                       // before: __tsan_write8(&slots[j]);  after:
 
 <a name="memintr"></a>
 **MEMINTR** (idea). A `memcpy` whose source is a private object (EA's fact) or a constant checks only its
-destination. ±2.5 % alone; part of Chromium's FE-INL + MEMINTR step (+9.8 %), its share not separated.
+destination. ±2.5 % alone; part of Chromium's [FE-INL](#fe-inl) + MEMINTR step (+9.8 %), its share not separated.
 
 ```c
 char buf[64];                       // private
@@ -184,12 +185,12 @@ y = p->len + 1;                     // before: __tsan_read4(&p->len)
   under premises P-EV, P-RESET and P-REPORT; the verified form needs none of them. This is the content for the
   paper's text on DE and bounded shadow memory.
 - Consequences: DE no longer lowers the count of instrumented accesses (the paper's static reduction figures for
-  DE change meaning); the test is [N1](#n1)'s, so where N1 is at every check DE adds nothing.
+  DE change meaning); the test is [N1](#n1)'s, so where [N1](#n1) is at every check DE adds nothing.
 
 <a name="vwide"></a>
 **VWIDE-loops** (idea). The verified form at checks in loops that nothing dominates but where an earlier check of
-the same address is likely (static estimate). Over FE-INL: Redis about +2.4 %, MySQL about +1.0 %. Not in the
-adopted configurations: Redis has N1 at every check, which includes it; on MySQL the 1 % is inside the noise.
+the same address is likely (static estimate). Over [FE-INL](#fe-inl): Redis about +2.4 %, MySQL about +1.0 %. Not in the
+adopted configurations: Redis has [N1](#n1) at every check, which includes it; on MySQL the 1 % is inside the noise.
 
 ```c
 for (i = 0; i < n; i++)
@@ -215,7 +216,7 @@ x = p->field;
   advanced (TSan advances it at release-like operations). DE proves it for all paths and needs dominance and
   must-alias; N1 observes it on the path taken. The placement variants are the static half.
 - Answers the ReX comparison (`4-experiments.tex:177`): a dynamic redundancy filter at near-zero per-access cost.
-- Results: Chromium +16.5 % (first sample), +13.4 % (hold-out) over FE-INL + MEMINTR on Intel; +1.2 %, −3.8 % on
+- Results: Chromium +16.5 % (first sample), +13.4 % (hold-out) over [FE-INL](#fe-inl) + [MEMINTR](#memintr) on Intel; +1.2 %, −3.8 % on
   AMD. FFmpeg +5.0 %. On top of the ownership configurations it loses: memcached −5 %, SQLite −18.5 %.
 - Cost: 133–140 bytes per check; Chromium code 3.0×, peak memory of the largest process 1.77×; compile time FFmpeg
   +97 %, Chromium +10 %, most of Redis's +168 %. x86-64 Linux, aligned accesses of 1–8 bytes.
@@ -230,7 +231,7 @@ x = p->field;
 
 <a name="fe-inl"></a>
 **FE-INL**. The shadow call stack's push and pop are done in place instead of by runtime calls at every function
-entry and exit. MySQL +3.6 % (its whole 1.13× configuration), Redis +4.8 %, Chromium +9.8 % with MEMINTR. Not an
+entry and exit. MySQL +3.6 % (its whole 1.13× configuration), Redis +4.8 %, Chromium +9.8 % with [MEMINTR](#memintr). Not an
 access check; no soundness argument needed (the recorded stack is the same). Place: a paragraph in `sec:trans` or
 after the remark "The pipeline can be extended with further analyses" (`3c-pipeline.tex:25`).
 
@@ -249,8 +250,8 @@ library-facts table, the families of [`optimization-results.md` §4](optimizatio
 | Introduction | five static analyses, four with a run-time form | ~15 lines rewritten |
 | SWMR | thread roots | ~6 lines |
 | EA | contents rule; memory intrinsics | ~5 lines |
-| DE (`sec:beyond`) | verified form, bounded shadow memory; N1 as its run-time form, placement | ~0.5 column |
-| `sec:trans` | DynSTC: runtime form, N1-ST, quiet threads; run-time LO (LO-OBJ); run-time EA (EVCONF-CHECKED); FE-INL | ~1 column |
+| DE (`sec:beyond`) | verified form, bounded shadow memory; [N1](#n1) as its run-time form, placement | ~0.5 column |
+| `sec:trans` | DynSTC: runtime form, [N1-ST](#n1-st), [quiet threads](#quiet); run-time LO ([LO-OBJ](#lo-obj)); run-time EA ([EVCONF-CHECKED](#evconf)); [FE-INL](#fe-inl) | ~1 column |
 | Pipeline | figure, order, summary step | ~8 lines |
 | Evaluation | updated figures under the old names; compile time | separate task |
 
@@ -258,18 +259,18 @@ About 1.5–2 columns of new text; the camera-ready version has one extra page.
 
 ## 5. Decisions (12 Oct)
 
-1. N1 is part of DE.
+1. [N1](#n1) is part of DE.
 2. The new optimizations are merged into the paper's analyses; updated figures are published mostly under the old
    names.
-3. The whole-program summary step does not weaken "fully automatic". The use of assertions (LO-OBJ) is to be settled.
-4. DynSTC-RT as a runtime option is accepted.
-5. Soundness statements for quiet threads, LO-OBJ and EVCONF-CHECKED: to be written and discussed separately; the
+3. The whole-program summary step does not weaken "fully automatic". The use of assertions ([LO-OBJ](#lo-obj)) is to be settled.
+4. [DynSTC-RT](#dynstc-rt) as a runtime option is accepted.
+5. Soundness statements for [quiet threads](#quiet), [LO-OBJ](#lo-obj) and [EVCONF-CHECKED](#evconf): to be written and discussed separately; the
    premises are listed in [`optimization-results.md` §8](optimization-results.md#premises).
 6. All figures on AMD; Chromium on Intel for now.
 7. Peeling stays, as part of DE.
 8. Space: one extra page.
 
-Open: LO-OBJ with assertions, or LO-MARK without them.
+Open: [LO-OBJ](#lo-obj) with assertions, or LO-MARK without them.
 
 <a name="terms"></a>
 ## Terms
