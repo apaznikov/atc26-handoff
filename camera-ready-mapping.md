@@ -6,13 +6,18 @@ Terms: [end of file](#terms). Hosts: AMD, except Chromium (Intel).
 
 ## 1. Mapping
 
-**In short.** Each new optimization is merged into one of the paper's analyses and reported under that analysis's
-name. The organizing idea: **four of the paper's five static analyses get a run-time form**, as STC already has
-DynSTC in the submitted paper (SWMR gets only a static refinement). The static analysis proves a property for all
-executions and removes the check; the run-time form tests the same property in the current execution and skips the
-check while it holds. Four more optimizations are refinements of a static rule (of SWMR, EA and DE). One, the
-inlined function entry and exit, maps to no analysis and gets a paragraph of its own. The run-time forms carry most
-of the adopted figures; three of the links are weak and are marked so below.
+**In short.** Each new optimization is assigned to one of the paper's analyses and reported under its name.
+
+- **Four of the five analyses (STC, LO, EA, DE) get a variant checked at run time**, as STC has DynSTC in the
+  submitted paper. The analysis removes TSan's check where it can prove its condition at compile time (LO: "every
+  access to the variable holds one lock"). The run-time variant leaves a short test of the same condition in the
+  code ("is the lock held now?") and calls TSan only if the test fails. These are DynSTC-RT, N1-ST and quiet threads
+  (STC); LO-OBJ (LO); EVCONF-CHECKED (EA); verified DE and N1 (DE).
+- **Four optimizations widen a static rule**: SWMR-ROOTS (SWMR), EA-CONTENTS and MEMINTR (EA), VWIDE-loops (DE).
+- **FE-INL** (inlined function entry and exit) belongs to no analysis and gets a paragraph of its own.
+
+Almost all adopted figures come from the run-time variants. For quiet threads, LO-OBJ and EVCONF-CHECKED the
+assignment is disputable; the objections are in their entries.
 
 Link: **direct** = the same rule, one condition changed; **idea** = the same property, established differently;
 **weak** = a reviewer may object.
