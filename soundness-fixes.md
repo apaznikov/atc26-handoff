@@ -1,6 +1,6 @@
 # Soundness fixes since the March 2026 compiler, and what they cost
 
-29 Sep 2026; the premises (§6) as of 7 Oct, the open points (§7) as of 5 Oct. Anything inferred is marked
+29 Sep 2026; the premises (§6) as of 12 Oct (§6e added 11 Oct), the open points (§7) as of 5 Oct. Anything inferred is marked
 *(inference)*.
 
 ## Short version
@@ -141,7 +141,8 @@ The largest defect, DE's "same location" test, fixed in the first review, has no
   - **Executed checks, pp** is the change in the share of checks executed at run time, in percentage points,
     estimated from profile runs.
 - **Fix IDs.** DE-1, EA-7, LO-4/4b and so on come from the fix inventory and the audit ledger.
-  `optimization-results.md` reuses DE-1…DE-10 and STC-1…4 for unrelated optimization ideas.
+  `optimization-results.md` (in its full form, commit 9126669) reuses DE-1…DE-10 and STC-1…4 for unrelated
+  optimization ideas.
 - **Steps.** A→B, B→C and C→D are the checkpoint steps above. "After D" means after shipping.
 
 ## 3. Speedup at each checkpoint
@@ -169,11 +170,11 @@ Key to table 1:
   - B→C shows only on SQLite, at 18-22 % of its loss.
   - C→D is 3-4 % of SQLite's loss.
 - **The submitted paper printed larger gains.** Over stock TSan it gave SQLite +71 %, memcached +7 %, Redis +45 %,
-  FFmpeg +57 % and MySQL +16 % (Select) / +11 % (Write-only) (`optimization-results.md`, table 3).
-  - Column A is the March compiler re-timed on today's bench.
+  FFmpeg +57 % and MySQL +16 % (Select) / +11 % (Write-only) (`optimization-results.md`, section 1, column "submitted paper").
+  - Column A is the March compiler re-timed on the bench of 24 Sep.
   - Its gap from the paper's figures reflects the measurement setup, not the fixes *(inference: same compiler)*.
-- **Raw cells** are in `fixcost-2026-09-24/`, and for A in the directory named after the March compiler, both in
-  the lab host's `/extra` data area.
+- **Raw cells** (the checkpoint timings of 24 Sep, and for A a directory named after the March compiler) are kept
+  on the lab host, not in this repository.
 
 **Table 1b. Static reach on the corpus: removed sites per analysis, and the change at each step**
 
@@ -394,7 +395,7 @@ Key to table 3:
 
 ## 6. Premises the soundness claims rest on
 
-In a program a premise excludes, a race may be lost. State 7 Oct; longer wording: commit 43568d5.
+In a program a premise excludes, a race may be lost. State 12 Oct (6e added 11 Oct); longer wording: commit 43568d5.
 
 ### 6a. Adopted
 
@@ -414,8 +415,8 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 | **CFG-TABLE** → **P-DICT** | 4 Oct; narrowed 5 Oct | Redis quiet threads | `dict.c` never reads or writes a stored value or entry; the rest of CFG-TABLE is a whole-program proof (A57-A57c). |
 | **Criterion G** | 25 Sep | merging under verified removal | Every granule stock reports on is still reported, no later, not pair for pair. |
 | **PM** (widened 7 Oct) | 7 Oct | the SQLite spec generator (gen16 on): one mutex identity for a lookup and its registration | SQLite's configuration in use (`sqlite3Config`: method tables and flags) is fixed after initialization, and its tables are the module's constant tables; no SQLite object outlives `sqlite3_shutdown` (clause added 8 Oct, audit A61l). SQLite's API contract (`sqlite3_config` after `sqlite3_initialize` returns SQLITE_MISUSE; shutdown requires every connection closed). |
-| **B2** (per type) | in gen9b's spec since its audit (A61h); named in §6 on 8 Oct | LO-OBJ-G specs generated from assertions (column (3)) | Holding the lock of one instance counts for every object of the protected type. For the derived parser params: a cell parsed under BtShared q's lock belongs to q (its page or q's temp space). Counterexample fixture R3 (`sqauto/repro19/`): a cell of a second BtShared parsed under the first's lock loses the race; SQLite conforms by reading. Path B (column (2)) does not use it: its owner is per instance and checked at run time. |
-| **Debug-location fidelity** | 8 Oct | the carve check's narrowing (SQLite column (3)) | A debug location names the function an instruction came from: the compiler keeps or drops locations and does not attribute code to another function. An instruction without a location is always checked; a build without debug info is refused. |
+| **B2** (per type) | in gen9b's spec since its audit (A61h); named in §6 on 8 Oct | LO-OBJ-G specs generated from assertions (the "generated spec or annotations" column) | Holding the lock of one instance counts for every object of the protected type. For the derived parser params: a cell parsed under BtShared q's lock belongs to q (its page or q's temp space). Counterexample fixture R3 (not in this repository): a cell of a second BtShared parsed under the first's lock loses the race; SQLite conforms by reading. Path B (the "no annotations, checked at run time" column) does not use it: its owner is per instance and checked at run time. |
+| **Debug-location fidelity** | 8 Oct | the carve check's narrowing (SQLite, the "generated spec or annotations" column) | A debug location names the function an instruction came from: the compiler keeps or drops locations and does not attribute code to another function. An instruction without a location is always checked; a build without debug info is refused. |
 | **R3, P-OWN** | 29 Sep | LO-OBJ-G | Every conflicting access holds the spec's lock or precedes publication; the spec names the right lock. |
 | **P-EV**, eviction | 1 Oct | every analysis | A race lost only because the covering record was evicted is accepted. |
 | **P-RESET** | 1 Oct | removal-mode DE, merge, loop ranges | The same for a global shadow reset (LG-2; ≈ 1/s on memcached). |
@@ -425,9 +426,9 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 | **P-REPORT** | 3 Oct | removal-mode DE | A second race on an already reported cell before the next sync may go unreported. |
 | **Plain lock success; library names; LIBC-ALLOC** | in use | LO; name tables; Redis's config-table proof | `pthread_mutex_lock` does not fail; libc names bind to libc; allocators behave as their IR attributes state. |
 
-- ALLOC-NOUAF validation (7 Oct, `alloc-nouaf-validation.md`): 50 runs of a full-check memcached build, 7,341,545 pushes, 0 accesses to a pushed block; scope `cache.c` free lists.
+- ALLOC-NOUAF validation (7 Oct): 50 runs of a full-check memcached build, 7,341,545 pushes, 0 accesses to a pushed block; scope `cache.c` free lists.
 
-### 6b. Pending a ruling
+### 6b. Pending a decision
 
 | premise | submitted | needed by | statement |
 |---|---|---|---|
@@ -462,7 +463,7 @@ In a program a premise excludes, a race may be lost. State 7 Oct; longer wording
 |---|---|---|---|
 | **P-EV-DEFER** | 28-29 Sep | DE-3R, DE-2R | A race lost when the other record disappears before a deferred or widened check; two losses outside this class found, fixes designed. |
 
-### 6e. Chromium (11 Oct, audit A87: `audit-a87-chromium-config-soundness.md`)
+### 6e. Chromium (11 Oct, audit A87)
 
 Configurations: CR1 (the four analyses + SWMR thread roots + inlined function entry/exit + one-sided memory
 intrinsics), CR1+N1 (+ inline hit test), S56 (the hit test only in functions of at most 56 IR instructions), per
@@ -474,8 +475,8 @@ lost check and no false report in the code as built; each configuration is sound
 inert: SWMR still runs per unit on a global that no other unit can name and that the unit stores to only in its
 initialiser; lock ownership matches the POSIX lock functions by name, so it does not see `base::Lock` (a try-lock,
 then an out-of-line lock) or PartitionAlloc's spin lock, but it can still remove checks in units that call
-`pthread_mutex_*` directly (the C libraries under third_party). So CR1's removals (0.85 % of linked sites) are
-mostly escape analysis; the share of each analysis is to be read from the pass's statistics on the 400-unit
+`pthread_mutex_*` directly (the C libraries under third_party). So the removals (0.85 % of linked sites for the analyses alone, the configuration the full ledger calls Sound; 0.81 %
+net for CR1; `optimization-results.md` at commit 9126669) are mostly escape analysis; the share of each analysis is to be read from the pass's statistics on the 400-unit
 sample before it is described. Premises A2, A2-LIB, A11, A12 (thread roots) are not needed for the Chromium
 statement; the lock-ownership and SWMR premises of 6a are.
 
@@ -485,7 +486,7 @@ statement; the lock-ownership and SWMR premises of 6a are.
 - A report on the destination of a one-sided copy has `__tsan_memcpy_nosrc` / `__tsan_memmove_nosrc` as its top
   frame, so a report key that includes that frame differs from stock's.
 
-**Premises used and not listed above** (to be adopted or rejected by a ruling; none is new code):
+**Premises used and not listed above** (to be adopted or rejected by a decision; none is new code):
 - `nocapture` attributes are truthful (escape analysis, one-sided copies).
 - One activation of a function runs on one thread at a time, and stacks are switched only through the fiber API
   (one-sided copies).
@@ -500,8 +501,8 @@ statement; the lock-ownership and SWMR premises of 6a are.
   `localtime_r` and siblings and `getaddrinfo` (sandbox/linux/services/libc_interceptor.cc), its own libevent 1.4
   `event_*`, and BoringSSL's `EVP_*`, all of them rows of the library-facts table. `localtime_r` is tabled as not
   synchronising, but Chromium's body calls `pthread_once`: the dominance elimination (AllOpt) can lose a race across
-  such a call. The facts CR1, CR1+N1 and S56 read still hold for those bodies, by reading. Owed: `-tsan-lib-facts=false` on the Chromium arms or a stated exception list. No AllOpt claim on Chromium until
-  then. Measured on 11 Oct: with the table off, 399 of 400 sampled units compile to the same code under CR1; the one
+  such a call. The facts CR1, CR1+N1 and S56 read still hold for those bodies, by reading. Owed: `-tsan-lib-facts=false` on the Chromium arms or a stated exception list; an AllOpt claim on Chromium
+  requires one of the two. Measured on 11 Oct: with the table off, 399 of 400 sampled units compile to the same code under CR1; the one
   that differs is v8's platform-posix.o, where escape analysis uses the row "`localtime_r` keeps no pointer to its
   arguments" to drop the check of one read of a local struct after the call. So CR1 does read a row whose callee is
   Chromium's own body (the sandbox's interceptor), through escape analysis, not through the dominance elimination.
@@ -514,7 +515,9 @@ statement; the lock-ownership and SWMR premises of 6a are.
   Chromium's (`localtime_r` and siblings) the body was read: it fills the caller's struct on the calling thread and
   neither keeps nor passes the pointer, so the fact used is true of it and no race is lost. The row that is false of
   that body (not synchronising) is read only by the dominance elimination; the no-peeling build of 11 Oct carries
-  the table off. The table-off CR1 is timed beside the arm of record as its own arm.
+  the table off. The table-off CR1 has been timed beside the arm of record as its own arm: CR1 without the
+  library-facts table reads the same as CR1 on both hosts (Intel first sample 1.104 against 1.104, hold-out 1.106
+  against 1.101; AMD 1.070 against 1.068).
 - A5 in a component build reads: every exported symbol defined in two loaded objects has ODR-equivalent
   definitions, and nothing is preloaded. A6 is not "LTO only": libc++'s extern templates give
   `available_externally` bodies in ordinary units (escape analysis refuses them; lock ownership's release summaries
@@ -540,7 +543,8 @@ checks, so the granule starts with one allocation record instead of two one-byte
 in the base variant and gains it in another. This is the eviction-only loss accepted on 1 Oct; for the paper it adds
 that such a loss need not be probabilistic, and that an optimised build can lose or gain a report against stock
 without any check on the racing accesses being removed. Rows that carry inline hit tests: explicitly FFmpeg ffn/ffk
-(s1, s4, k2), Redis rcy, Chromium CR1+N1, K4, S56, s1; through `-tsan-de-verified` (covered checks become inline
+(s1, s4, k2), Redis rcy, Chromium CR1+N1, K4, S56, s1 (ffn/ffk, rcy and the names below are tree names of the full ledger,
+`optimization-results.md` at commit 9126669); through `-tsan-de-verified` (covered checks become inline
 tests at fewer sites) memcached mcf and mcy, SQLite zg6/zgB, MySQL rpf, Redis. Confirmed slot by slot inside
 Chromium's handler (one run per arm): in CR1 the DCHECK read's victim is slot 0, the main thread's own old record
 (trace index mod 4 = 0), and the race is reported; in CR1+N1 it is slot 3, the worker's read (index mod 4 = 3), and
@@ -553,7 +557,7 @@ compile through them). The one failure is a link error, not a lost report: in a 
 no inline test but leaves an unused declaration of the hidden thread-local it would read, and the linker refuses the
 undefined symbol; with inline function entry/exit the symbol is used and the link passes. A pass defect outside every
 record configuration (each has inline entry/exit beside the hit test, or gets the test through the verified
-elimination); to be fixed in the pass.
+elimination); fix decided 12 Oct, not yet in a frozen compiler.
 
 **Open, disclosed beside any figure with the inline hit test:** E8 (two unexplained server deaths in 104 MySQL
 runs under the inline hit test, none in 319 without it, no recurrence in 80 later runs) was never resolved.
@@ -578,7 +582,7 @@ removed. "Identical union" has no ten-run table behind it for these configuratio
   predates the audit *(inference)*.
 - **Redis under exact DE.** The possible 2-3 % loss is inside the timing resolution.
 - **The DE library table's cost.** The inventory records a static cost of 10 sites on shell.c and 0 elsewhere. It
-  also mentions a lab note that claims a larger cost. The contradiction has not been settled by measurement.
+  also mentions an internal note that claims a larger cost. The contradiction has not been settled by measurement.
 - **"The fail-closed sync-free table" in Table 3.** The sources do not say which commit this denotes. It may be the
   declarations-only name tables of shapes 37 and 40 *(inference)*.
 - **A known open issue with no reach.** DE trusts alias analysis across an `addrspacecast` that changes pointer size
@@ -588,14 +592,15 @@ removed. "Identical union" has no ten-run table behind it for these configuratio
 
 ## 8. Sources
 
-Paths are relative to this repository unless stated otherwise.
-- `archive-2026-09-25/soundness-fixes-and-recovery-plan.md`: the fix inventory by analysis (what was, what became,
-  commit), the per-commit static counts from A to D, the decomposition of C's EA commit, and the recovery plan.
-- `shapes-ledger.md`: shapes 24-62 and LG-2, their fixes and costs, whether D has them, the gates, the premises
+Only `optimization-results.md` is in this repository. The other materials listed are kept outside it and are named
+here as the origin of the facts above.
+- The fix inventory and recovery plan of 25 Sep: the fix inventory by analysis (what was, what became, commit), the
+  per-commit static counts from A to D, the decomposition of C's EA commit, and the recovery plan.
+- The shapes ledger: shapes 24-62 and LG-2, their fixes and costs, whether D has them, the gates, the premises
   (no use-after-free, A2-A12, P-EV) and the rejected designs.
-- `removed-from-artifact/2026-09-23-evening/TSanAnalysesAudit.md`: shapes 1-23, the function-level audit, the fix IDs
-  and the static counts after STC-3, DE-6 and LO-7.
-- `optimization-results.md` (state of 28-29 Sep): P1-v3, exact DE, P-EV, P5, R3 and P-OWN, "P1-v3 over the shipped
-  artifact", and the paper's printed speedups.
-- The checkpoint timings of 24 Sep: raw cells in `fixcost-2026-09-24/`, and for A in the directory named after the
-  March compiler, both in the lab host's `/extra` data area.
+- The function-level audit of the analyses (23 Sep): shapes 1-23, the fix IDs and the static counts after STC-3,
+  DE-6 and LO-7.
+- `optimization-results.md` (state of 28-29 Sep, in this repository's history): P1-v3, exact DE, P-EV, P5, R3 and
+  P-OWN, "P1-v3 over the shipped artifact", and the paper's printed speedups.
+- The checkpoint timings of 24 Sep: raw cells, and for A a directory named after the March compiler, both on the
+  lab host.
