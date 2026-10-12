@@ -27,7 +27,7 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 
 | app | STC | SWMR | LO | EA | DE | DE+Peeling | DynSTC | FE-INL | AllOpt | status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| SQLite | | | | | | | | | 1.28× [1.23, 1.32] | current (quiet leg 12 Oct, 4 offsets × N = 4, A/A 1.013; LO-MARK v1, audit of the guarantee pending) |
+| SQLite | | | | | | | | | 1.28× [1.23, 1.32] | current (stress2 only, AMD; quiet leg 12 Oct, 4 offsets × N = 4, A/A 1.013; LO-MARK v1; the assertion-derived spec reads 1.26× in the same runs; the same trees read 1.11× on Intel) |
 | FFmpeg | | | | | | | | | 1.29× | current |
 | Redis | | | | | | | | | 1.54× | current |
 | MySQL | | | | | | | | | 1.13× | current |
@@ -81,7 +81,7 @@ Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead aga
 
 | app | configuration | speedup | stock build | optimized build | overhead | status |
 |---|---|---|---|---|---|---|
-| SQLite | LO-OBJ, generated spec | 1.19× | 33.27 s | 43.28 s | +30 % | current (LO-MARK's to be taken) |
+| SQLite | LO-OBJ, generated spec | 1.19× | 33.27 s | 43.28 s | +30 % | current (not the adopted configuration; LO-MARK's compile time is not measured) |
 | FFmpeg | N1 at every check | 1.285× | 76.10 s | 149.88 s | +97 % | current (static placement under test) |
 | Redis | adopted | 1.49× | 5.37 s | 14.38 s | +168 % | current (static placement under test) |
 | FFmpeg | candidate: N1 placed statically, `fk6` | under test | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds) |
@@ -106,8 +106,11 @@ no site lost, no voided run:
 | `walIndexRecover` (line 67460) | 0 | 1 | 1 | 0 |
 | `sqlite3_enable_shared_cache` (line 7164) | 0 | 1 | 1 | 0 |
 
-Status: current (audit pending). Every rate of LO-MARK is inside the range of the three stock arms; stock against
-stock differs as much (one site 3 of 20 in one stock arm and 0 of 20 in the other two). Seeded control: an unlocked
+Status: current (audited 12 Oct). Every rate of LO-MARK is inside the range of the three stock arms; stock against
+stock differs as much (one site 3 of 20 in one stock arm and 0 of 20 in the other two). In the session of 9 Oct
+(N = 20) LO-MARK was below both stock arms at the three WAL sites (5 against 13 and 6, 2 against 10 and 4, 4 against
+10 and 8), so "inside stock's range" holds for 12 Oct only. The three rare sites (0 or 1 of 20) are undetermined,
+not shown kept. Seeded control: an unlocked
 write to a page buffer is reported by stock in 5 of 5 runs and voids the run in 5 of 5 under LO-MARK; never silent.
 
 Chromium, runs reporting the race, all sessions:
