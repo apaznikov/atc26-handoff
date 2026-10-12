@@ -45,7 +45,7 @@ lost except through [eviction](#evict).
 |---|---|---|---|---|---|---|
 | SQLite | threadtest3 stress2 | 1.71× | **1.23×** (1.28× with the other half of the host idle) | [LO-MARK](#lo-mark) v1 | (2) no annotations, run-time checked; configuration: the names of the mutex API and the object types to cover | not measured |
 | FFmpeg | four transcodes of one film | 1.57× | **1.29×** | [DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st) | (2) no annotations, run-time checked | +97 % |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.52×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % |
 | MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** | [FE-INL](#fe-inl) | (1) no annotations, static | +16 % |
 | memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | (2) no annotations, run-time checked | not measured |
 | Chromium | blink_perf, [hold-out](#samples) sample, Intel host | 1.39× | **1.25×** | [CR1+N1](#cr1) | (1) no annotations, static | +10 % |
@@ -68,6 +68,7 @@ Other measured configurations of the same applications:
 | SQLite | [LO-MARK](#lo-mark) v1, final record leg 12-13 Oct (with a native arm) | **1.233×** [1.197, 1.265] | | same trees, 4 offsets × N=4, 64 of 64 valid, 0 void, A/A 1.000 [0.974, 1.021]; stock 5.43× slower than native [5.12, 5.68], LO-MARK 4.40×; peak RSS native 8.6, stock 60.8, v1 61.7 MiB. The other half of the host ran other legs in 47 of 65 cells (0.19-0.28 busy), unlike the quiet leg above; the points differ by 3.5 %, the intervals overlap |
 | FFmpeg | [N1 placed statically](#n1-place) (`fk6`; `fc4` reads the same) instead of N1 everywhere | 1.24× [1.23, 1.25] | +18 % (`fc4` +33 %) | 12 Oct, 4 offsets × N=2, A/A 0.997; the adopted line reads 1.287× [1.275, 1.301] in the same leg, 3.7 % above with disjoint intervals; the run-time options on the stock binary alone 1.135×. The h264 transcode is 7-8 % slower in every arm that has the run-time options |
 | FFmpeg | [N1 by static rule s4](#n1-place) instead of N1 everywhere | 1.23× | +36 % | one repetition per code offset |
+| Redis | adopted line, final record leg 13 Oct (with a native arm) | **1.517×** [1.493, 1.533] | | 4 offsets × N=4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; stock 6.17× slower than native, the adopted line 4.07×; server CPU per run native 6.8 s, stock 177.7, adopted 108.9; server peak RSS 46 / 964 / 969 MiB; other half of the host busy in every cell (0.06-0.08) |
 | Redis | adopted line with [N1 placed statically](#n1-place) (`rk4`) instead of N1 everywhere | 1.39× [1.37, 1.41] | +128 % | 12 Oct, 4 offsets × N=2, A/A 1.002; the adopted line reads 1.51× [1.48, 1.53] in the same leg at +173 %; rule s4 1.31×. Not adopted: 8 % slower, resolved at every offset |
 | Redis | [FE-INL](#fe-inl) + [N1](#n1), no quiet threads | 1.10× | | static only |
 | memcached | analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) | 1.02× | +11 % | static only |
