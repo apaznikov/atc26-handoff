@@ -33,6 +33,12 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 | MySQL | | | | | | | | | 1.13× | current |
 | memcached | | | | | | | | | 1.80× | current |
 
+FFmpeg has two candidate lines for AllOpt (leg of 12 Oct, 4 offsets × N = 2, A/A 0.997): N1 at every check 1.287×
+[1.275, 1.301] at about +100 % compile time; N1 placed statically 1.240× [1.232, 1.247] at +18 %. Of both, 1.135× is
+the run-time option alone on the stock binary. Per transcode (every check / static / option only): copy 2.72 / 2.45
+/ 1.80; mjpeg 1.09 / 1.05 / 1.00; h265 1.00 / 1.00 / 1.00; h264 0.93 / 0.92 / 0.92. Which line leads: to be decided;
+both are in the final leg.
+
 Chromium, Intel, N = 3 repetitions, speedup over stock:
 
 | configuration | first sample (49 stories) | hold-out sample (48 stories) | status |
@@ -84,8 +90,8 @@ Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead aga
 | SQLite | LO-OBJ, generated spec | 1.19× | 33.27 s | 43.28 s | +30 % | current (not the adopted configuration; LO-MARK's compile time is not measured) |
 | FFmpeg | N1 at every check | 1.285× | 76.10 s | 149.88 s | +97 % | current (static placement under test) |
 | Redis | adopted | 1.49× | 5.37 s | 14.38 s | +168 % | current (static placement under test) |
-| FFmpeg | candidate: N1 placed statically, `fk6` | under test | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds) |
-| FFmpeg | candidate: N1 placed statically, `fc4` | under test | 72 s | 95.5 s | +33 % | current (2 builds per arm, whole seconds) |
+| FFmpeg | alternative: N1 placed statically, `fk6` | 1.24× | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds) |
+| FFmpeg | alternative: N1 placed statically, `fc4` | 1.24× | 72 s | 95.5 s | +33 % | current (2 builds per arm, whole seconds) |
 | Redis | alternative: N1 placed statically, `rk4` | 1.39× | 5.25 s | 11.99 s | +128 % | current; not adopted (adopted line 1.51× in the same leg, 14.31 s, +173 %) |
 | MySQL | FE-INL | 1.13× | 874.75 s | 1015.13 s | +16 % | current |
 | memcached | adopted | 1.80× | | | not measured | pending |
