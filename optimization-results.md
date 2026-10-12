@@ -153,10 +153,9 @@ it).
   to the hit test. Confirmed on stock (12 Oct, Speedometer with V8's `--stress-compaction`, untimed host): stock dies
   on the same check, same file, line and condition, in 1 of 5 runs, and CR1 in 1 of 4. So
   the check fails without any of our changes. Still open: whether CR1+N1 hits it more often than stock without the
-  stress flag: 3 of about 32 Speedometer runs on two hosts (old_index 15239, 19310, 12373), stock 0 of about 17 on
-  the Intel host and none on the third host; that difference alone is not significant (stock 0 of 17 at CR1+N1's
-  rate has probability about 0.2). A count of both in turn runs on the Intel host until 13 Oct 06:00 (so far CR1+N1
-  1 of 7, stock 0 of 6).
+  stress flag: 3 of about 35 Speedometer runs on three hosts (about 9 %, rough 95 % range 2-23 %), stock 0 of about
+  20 on the Intel host and none on the third host (upper bound about 14 %). The counting loop of 12-13 Oct on the
+  Intel host, the two builds in turn: CR1+N1 1 of 10, stock 0 of 9. The difference is suggestive, not established.
 
 **Race preservation.** Runs that report the race, over all sessions (10 runs of the Blink stories and at least 2 of
 Speedometer per build in the main table):
