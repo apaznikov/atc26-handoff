@@ -84,7 +84,7 @@ Other measured configurations of the same applications:
 - memcached's 1.80× and MySQL's 1.13× are over upstream LLVM's TSan; ours and upstream's stock differ by -4 to +1.5 %.
 - [The paper's analyses](#paper), with the soundness fixes, read about 1.0× on SQLite, memcached and Chromium on the
   camera-ready compiler; the adopted figures are the analyses with their extensions ([section 6](#explain)).
-- Still open beside the figures: five premises await a decision (`soundness-fixes.md` §6b; two of them are EVCONF's);; two unexplained server deaths in 104 MySQL runs under the inline hit
+- Still open beside the figures: five premises await a decision (`soundness-fixes.md` §6b; two of them are EVCONF's), and the wide reading of no use-after-free that LO-MARK needs; two unexplained server deaths in 104 MySQL runs under the inline hit
   test (none in 319 runs without it, none in 80 later runs).
 
 <a name="chromium"></a>
