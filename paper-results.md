@@ -102,8 +102,8 @@ Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead aga
 
 | app | configuration | speedup | stock build | optimized build | overhead | status |
 |---|---|---|---|---|---|---|
-| SQLite | LO-OBJ, generated spec | 1.19× | 33.27 s | 43.28 s | +30 % | current (not the adopted configuration; LO-MARK's compile time is not measured) |
-| FFmpeg | N1 at every check | 1.285× | 76.10 s | 149.88 s | +97 % | current (static placement under test) |
+| SQLite | AllOpt (LO-MARK v1) | 1.23× | 24.86 s | 37.53 s | +51 % | final. Generating the spec: 98.7 s on one CPU, once per source version (with it counted into one build: 136.2 s, 5.5× stock); the same analyses without the spec: 30.77 s, +24 % |
+| FFmpeg | AllOpt with N1 at every check | 1.29× | 73 s | 136 s | +86 % | final (3 builds per arm) |
 | Redis | adopted | 1.49× | 5.37 s | 14.38 s | +168 % | current (static placement under test) |
 | FFmpeg | alternative: N1 placed statically, `fk6` | 1.24× | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds) |
 | FFmpeg | alternative: N1 placed statically, `fc4` | 1.24× | 72 s | 95.5 s | +33 % | current (2 builds per arm, whole seconds) |
