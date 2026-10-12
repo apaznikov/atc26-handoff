@@ -14,6 +14,7 @@ version of this file, commit `9126669`. Soundness, premises and audits: [`soundn
 | 5 | [Compile time](#compile) | build time and speedup of each configuration |
 | 6 | [What each optimization does](#explain) | a short text and a before/after C example for every name used here |
 | 7 | [Method](#method) | how the figures were taken |
+| 8 | [Premises](#premises) | what each adopted figure assumes about the program |
 
 <a name="notation"></a>
 **Notation** used in the tables:
@@ -40,14 +41,20 @@ Speedup = stock TSan's run time over the optimized build's; compile time is over
 are sound under the premises of [`soundness-fixes.md`](soundness-fixes.md) §6: no race that stock TSan reports is
 lost except through [eviction](#evict).
 
-| app | workload | submitted paper | adopted figure | configuration | annotations | compile time |
+| app | workload | submitted paper | adopted figure | configuration | claim class | compile time |
 |---|---|---|---|---|---|---|
-| SQLite | threadtest3 stress2 | 1.71× | **1.19×** | [LO-OBJ-G](#lo-obj-g) | none: the spec is generated from the program's assertions | +30 % |
-| FFmpeg | four transcodes of one film | 1.57× | **1.29×** | [DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st) | none | +97 % |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | none | +168 % |
-| MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** | [FE-INL](#fe-inl) | none | +16 % |
-| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | none | not measured |
-| Chromium | blink_perf, [hold-out](#samples) sample, Intel host | 1.39× | **1.25×** | [CR1+N1](#cr1) | none | +10 % |
+| SQLite | threadtest3 stress2 | 1.71× | **1.19×** | [LO-OBJ-G](#lo-obj-g) | (3) spec generated from the program's assertions, checked at run time | +30 % |
+| FFmpeg | four transcodes of one film | 1.57× | **1.29×** | [DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st) | (2) no annotations, run-time checked | +97 % |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % |
+| MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** | [FE-INL](#fe-inl) | (1) no annotations, static | +16 % |
+| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | (2) no annotations, run-time checked | not measured |
+| Chromium | blink_perf, [hold-out](#samples) sample, Intel host | 1.39× | **1.25×** | [CR1+N1](#cr1) | (1) no annotations, static | +10 % |
+
+Claim classes, strongest first: (1) no annotations, decided at compile time; (2) no annotations, a condition
+tested at run time decides; (3) a spec generated from the program's own assertions, tested at run time; (4) a
+hand-written spec or annotations. Best figure per class where it differs from the adopted one: SQLite (1) ≈ 1.0×,
+(2) 1.06–1.26× ([LO-MARK](#lo-mark), not a claim), (4) 1.25×; Redis (1) 1.10×; memcached (1) 1.02×, (4) 1.81×;
+FFmpeg (1) 1.18×. The premises behind each figure: [section 8](#premises).
 
 Other measured configurations of the same applications:
 
@@ -125,8 +132,11 @@ it).
 - **compiler-rt TSan tests with the flags** (391 tests run): [CR1](#cr1), [CR1+N1](#cr1) and [S56](#n1-place) pass
   all. The [hit-test](#n1) flag alone fails one test at -O0 (a link error from an unused declaration; fix decided
   12 Oct, not yet in a frozen compiler).
-- **Open**: one CR1+N1 Speedometer story failed in 19 runs (a renderer disappeared, no sanitizer output; it did not
-  recur).
+- **Open**: two CR1+N1 Speedometer runs (of about 26) died on the same V8 debug check in the garbage collector
+  (`cppheap-pointer-table.cc:167`), with no sanitizer output. No other build shows that message in about 5,700 run
+  and story logs on three hosts, and no CR1+N1 run of the Blink stories (about 250) does. Whether it is a race in V8
+  that the changed timing exposes or an effect of the inline hit test is not established; a failure-rate run of
+  CR1+N1 against stock and an analysis of the compiled code are in progress.
 
 **Race preservation.** Runs that report the race, over all sessions (10 runs of the Blink stories and at least 2 of
 Speedometer per build in the main table):
@@ -646,3 +656,25 @@ pBt->nPage++;                       // before: __tsan_write4(&pBt->nPage)
   from other roots: memcached's 1.80× (`tsan-ecc-b54ce0196884`), SQLite's 1.24× (`tsan-carve-da51c2dd8b3c`) and
   LO-MARK (`tsan-lomark-718c7520052c`).
 - Premises used by the adopted figures: `soundness-fixes.md` §6.
+
+<a name="premises"></a>
+## 8. Premises
+
+In a program that a premise excludes, a race may be lost. Full wording, dates and audits:
+[`soundness-fixes.md`](soundness-fixes.md) §6. "Pending" = not yet decided.
+
+| figure | rests on |
+|---|---|
+| every figure | no use-after-free; no access outside the object its pointer was derived from; a race lost only through [eviction](#evict) is accepted; signal handlers that synchronise with other threads are outside the model |
+| SQLite, [LO-OBJ-G](#lo-obj-g) | every conflicting access holds the spec's lock or precedes publication, and the spec names the right lock (R3, P-OWN); holding the lock of one instance counts for every object of the protected type (B2); SQLite's configuration is fixed after initialization (PM); debug locations name the function an instruction came from |
+| memcached, [EVCONF-CHECKED](#evconf-checked) | an indirect call reaches only functions of its type (A2). Pending: within one file table, freeing descriptor `n` happens before any later call returning `n` (G1) |
+| Redis, [quiet threads](#quiet) | closed world: nothing outside the program calls in or names its data (A12, A12-DATA); no member's address is used to reach another member (FIELD-ADDR); `dict.c` never reads or writes a stored value (P-DICT); A2. Pending: an `__attribute__((malloc))` function returns unaliased memory |
+| FFmpeg, [DynSTC-RT](#dynstc-rt) | no thread exists when `main` starts except from checked constructors; ignore-sync regions opened elsewhere are unseen (A10, A11) |
+| MySQL, [FE-INL](#fe-inl) | nothing beyond the first row |
+| Chromium, [CR1+N1](#cr1) | nothing beyond the first row; `soundness-fixes.md` §6e |
+| the analyses on `-fPIC` code | pending: a default-visibility definition is not replaced at load time (A5) |
+| [DE](#de) in removal mode (not the adopted, verified form) | a second race on an already reported cell may go unreported; a global shadow reset may hide a race (P-REPORT, P-RESET) |
+
+Soundness arguments still to be written for the paper: [quiet threads](#quiet), [LO-OBJ-G](#lo-obj-g),
+[EVCONF-CHECKED](#evconf-checked). [LO-MARK](#lo-mark)'s premises are not written up.
+
