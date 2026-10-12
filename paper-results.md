@@ -68,10 +68,11 @@ Speedometer 3, Score over stock, N = 3 repetitions (range):
 | A/A | 1.012 (0.994–1.044) | 1.009 (0.972–1.042) | final |
 
 On Intel one repetition of the FE-INL configuration ran on a disturbed host; without it the figure is 1.090 (N = 2).
-Three of about 32 Speedometer runs of AllOpt died on a debug check of V8's garbage collector; no other build did; the
+Three of about 35 Speedometer runs of AllOpt died on a debug check of V8's garbage collector; no other build did; the
 compiled code points to a timing-dependent condition in V8. Confirmed: with V8's forced compaction the stock TSan
 build dies on the same check (1 of 5 runs; the FE-INL configuration 1 of 4). Whether AllOpt hits it more often than stock in normal runs
-(3 of about 32 runs against 0 of about 17) is being counted; the difference is not significant so far.
+is not established: 3 of about 35 (about 9 %) against 0 of about 20 (upper bound about 14 %); in the counting loop
+of 12-13 Oct, the two builds in turn, AllOpt 1 of 10 and stock 0 of 9.
 
 ## 3. Slowdown over native, memory
 
