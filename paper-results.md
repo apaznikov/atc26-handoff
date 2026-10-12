@@ -27,7 +27,7 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 
 | app | STC | SWMR | LO | EA | DE | DE+Peeling | DynSTC | FE-INL | AllOpt | status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| SQLite | | | | | | | | | 1.28× [1.23, 1.32] | current (stress2 only, AMD; quiet leg 12 Oct, 4 offsets × N = 4, A/A 1.013; LO-MARK v1; the assertion-derived spec reads 1.26× in the same runs; the same trees read 1.11× on Intel) |
+| SQLite | | | | | | | | | 1.23× [1.20, 1.27] | final (record leg 12-13 Oct, stress2, AMD, 4 offsets × N = 4, 64 of 64 runs valid, A/A 1.000 [0.974, 1.021]; other half of the host busy in 47 of 65 cells. With the other half idle, same trees, three hours earlier: 1.28× [1.23, 1.32]. LO-MARK v1; the assertion-derived spec reads the same; Intel 1.11×) |
 | FFmpeg | | | | | | | | | 1.29× | current |
 | Redis | | | | | | | | | 1.54× | current |
 | MySQL | | | | | | | | | 1.13× | current |
@@ -67,11 +67,13 @@ build dies on the same check (1 of 5 runs; the FE-INL configuration 1 of 4). Whe
 
 ## 3. Slowdown over native, memory
 
-Pending: no native arm has been measured yet (final record legs; Chromium needs a native build).
+Slowdown = figure of merit of native over the build's. Memory: peak resident memory of the timed process; the
+reduction is (R_stock − R_opt) / R_stock with R = peak − native's peak. Other applications: pending (final legs;
+Chromium needs a native build).
 
-| app | stock / native | AllOpt / native | memory overhead reduction | status |
-|---|---|---|---|---|
-| | | | | pending |
+| app | stock / native | AllOpt / native | peak RSS native / stock / AllOpt | memory overhead reduction | status |
+|---|---|---|---|---|---|
+| SQLite | 5.43× [5.12, 5.68] | 4.40× | 8.6 / 60.8 / 61.7 MiB | −1.7 % (an increase) | final |
 
 Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.06×, AllOpt 1.54× on Intel
 (Speedometer); 1.09× and 1.77× on AMD (mapped code; allocated memory unchanged). current.
