@@ -28,7 +28,7 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 | app | STC | SWMR | LO | EA | DE | DE+Peeling | DynSTC | FE-INL | AllOpt | status |
 |---|---|---|---|---|---|---|---|---|---|---|
 | SQLite | = stock | = stock | 1.26× [1.22, 1.31] | 0.97 [0.94, 1.00] | held (1.01) | 1.00 [0.96, 1.04] | 1.00 [0.96, 1.03] | 1.02 [0.97, 1.05] | 1.23× [1.20, 1.27] | final (record leg 12-13 Oct, stress2, AMD, 4 offsets × N = 4, 64 of 64 runs valid, A/A 1.000 [0.974, 1.021]; other half of the host busy in 47 of 65 cells. With the other half idle, same trees, three hours earlier: 1.28× [1.23, 1.32]. LO-MARK v1; the assertion-derived spec reads the same; Intel 1.11×) |
-| FFmpeg | | | | | | | | | 1.29× | current |
+| FFmpeg | | | | | | | | | 1.29× [1.28, 1.29] with N1 at every check; 1.24× [1.23, 1.25] with N1 placed statically | final (record leg 13 Oct, four transcodes, AMD, 4 offsets × N = 4, 80 of 80 valid, A/A 1.001 [0.994, 1.008]; other half of the host busy in 65 of 81 cells; which line is AllOpt: to be decided) |
 | Redis | | | | | | | | | 1.52× [1.49, 1.53] | final (record leg 13 Oct, composite of seven commands, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; other half of the host busy in every cell. Per command: LRANGE 1.41-1.61, MSET 1.87, ZADD 1.28, ZPOPMIN 1.43) |
 | MySQL | | | | | | | | | 1.13× | current |
 | memcached | | | | | | | | | 1.80× | current |
@@ -38,11 +38,11 @@ singles leg reads 1.014 [0.938, 1.073], and every SQLite column but LO is inside
 byte-identical to stock and was not timed. SQLite's DE is held: one race site reported by stock in 3 of 10 runs was
 reported in 0 of 10 (the checks at the site are identical to stock's; a 20-run recheck is running).
 
-FFmpeg has two candidate lines for AllOpt (leg of 12 Oct, 4 offsets × N = 2, A/A 0.997): N1 at every check 1.287×
-[1.275, 1.301] at about +100 % compile time; N1 placed statically 1.240× [1.232, 1.247] at +18 %. Of both, 1.135× is
-the run-time option alone on the stock binary. Per transcode (every check / static / option only): copy 2.72 / 2.45
-/ 1.80; mjpeg 1.09 / 1.05 / 1.00; h265 1.00 / 1.00 / 1.00; h264 0.93 / 0.92 / 0.92. Which line leads: to be decided;
-both are in the final leg.
+FFmpeg, per transcode in the final leg (N1 at every check / N1 placed statically, over stock; stock's slowdown
+over native): copy 2.71 / 2.44; 5.1× (native takes 0.11 s on a 0.01 s clock, coarse); mjpeg 1.08 / 1.04; 6.3×;
+h265 1.00 / 1.00; 1.42×; h264 0.94 / 0.93; 1.29×. The static line is 0.963 [0.955, 0.971] of the other and costs
++18 % compile time against about +100 %. In the leg of 12 Oct the run-time option alone on the stock binary read
+1.135×, and h264 was 7-8 % slower in every arm that had the option.
 
 Chromium, Intel, N = 3 repetitions, speedup over stock:
 
@@ -80,6 +80,8 @@ Chromium needs a native build).
 |---|---|---|---|---|---|
 | SQLite | 5.43× [5.12, 5.68] | 4.40× | 8.6 / 60.8 / 61.7 MiB | −1.7 % (an increase) | final |
 | Redis (server process) | 6.17× | 4.07× | 46 / 964 / 969 MiB | −0.5 % (an increase) | final; server CPU per run 6.8 / 177.7 / 108.9 s |
+| FFmpeg, N1 at every check | 2.77× [2.75, 2.80] | 2.16× | 522 / 1442 / 1469 MiB | −2.9 % (an increase) | final |
+| FFmpeg, N1 placed statically | 2.77× | 2.24× | 522 / 1442 / 1445 MiB | −0.3 % | final |
 
 Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.06×, AllOpt 1.54× on Intel
 (Speedometer); 1.09× and 1.77× on AMD (mapped code; allocated memory unchanged). current.
