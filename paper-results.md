@@ -149,8 +149,16 @@ SQLite, single configurations, 13 Oct, 10 runs per arm (stock | STC | SWMR | LO 
 3 | 3 | 3 | 2 | 2 | 0 | 3 | 5. DE's 0 of 10 was rechecked in one session of 20 runs: stock 6 of 20, DE 6 of 20
 (DE+Peeling 3 of 10); the checks at that site are identical in the three builds. No site lost in any arm. final.
 
-Redis, single configurations: stock reports no race in 10 runs on this workload and no arm reports any, so the
-comparison certifies nothing; seeded races are needed (pending).
+Redis, single configurations: stock reports no race on this workload, so 11 seeded races were run, 10 runs per
+arm (stock, STC, SWMR, EA, DE, DE+Peeling, FE-INL): 10 of them reported in 10 of 10 runs in every arm; the
+timing-dependent one in 8 of 10 by stock and 6 to 9 of 10 by the arms. What this certifies: in DE and DE+Peeling
+every check in the seeded functions is an inline test, so all 11 seeds exercise it; in FE-INL they exercise the
+stack attribution; in STC, SWMR and EA the seeded functions are compiled as in stock, so no seed is aimed at those
+three (their code changes are not tested by the seeds). current.
+
+MySQL, single configurations (STC, SWMR, LO, EA, DE, DE+Peeling), 5 runs per arm, 115 sites reported by stock: no
+site lost, no server death; kept 86 to 94 per arm, the rest undetermined (sites stock itself reports in 1 of 5
+runs); 5 more runs per arm are queued. current.
 
 Other applications: 10 stock against 10 optimized runs each, no site lost (memcached 4 sites, MySQL 232-236;
 Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries).
