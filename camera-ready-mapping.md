@@ -212,7 +212,10 @@ x = p->field;
   +97 %, Chromium +10 %, most of Redis's +168 %. x86-64 Linux, aligned accesses of 1–8 bytes.
 - Against: stock's runtime does this comparison as its first step, so it can be called inlining of the fast path;
   it removes no check.
-- Open: two server deaths in 104 MySQL runs with it (none in 80 later runs); a lower report rate of one Chromium race.
+- Open: two server deaths in 104 MySQL runs with it (none in 80 later runs); a lower report rate of one Chromium race;
+  two of about 26 Chromium Speedometer runs with it died on a V8 debug check in the garbage collector (no other
+  build did; the source points to a timing hazard in V8 itself, under test, see
+  [`optimization-results.md` §2](optimization-results.md#chromium)).
 
 ### No analysis
 
