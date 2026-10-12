@@ -212,6 +212,13 @@ memcached and Redis part of it is taken at run time by the [ownership checks](#o
 | [EA](#ea): memory that is in fact one-thread or consistently ordered | 72 % | 55 % | 63 % | 49 % | 70 % |
 | share of the row above that is heap reachable from shared structures | 79 % | 34 % | 42 % | — | 7.5 % |
 
+**A further application screened: zstd** (12 Oct; zstd 1.5.7, Silesia corpus, 16 workers; untimed shared host, so
+indications only, 5 rounds). Stock TSan reports no race. Over stock, compressing at level 19: the analyses with
+[DE](#de) 1.04×, with [FE-INL](#fe-inl) 1.03×, with [N1](#n1) 1.08× (stock's own spread 1.04); at level 3 and with
+`--long` nothing leaves the spread; decompression is single-threaded. [DE](#de) removes 4.4 % of the static checks
+and [EA](#ea) 2.0 %; [STC](#stc), [SWMR](#swmr) and [LO](#lo) find nothing in it. zstd reads mostly through
+unaligned-access helpers, which [N1](#n1) does not cover (8,131 call sites). Build time with N1 +86 %, code 2.5×.
+
 <a name="compile"></a>
 ## 5. Compile time
 
