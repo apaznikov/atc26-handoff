@@ -55,5 +55,16 @@ runtime. The only figures taken on an unmodified runtime are the profiles of sec
 ## 5. Where it lives
 
 Branch `experiment/als` c911b1f1ff67 (on 8345a0396fa5, runtime only); frozen root
-`/extra/alexey/builds/tsan-als-c911b1f1ff67` (not for the paper); census and legs under
-`/extra/alexey/chromium/als1`, `als2`, `als2nf`, `als3`.
+`/extra/$USER/builds/tsan-als-c911b1f1ff67` (not for the paper); census and legs under
+`/extra/$USER/chromium/als1`, `als2`, `als2nf`, `als3`.
+
+The relinked browsers were removed from the focs SSD scratch on 10 Oct 2026 (the line is parked and the room was
+needed for builds): `chrome-cr1n1-als` (chrome sha256 712a33bd626e1830), `chrome-cr1n1-als2` (5e5e6463cbf65941),
+`chrome-cr1n1-als-c911b1f1ff67` (121ddcc66e10dede). One relinked pair remains under
+`/extra/$USER/chromium/scratch/cr8345`: `chrome-cr1r` (CR1 rebuilt, with `obj/`) and
+`chrome-cr1r-als-c911b1f1ff67` (605e9d99b0ccbc5c). To make one again: an out dir of the configuration with its
+`obj/` tree (about an hour's build on focs), then `/extra/$USER/chromium/cr8345/relink.sh <tag> <archives dir>
+<out dir> <sibling dir>`, a 15-second link that replaces only `chrome`; only the executables embed the runtime. After the removal
+the frozen CR1+N1 browser (121ddcc66e10dede) exists only as the timing lane's copy on apollo
+(`~/p5-apollo/chromium/nvme/out/chrome-cr1n1alsf`), and the provisional one of commit 9dbd02c7cfac
+(5e5e6463cbf65941) exists nowhere; its archives are in `/extra/$USER/wt-dev2-r/als/rt-9dbd02c7cfac`.
