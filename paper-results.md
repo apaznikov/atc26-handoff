@@ -86,7 +86,7 @@ Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead aga
 | Redis | adopted | 1.49× | 5.37 s | 14.38 s | +168 % | current (static placement under test) |
 | FFmpeg | candidate: N1 placed statically, `fk6` | under test | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds) |
 | FFmpeg | candidate: N1 placed statically, `fc4` | under test | 72 s | 95.5 s | +33 % | current (2 builds per arm, whole seconds) |
-| Redis | candidate: N1 placed statically, `rk4` | under test | 5.25 s | 11.99 s | +128 % | current (same run: adopted line 14.31 s, +173 %) |
+| Redis | alternative: N1 placed statically, `rk4` | 1.39× | 5.25 s | 11.99 s | +128 % | current; not adopted (adopted line 1.51× in the same leg, 14.31 s, +173 %) |
 | MySQL | FE-INL | 1.13× | 874.75 s | 1015.13 s | +16 % | current |
 | memcached | adopted | 1.80× | | | not measured | pending |
 | Chromium | AllOpt | 1.25× | | | +10 % (CPU time, 400 sampled units) | final |
