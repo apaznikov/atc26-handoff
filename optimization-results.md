@@ -125,8 +125,11 @@ it).
 - **compiler-rt TSan tests with the flags** (391 tests run): [CR1](#cr1), [CR1+N1](#cr1) and [S56](#n1-place) pass
   all. The [hit-test](#n1) flag alone fails one test at -O0 (a link error from an unused declaration; fix decided
   12 Oct, not yet in a frozen compiler).
-- **Open**: one CR1+N1 Speedometer story failed in 19 runs (a renderer disappeared, no sanitizer output; it did not
-  recur).
+- **Open**: two CR1+N1 Speedometer runs failed with no sanitizer output. One (Intel, 12 Oct) died on a V8 debug
+  check in the garbage collector (`cppheap-pointer-table.cc:167`); it is the only run with that message among about
+  1,750 run logs of all builds on both hosts, about 250 of them CR1+N1. The other (1 of 19 preservation runs) lost
+  a renderer with no message kept. Whether stock fails the same check at some rate is not known; a failure-rate run
+  of CR1+N1 against stock is in progress.
 
 **Race preservation.** Runs that report the race, over all sessions (10 runs of the Blink stories and at least 2 of
 Speedometer per build in the main table):
