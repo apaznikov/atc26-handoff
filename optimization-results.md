@@ -10,7 +10,7 @@ version of this file, commit `9126669`. Soundness, premises and audits: [`soundn
 | 1 | [Summary](#summary) | the best figure per application, its configuration and its compile time |
 | 2 | [Chromium](#chromium) | every configuration on two hosts and two story samples; what was learned |
 | 3 | [Single optimizations](#single) | what each optimization adds alone, per application |
-| 4 | [Further variants](#nogain) | variants tried on top of the adopted forms, and the headroom left |
+| 4 | [Further variants](#variants) | variants tried on top of the adopted forms, and the headroom left |
 | 5 | [Compile time](#compile) | build time and speedup of each configuration |
 | 6 | [What each optimization does](#explain) | a short text and a before/after C example for every name used here |
 | 7 | [Method](#method) | how the figures were taken |
@@ -20,87 +20,128 @@ version of this file, commit `9126669`. Soundness, premises and audits: [`soundn
 
 | mark | meaning |
 |---|---|
-| <a name="kind-s"></a>S | static: decided at compile time, nothing added at run time |
-| <a name="kind-r"></a>R | checked at run time, no annotation: the compiler inserts a guard or a test |
+| <a name="kind-s"></a>S | decided at compile time: no run-time condition decides whether an access is checked (the check itself may be inlined) |
+| <a name="kind-r"></a>R | a condition tested at run time decides it, with no annotation: a guard the compiler inserts, or a mode of the runtime ([DynSTC-RT](#dynstc-rt)) |
 | <a name="kind-g"></a>G | uses a spec generated from the program's own assertions |
 | <a name="kind-a"></a>A | uses a hand-written annotation or spec (A+R, G+R: guarded at run time as well) |
 | <a name="host-f"></a>`f` | measured on the Intel host; without the mark, on the AMD host |
+| <a name="leg"></a>leg, arm | a leg is one timed session in which the compared builds (its arms) run interleaved |
 | <a name="aa"></a>A/A | the same binary run as two arms of one leg; its ratio shows the noise of the leg |
-| **bold** | in section 3: a gain beyond the A/A; elsewhere: the figure of record |
+| N | number of repetitions (separately started legs) |
+| **bold** | in section 3: a gain beyond the A/A; elsewhere: the adopted figure |
 | — | not measured |
 | <a name="samples"></a>first / hold-out | Chromium's two story samples: 49 stories used during development / 48 other stories fixed before they ran |
+| <a name="evict"></a>eviction | TSan keeps four records per 8-byte cell of memory; a newer record can displace the one a race report needed. Stock TSan loses races this way too |
 
 <a name="summary"></a>
 ## 1. Summary
 
-Speedup = stock TSan's run time over the optimized build's. Every figure is sound: no race that stock TSan reports is
-lost, under the premises of `soundness-fixes.md` §6. Compile time is over stock TSan's build.
+Speedup = stock TSan's run time over the optimized build's; compile time is over stock TSan's build. The bold figures
+are sound under the premises of [`soundness-fixes.md`](soundness-fixes.md) §6: no race that stock TSan reports is
+lost except through [eviction](#evict).
 
-| app | workload | submitted paper | no annotations, static | no annotations, checked at run time | generated spec or annotations | compile time |
+| app | workload | submitted paper | adopted figure | configuration | annotations | compile time |
 |---|---|---|---|---|---|---|
-| SQLite | threadtest3 stress2 | 1.71× | ≈ 1.0× ([analyses as submitted](#paper)) | 1.26× ([LO-MARK](#lo-mark); measured, not yet a claim) | **1.19×** ([LO-OBJ-G](#lo-obj-g), generated spec); 1.24× with run-time owner checks; 1.25× hand-written spec | +28 % |
-| FFmpeg | four transcodes of one film | 1.57× | — | **1.29×** ([DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st)); **1.23×** with the hit test placed by a [static rule](#n1-place) | — | +97 %; static rule +36 % |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | 1.10× ([FE-INL](#fe-inl) + [N1](#n1)) | **1.54×** (+ [quiet threads](#quiet); a fresh build on 12 Oct read 1.49×) | — | +168 % |
-| MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** ([FE-INL](#fe-inl)) | — | — | +16 % |
-| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.02×** (analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr)) | **1.80×** ([EVCONF-CHECKED](#evconf-checked)) | 1.81× ([EVCONF](#evconf), 7 annotated fields) | +11 %; with EVCONF +35 % |
-| Chromium | blink_perf, [hold-out](#samples) sample of 48 stories; Intel host | 1.39× | **1.10×** ([CR1](#cr1)), **1.16×** ([S56](#n1-place)), **1.25×** ([CR1+N1](#cr1)) | — | — | CR1 +1 %; CR1+N1 +10 % |
+| SQLite | threadtest3 stress2 | 1.71× | **1.19×** | [LO-OBJ-G](#lo-obj-g) | none: the spec is generated from the program's assertions | +30 % |
+| FFmpeg | four transcodes of one film | 1.57× | **1.29×** | [DynSTC-RT](#dynstc-rt) + [N1](#n1) + [N1-ST](#n1-st) | none | +97 % |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.54×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | none | +168 % |
+| MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.13×** | [FE-INL](#fe-inl) | none | +16 % |
+| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | none | not measured |
+| Chromium | blink_perf, [hold-out](#samples) sample, Intel host | 1.39× | **1.25×** | [CR1+N1](#cr1) | none | +10 % |
+
+Other measured configurations of the same applications:
+
+| app | configuration | speedup | compile time | note |
+|---|---|---|---|---|
+| SQLite | [the paper's analyses](#paper) with the soundness fixes | ≈ 1.0× | | |
+| SQLite | [LO-OBJ-G](#lo-obj-g), hand-written spec | 1.25× | | |
+| SQLite | LO-OBJ-G with parser parameters derived and owner checks at run time | 1.24× | | another compiler root; audit and preservation run owed |
+| SQLite | [LO-MARK](#lo-mark) | 1.06-1.26× | | three [legs](#leg); not separated from the generated spec (1.23× in the best leg); not a claim |
+| FFmpeg | [N1 by static rule s4](#n1-place) instead of N1 everywhere | 1.23× | +36 % | one repetition per code offset |
+| Redis | [FE-INL](#fe-inl) + [N1](#n1), no quiet threads | 1.10× | | static only |
+| memcached | analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) | 1.02× | +11 % | static only |
+| memcached | [EVCONF](#evconf), 7 annotated fields | 1.81× | +35 % | |
+| Chromium | [CR1](#cr1) | 1.10× | +1 % | static only |
+| Chromium | [S56](#n1-place) | 1.16× | not sampled | |
 
 - Hosts: AMD = 2 × EPYC 9115 (every row except Chromium); Intel = Xeon w9-3495X (Chromium; its AMD figures are in
   [section 2](#chromium)).
 - SQLite's figure is completed statements per 60 s of a lock-contended mix dominated by integrity checks (33-36 %) and
   schema statements; the write loops are 7-9 % of it. It is a throughput ratio, not a speedup of write work.
-- SQLite's row is being re-recorded without dominance elimination and peeling (same speed in a screening leg, 1.185
-  against 1.187; compile time +20 % against +37 % by CPU time).
-- FFmpeg: of the 1.29×, 1.085× is the runtime option of DynSTC-RT alone; the instrumentation gives 1.18×.
+- SQLite without [dominance elimination](#de) and [peeling](#peel) runs at the same speed (1.185 against 1.187, one
+  leg, the earlier generated spec) and builds at +13 % instead of +25 % (12 Oct, same method as [section 5](#compile)).
+- Redis: a fresh build of the same configuration read 1.49× on 11 Oct; that build is the one timed in
+  [section 5](#compile).
+- FFmpeg: of the 1.29×, 1.085× is the runtime option of [DynSTC-RT](#dynstc-rt) alone; the instrumentation gives 1.18×.
 - memcached's 1.80× and MySQL's 1.13× are over upstream LLVM's TSan; ours and upstream's stock differ by -4 to +1.5 %.
-- On the camera-ready compiler with the soundness fixes the analyses in their submitted form read about 1.0× on
-  SQLite, memcached and Chromium; the figures of this table are the analyses with their extensions
-  ([section 6](#explain)).
+- [The paper's analyses](#paper), with the soundness fixes, read about 1.0× on SQLite, memcached and Chromium on the
+  camera-ready compiler; the adopted figures are the analyses with their extensions ([section 6](#explain)).
+- Still open beside the figures: five premises await a decision (`soundness-fixes.md` §6b; two of them are EVCONF's);
+  LO-MARK's premises are not written up there; two unexplained server deaths in 104 MySQL runs under the inline hit
+  test (none in 319 runs without it, none in 80 later runs).
 
 <a name="chromium"></a>
 ## 2. Chromium
 
-Chromium 127.0.6533.119, component build (486 libraries) with DCHECKs on, compiler `tsan-cr-8345a0396fa5`
-(`tsan-cr2-429bd8cf76b9` for S56). First sample: 49 Blink stories of six suites, used during development. Hold-out
-sample: 48 other stories, fixed before they ran ([notation](#samples)). Speedup over stock TSan, N=3 unless noted.
+Chromium 127.0.6533.119, component build (486 libraries) with Chromium's debug assertions (DCHECKs) on, compiler
+`tsan-cr-8345a0396fa5` (`tsan-cr2-429bd8cf76b9` for S56). [First sample](#samples): 49 Blink stories of six suites,
+used during development. [Hold-out sample](#samples): 48 other stories, fixed before they ran. Speedup over stock
+TSan, N=3 unless noted. The configurations are defined [here](#cr1).
 
-| configuration | Intel, first | Intel, hold-out | AMD, first | AMD, hold-out |
+| configuration | Intel, [first](#samples) | Intel, [hold-out](#samples) | AMD, first | AMD, hold-out |
 |---|---|---|---|---|
-| [Sound](#cr1) (the four analyses) | 1.006 (N=2) | — | 0.995 | — |
-| [AllOpt](#cr1) (+ dominance elimination, peeling) | 0.994 (N=2) | — | 1.011 | — |
+| [Sound](#cr1) ([the four analyses](#paper)) | 1.005 | — | 0.995 | — |
+| Sound + [DE](#de), no peeling | 1.012 | — | 0.999 | — |
+| [AllOpt](#cr1) (Sound + [DE](#de) + [peeling](#peel)) | 0.993 | — | 1.011 | — |
 | [CR1](#cr1) | 1.104 | 1.101 | 1.068 | 1.057 |
-| [CR1](#cr1) without the [library-facts table](#cr1) | 1.102 (N=2) | 1.106 (N=2) | 1.070 | — |
+| [CR1](#cr1) without the [library-facts table](#cr1) | 1.104 | 1.106 (N=2) | 1.070 | — |
 | [S56](#n1-place) | 1.186 | 1.157 | 1.086 | 1.054 |
 | [CR1+N1](#cr1) | 1.286 | 1.248 | 1.081 | 1.017 |
 
-- **On Chromium the gain comes from the extensions.** The analyses in their submitted form read within 1 % of stock
-  on both hosts; [FE-INL](#fe-inl) and [SWMR-ROOTS](#swmr-roots) in CR1 and the inline hit test [N1](#n1) carry the
-  gain.
+What each step adds is in [section 3](#single-chromium). Read with two limits: this is not the build Chromium's own
+TSan bots use (static, no DCHECKs; static builds were not measured, and the difference favours inlined paths); and a
+difference under about 1.5 % is within what code placement alone does (a layout twin of [CR1](#cr1) reads 1.013 over
+it).
+
+- **On Chromium the gain comes from the form of the instrumentation.** [The paper's analyses](#paper) read within
+  about 1 % of stock on both hosts; [FE-INL](#fe-inl) (with [MEMINTR](#memintr)) in [CR1](#cr1) and the inline hit
+  test [N1](#n1) carry the gain. [SWMR-ROOTS](#swmr-roots) is switched on in CR1 but does nothing in a build
+  compiled unit by unit (`soundness-fixes.md` §6e).
 - **[CR1](#cr1) holds on unseen stories**: 1.10× on Intel, 1.06× on AMD.
-- **The [inline hit test](#n1) pays only on Intel**: +13 to +17 % over CR1. On AMD's hold-out it is 4 % below CR1 (four
-  readings of the same sign). [S56](#n1-place) equals CR1 on AMD.
+- **The [inline hit test](#n1) pays only on Intel**: +13 to +17 % over CR1. On AMD's hold-out it is 4 % below CR1
+  (four readings of the same sign), and [S56](#n1-place) equals CR1 there.
 - **Why the hosts differ is not established.** Excluded: thread count (Intel pinned to 16 threads reads the same),
   the container, fonts and paths (AMD on the host reproduces the container within 0.006). Counters show the hit test
   removing cycles in the runtime and adding about as many outside it on both hosts.
-- **[Peeling](#peel)** costs 1.8 % on Intel and gains 1.1 % on AMD; each sign is stable on its host.
 - **The [library-facts table](#cr1) is not needed**: CR1 without it reads the same everywhere.
-- **Whole `paint` suite** (AMD, N=2): CR1 1.062, CR1+N1 1.160, S56 1.169; without the multicol stories 1.048, 1.030,
-  1.044.
+- **Whole `paint` suite** (AMD, N=2): [CR1](#cr1) 1.062, [CR1+N1](#cr1) 1.160, [S56](#n1-place) 1.169; without its
+  multi-column layout stories 1.048, 1.030, 1.044.
 - **Code and memory**: code 1.18× stock's for CR1 and 3.0× for CR1+N1. Largest process's peak RSS: CR1 1.09×, S56
   1.27×, CR1+N1 1.77× (mapped code; allocated memory unchanged).
-- **Race preservation** (10 runs of the Blink stories per build): no build loses a race that stock reports. The
-  crashpad race is reported in 10 of 19 CR1+N1 runs against 27 of 27 for stock and CR1; this is shadow-cell eviction.
-  The perfetto race is reported by the optimized builds (CR1 4 of 20, CR1+N1 3 of 10) and never by stock (0 of 30).
-- **compiler-rt TSan tests with the flags** (391 tests run): CR1, CR1+N1 and S56 pass all. The hit-test flag alone
-  fails one test at -O0 (a link error from an unused declaration; fix approved 12 Oct).
+- **compiler-rt TSan tests with the flags** (391 tests run): [CR1](#cr1), [CR1+N1](#cr1) and [S56](#n1-place) pass
+  all. The [hit-test](#n1) flag alone fails one test at -O0 (a link error from an unused declaration; fix decided
+  12 Oct, not yet in a frozen compiler).
 - **Open**: one CR1+N1 Speedometer story failed in 19 runs (a renderer disappeared, no sanitizer output; it did not
-  recur). Speedometer 3 at three repetitions is running on both hosts.
+  recur).
+
+**Race preservation.** Runs that report the race, over all sessions (10 runs of the Blink stories and at least 2 of
+Speedometer per build in the main table):
+
+| race (where it shows) | stock | [CR1](#cr1) | [CR1+N1](#cr1) | [S56](#n1-place) |
+|---|---|---|---|---|
+| crashpad `WorkerThread::Stop` (Speedometer) | 27 of 27, stock and CR1 together | | 10 of 19 | 3 of 4 |
+| perfetto start-up (`paint`) | 0 of 30 (4 of 9 with the shadow-reset option) | 4 of 20 | 3 of 10 | — |
+| PartitionAlloc bit-field (Speedometer) | 7 of 15 | 6 of 12 | 2 of 19 | 2 of 4 |
+
+Every race that stock reports is reported by every build in at least one run. The crashpad runs without a report are
+[eviction](#evict) in the unmodified runtime (`soundness-fixes.md` §6e); the lower PartitionAlloc rate under CR1+N1 is
+not explained.
 
 <a name="single"></a>
 ## 3. Single optimizations
 
-Change of speed in percent from adding one optimization. Rows down to MEMINTR: over [the paper's analyses](#paper)
-with every soundness fix. Rows below: on top of their app's configuration.
+Change of speed in percent from adding one optimization. Rows down to [MEMINTR](#memintr): over
+[the paper's analyses](#paper) with every soundness fix. Rows below: on top of their application's configuration.
 
 Marks S, R, G, A, `f`, bold and "—" are explained under [Notation](#notation).
 
@@ -108,7 +149,7 @@ Marks S, R, G, A, `f`, bold and "—" are explained under [Notation](#notation).
 |---|---|---|---|---|---|---|
 | [DynSTC-RT](#dynstc-rt) | [R](#kind-r) | +0.4 | −0.3 | [`f`](#host-f) −2.2 | +0.1 | [`f`](#host-f) **+12.0** |
 | [DynSTC](#dynstc) (the paper's guard) | [R](#kind-r) | — | −0.5 | −5.5 | −0.7 | [`f`](#host-f) **+10.1** |
-| [N1](#n1) | [S](#kind-s) | −0.8 | +0.3 | [`f`](#host-f) +2.5 | −1.7 | [`f`](#host-f) **+5.0** |
+| [N1](#n1) | [S](#kind-s) | −0.8 | +0.3 (−5 on memcached's adopted configuration) | [`f`](#host-f) +2.5 | −1.7 | [`f`](#host-f) **+5.0** |
 | [N1-ST](#n1-st) (over N1 + DynSTC-RT) | [R](#kind-r) | +0.2 | −0.2 | [`f`](#host-f) −1.4 | −1.8 | [`f`](#host-f) **+16.9** |
 | [N1-L](#n1-place) | [S](#kind-s) | +0.3 | −0.9 | [`f`](#host-f) −2.5 | −0.1 | [`f`](#host-f) **+3.0** |
 | [FE-INL](#fe-inl) | [S](#kind-s) | −0.7 | +0.8 | [`f`](#host-f) **+4.8** | **+3.6** | [`f`](#host-f) 0.0 |
@@ -123,63 +164,67 @@ Marks S, R, G, A, `f`, bold and "—" are explained under [Notation](#notation).
 | [EVCONF-INTERCEPT](#evconf) | [A](#kind-a)+[R](#kind-r) | — | **+7.5** | — | — | — |
 | [EVCONF-CHECKED](#evconf-checked) (over upstream stock) | [R](#kind-r) | — | **+80** | — | — | — |
 | [Quiet threads](#quiet) | [R](#kind-r) | — | — | **+31.9** | — | — |
-| [LO-OBJ-G](#lo-obj-g), generated spec (over stock) | [G](#kind-g)+[R](#kind-r) | **+15.7** | — | — | — | — |
+| [LO-OBJ-G](#lo-obj-g), generated spec, earlier generator (over stock) | [G](#kind-g)+[R](#kind-r) | **+15.7** | — | — | — | — |
 | [LO-OBJ-G](#lo-obj-g), hand-written spec (over stock) | [A](#kind-a)+[R](#kind-r) | **+25.0** | — | — | — | — |
 
-**Chromium**, step by step (each step over the configuration named in "over"; first sample unless noted; N=2-3):
+<a name="single-chromium"></a>
+**Chromium**, step by step: change in percent over the configuration named in "over", from the table of
+[section 2](#chromium), both arms taken in the same [legs](#leg). Steps under 1.5 % are inside the code-placement
+bound.
 
-| step | kind | over | Intel | AMD |
-|---|---|---|---|---|
-| [The four analyses](#paper) (Sound) | [S](#kind-s) | stock | +0.6 | −0.5 |
-| [DE](#de) | [S](#kind-s) | Sound | +0.6 | +0.4 |
-| [Peeling](#peel) | [S](#kind-s) | Sound + DE | −1.8 | +1.1 |
-| [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) (= [CR1](#cr1)) | [S](#kind-s) | Sound | **+9.5** | **+7.4** |
-| [library-facts table](#cr1) | [S](#kind-s) | CR1 without it | 0.0 | −0.2 |
-| [N1](#n1) at every check | [S](#kind-s) | CR1 | **+16.5**; hold-out **+13.4** | +1.2; hold-out −3.8 |
-| [N1 in small functions, S56](#n1-place) | [S](#kind-s) | CR1 | **+7.4**; hold-out **+5.1** | +1.7; hold-out −0.3 |
-| [N1 in small loops, K4](#n1-place) (N=1) | [S](#kind-s) | CR1 | +0.2 | −0.4 |
+| step | over | Intel, [first](#samples) | Intel, [hold-out](#samples) | AMD, first | AMD, hold-out |
+|---|---|---|---|---|---|
+| [The four analyses](#paper) ([Sound](#cr1)) | stock | +0.5 | — | −0.5 | — |
+| [DE](#de) | [Sound](#cr1) | +0.7 | — | +0.5 | — |
+| [Peeling](#peel) | Sound + [DE](#de) | −1.9 | — | +1.1 | — |
+| [FE-INL](#fe-inl) + [MEMINTR](#memintr) (= [CR1](#cr1); [SWMR-ROOTS](#swmr-roots) is on but inert here) | [Sound](#cr1) | **+9.8** | — | **+7.4** | — |
+| [library-facts table](#cr1) | [CR1](#cr1) without it | −0.1 | −0.3 | −0.2 | — |
+| [N1](#n1) at every check | [CR1](#cr1) | **+16.5** | **+13.4** | +1.2 | −3.8 |
+| [N1 in small functions, S56](#n1-place) | [CR1](#cr1) | **+7.4** | **+5.1** | +1.7 | −0.3 |
+| [N1 in small loops, K4](#n1-place) (indicative: one repetition, CR1 from other legs) | [CR1](#cr1) | +0.2 | — | −0.4 | — |
 
-<a name="nogain"></a>
+<a name="variants"></a>
 ## 4. Further variants
 
-The adopted analyses and their extensions (sections 1-3) already take most of what these workloads offer. The variants
-below were built and measured on top of them and add little here; they are recorded so that they are not tried again.
-One row per family; shares are of executed checks. Details: commit `9126669`, tables 3 and 6.
+The variants below were tried on top of the adopted forms, either built and timed or bounded by a count of executed
+checks, and add little on these workloads; they are recorded so that they are not tried again. One row per family;
+shares are of executed checks. Details: commit `9126669`, tables 3 and 6.
 
 | family | variants tried | added on top of the adopted form |
 |---|---|---|
-| [N1](#n1) variants | compact or batched tests; shared thread-state load; test for relaxed atomics; out-of-line entries saving fewer registers | ±1 %, or −2 to −4 %; the batched form loses races |
+| [N1](#n1) variants | compact or batched tests; shared thread-state load; test for relaxed atomics; out-of-line entries saving fewer registers | ±1 %, or −2 to −4 %; the batched form is not sound |
 | [N1](#n1) placement for speed | profile hot list; static frequency; loops only | none beats the full version in speed; they trade speed for compile time ([section 5](#compile)) |
 | [FE-INL](#fe-inl) variants | lazy entry; only hot functions; one exit; no entry/exit in functions without accesses | ±1 %, MySQL −5 % for one exit; the last changes report stacks and was not taken |
-| [N1](#n1), [FE-INL](#fe-inl), [MEMINTR](#memintr) on top of SQLite's [LO-OBJ-G](#lo-obj-g) | each added alone | FE-INL +4.5 %, MEMINTR +3.5 % inside a wide [A/A](#aa); N1 −18.5 % |
+| [N1](#n1), [FE-INL](#fe-inl), [MEMINTR](#memintr) on top of SQLite's [LO-OBJ-G](#lo-obj-g) | each added alone | [FE-INL](#fe-inl) +4.5 %, [MEMINTR](#memintr) +3.5 % inside a wide [A/A](#aa); [N1](#n1) −18.5 % |
 | More optimization before instrumentation | LTO; Attributor; extra passes | nothing; the Attributor miscompiles |
-| Loop guard (a relative of [peeling](#peel)) | a loop-invariant access checked once per sync-free stretch | Redis +2 to +3 %, others ≈ 0; rejected as imprecise |
-| [Dominance elimination](#de), further rules | covered checks deleted instead of [verified](#de); one range check per loop; adjacent fields merged; a cover on every path; covers across loop iterations; post-dominance with proven termination; stronger alias analysis | within ±1 % on top of the adopted DE (Redis −3.8 % for deletion); each rule reaches at most 2 % of checks beyond what DE already covers |
-| [Escape analysis](#ea), finer | whole-program summaries; per-call-site parameter facts; slots and field chains; fresh return values; thread-local roots | each reaches under 2-3 % of checks beyond the adopted EA and [EA-CONTENTS](#ea-contents); what remains is heap memory reachable from shared structures, which the [run-time ownership checks](#own) address |
-| [STC](#stc), [SWMR](#swmr), [LO](#lo), finer | closed-world facts; join-aware STC; thread roles; publish-once; written-before-publication; POSIX calls transparent to LO | each reaches under 3 % of checks beyond the adopted forms and [SWMR-ROOTS](#swmr-roots); two variants were not sound and were withdrawn |
+| Loop guard (a relative of [peeling](#peel)) | a loop-invariant access checked once per sync-free stretch | Redis +2 to +3 %, the others within ±1 % (MySQL down to −4 % in one form); not taken |
+| [Dominance elimination](#de), further rules | covered checks deleted instead of [verified](#de); one range check per loop; adjacent fields merged; a cover on every path; covers across loop iterations; post-dominance with proven termination; stronger alias analysis | within ±1 % on top of the adopted [DE](#de) (Redis −3.8 % for deletion); each rule reaches at most 2 % of checks beyond what [DE](#de) already covers. An earlier package of the merging and loop-range rules read memcached +3.6 %, MySQL +3 to +6 %, Redis −2.6 % and was superseded |
+| [Escape analysis](#ea), finer | whole-program summaries; per-call-site parameter facts; slots and field chains; fresh return values; thread-local roots | each reaches under 2-3 % of checks beyond the adopted [EA](#ea) and [EA-CONTENTS](#ea-contents); what remains on SQLite is mostly heap memory reachable from shared structures (34-42 % on memcached and Redis, 7.5 % on FFmpeg), part of which the [run-time ownership checks](#own) take |
+| [STC](#stc), [SWMR](#swmr), [LO](#lo), finer | closed-world facts; join-aware STC; thread roles; publish-once; written-before-publication; POSIX calls transparent to LO | each reaches under 3 % of checks beyond the adopted [STC](#stc), [SWMR](#swmr), [LO](#lo) and [SWMR-ROOTS](#swmr-roots); two variants were not sound and were withdrawn |
 
-Headroom left to the analyses (share of executed checks that a stronger proof could still remove; most of it is the
-target of the [run-time ownership checks](#own)):
+Headroom left to the static analyses (share of executed checks that a stronger proof could still remove). On SQLite,
+memcached and Redis part of it is taken at run time by the [ownership checks](#own):
 
 | not yet proven statically | SQLite | memcached | Redis | MySQL | FFmpeg |
 |---|---|---|---|---|---|
 | [DE](#de): same address twice, no acquire between, both kept | 3.4 % | 0.04 % | 3.4 % | 5.5 % | 5.9 % |
 | [DE](#de): neither check dominates the other | 4.4 % | 0.08 % | 5.8 % | 1.0 % | 8.6 % |
 | [EA](#ea): memory that is in fact one-thread or consistently ordered | 72 % | 55 % | 63 % | 49 % | 70 % |
-| of it: heap reachable from shared structures | 79 % | 34 % | 42 % | — | 7.5 % |
+| share of the row above that is heap reachable from shared structures | 79 % | 34 % | 42 % | — | 7.5 % |
 
 <a name="compile"></a>
 ## 5. Compile time
 
-Fresh trees, no ccache, 8 jobs (MySQL 6), stock and the line alternating, medians of 3, wall seconds. For Redis and
-memcached the line includes the whole-program summary step.
+Fresh trees, no ccache, 8 jobs (MySQL 6), stock and the optimized build alternating, medians of 3, wall seconds.
+For Redis and memcached the optimized build includes the summary step: a pass over the whole program that
+[quiet threads](#quiet) and the cross-unit analyses need before the units are compiled.
 
 | app | configuration | speedup | stock build | optimized build | compile-time overhead |
 |---|---|---|---|---|---|
 | memcached | no annotations (analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr)) | 1.02× | 7.25 s | 8.03 s | +11 % |
-| memcached | with [EVCONF](#evconf) | 1.81× | 6.47 s | 8.71 s | +35 % |
-| Redis | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | 1.49× (fresh build; the row of record 1.54×) | 5.37 s | 14.38 s | **+168 %** |
-| SQLite | [LO-OBJ-G](#lo-obj-g), generated spec | 1.19× | 33.23 s | 42.57 s | +28 % |
+| memcached | [EVCONF](#evconf), 7 annotated fields ([EVCONF-CHECKED](#evconf-checked), 1.80×, was not timed) | 1.81× | 6.47 s | 8.71 s | +35 % |
+| Redis | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | 1.49× | 5.37 s | 14.38 s | **+168 %** |
+| SQLite | [LO-OBJ-G](#lo-obj-g), generated spec | 1.19× | 33.27 s | 43.28 s | +30 % |
 | FFmpeg | [N1](#n1) at every check | 1.285× | 76.10 s | 149.88 s | +97 % |
 | FFmpeg | [N1 by static rule s1](#n1-place) | 1.241× | 76.10 s | 110.77 s | +46 % |
 | FFmpeg | [N1 by static rule s4](#n1-place) | 1.227× | 76.10 s | 103.53 s | +36 % |
@@ -187,32 +232,38 @@ memcached the line includes the whole-program summary step.
 | Chromium | [CR1](#cr1) (400 sampled units, CPU time) | 1.10× ([`f`](#host-f)) | — | — | +1.1 % (1.004-1.018) |
 | Chromium | [CR1+N1](#cr1) (same sample) | 1.25× ([`f`](#host-f)) | — | — | +10.4 % (1.076-1.142) |
 
-Redis's build time includes the summary generator with kept inputs and parallel analyses (adopted 12 Oct; the binary
-is the same as before, when the overhead was +230 %).
+- Redis's 1.49× is the build that was timed here; the leg behind section 1 read 1.54×.
+- SQLite: generating the spec takes 52.9 s more, once per program version. The earlier generator's spec (1.17× in the
+  same leg) builds at +28 %.
+- A rerun of 11 Oct on later compilers reproduced the rows within about ten points, except memcached's first row
+  (+24 % against +11 %; in a program this small the difference is 1.4 s) and FFmpeg's s4 (+28 %).
 
-- **The cost is the [inline hit test](#n1)**: about 25 machine instructions and 133-140 bytes per check. Redis by CPU
-  time over stock: analyses +1.6 %, + [elimination](#de) and [peeling](#peel) +17 %, + [inlined entry/exit](#fe-inl) +24 %,
-  + hit test +157 %.
-  The pass itself is 1 % of the added time; the rest is the back end working over the larger code.
+- **The cost is the [inline hit test](#n1)**: 133-140 bytes and two or three extra blocks per check. Redis by CPU
+  time over stock: analyses +1.6 %; with [elimination](#de) and [peeling](#peel) +17 %; with
+  [inlined entry/exit](#fe-inl) +24 %; with the hit test +157 %. The pass itself is 1 % of the added time; the rest
+  is the back end working over the larger code.
 - **No change of the pass lowers it**: prototypes of a smaller test gave at most 1-2 % (an assembly form −10 % with
   1.5-1.9 % more code). The one design that would is a back-end pseudo-instruction, recorded as an idea in
   [`runtime/ideas.md`](runtime/ideas.md) and not built.
-- **Fewer tests cost speed on Redis** (AMD, over stock): record 1.49×; [static rules](#n1-place) s1 1.34× (+73 % CPU
-  time), k2 1.32× (+46 %), s4 1.29× (+42 %); no hit test 1.28× (+26 %).
-- **FFmpeg**: no static rule separates the hot checks from the bulk (s1 keeps 48 % of the hot locations for 23 % of
+- **Fewer tests cost speed on Redis** (AMD, over stock; overhead as CPU time of the units alone, on which scale the
+  adopted build is +174 %): adopted 1.49×; [static rules](#n1-place) [s1](#n1-place) 1.34× (+73 %),
+  [k2](#n1-place) 1.32× (+46 %), [s4](#n1-place) 1.29× (+42 %); no [hit test](#n1) 1.28× (+26 %). By the table's
+  method (wall, summary step included) the points are 1.49× at +168 %, s4 at +121 % and no hit test at +113 %.
+- **FFmpeg**: no static rule separates the hot checks from the bulk ([s1](#n1-place) keeps 48 % of the hot locations for 23 % of
   the code growth; function-size caps keep 2-13 %). The whole speed difference is in the stream-copy transcode.
-- **SQLite** by CPU time: record +37 %; without [peeling](#peel) +27 %; without [elimination](#de) and peeling +20 %, at the same
-  speed. The owner checks and the analyses are those 20 points.
-- **Redis's summary step** (the whole-program pass that [quiet threads](#quiet) need) was 7.9 s of the 17.8 s (+230 %). Not rerunning `make -n` and the dependency build, and
-  running the whole-program analyses in parallel, brings it to 4.6 s. Summaries and server code are identical.
-- Being measured (12 Oct): where the hit-test hits concentrate on Redis and FFmpeg, to place the test by a profile
-  list or per unit.
+- **SQLite**, earlier generated spec, wall time by the table's method (12 Oct; stock 34.31 s): with all flags +25 %;
+  without [peeling](#peel) +16 %; without [elimination](#de) and peeling +13 %, at the same speed. By CPU time of the
+  units alone: +37 %, +27 %, +20 %; the owner checks of [LO-OBJ-G](#lo-obj-g) and the analyses are what remains.
+- **Redis's summary step** was 7.9 s of 17.8 s (+230 %). Not rerunning `make -n` and the dependency build, and
+  running the whole-program analyses in parallel, brings it to 4.6 s (adopted 12 Oct). Summaries and server code are
+  identical.
 
 <a name="explain"></a>
 ## 6. What each optimization does
 
 The examples are schematic C. `__tsan_read4(p)` / `__tsan_write4(p)` stand for TSan's check of a 4-byte access; real
-entry names and the inlined code differ in detail. Each entry: what it does, then the code before and after.
+entry names and the inlined code differ in detail. Each entry: what it does, then, where it helps, the code before
+and after.
 
 | group | entries |
 |---|---|
@@ -220,7 +271,7 @@ entry names and the inlined code differ in detail. Each entry: what it does, the
 | [The form of the instrumentation](#form) | [FE-INL](#fe-inl) · [FE-SINK](#fe-sink) · [N1](#n1) · [N1 placement: N1-L, K4, s1, s4, k2, S56](#n1-place) · [DynSTC-RT](#dynstc-rt) · [N1-ST](#n1-st) · [VWIDE-loops](#vwide) · [MEMINTR](#memintr) |
 | [Refinements of the analyses](#refine) | [EA-CONTENTS](#ea-contents) · [SWMR-ROOTS](#swmr-roots) |
 | [Ownership checked at run time](#own) | [EVCONF](#evconf) · [EVCONF-CHECKED](#evconf-checked) · [Quiet threads](#quiet) · [LO-OBJ-G](#lo-obj-g) · [LO-MARK](#lo-mark) |
-| [Chromium configurations](#cr1) | Sound · AllOpt · CR1 · CR1+N1 · S56 · library-facts table |
+| [Chromium configurations](#cr1) | [Sound · AllOpt · CR1 · CR1+N1 · S56 · library-facts table](#cr1) |
 
 <a name="paper"></a>
 ### The paper's analyses
@@ -287,12 +338,13 @@ void handle(void) {
 #### DE, dominance elimination
 
 A second access to the same address needs no new check if a checked access dominates
-it and nothing between them can synchronize. In the builds of record the covered check is not deleted but *verified*:
+it and nothing between them can synchronize. In the adopted builds the covered check is not deleted but *verified*:
 it becomes a short inline test that the earlier record is still in the shadow cell, and calls the runtime only if not.
 
 ```c
 x = p->len;                         // __tsan_read4(&p->len)
-y = p->len + 1;                     // before: __tsan_read4(&p->len);  after: covered by the check above
+y = p->len + 1;                     // before: __tsan_read4(&p->len)
+                                    // after:  if (record_of_the_check_above_is_gone(&p->len)) __tsan_read4(&p->len);
 ```
 
 ---
@@ -307,7 +359,7 @@ the remaining iterations.
 for (i = 0; i < n; i++) s += *p;    // before: __tsan_read4(p) in every iteration
 // after:
 if (n > 0) { __tsan_read4(p); s += *p; }
-for (i = 1; i < n; i++) s += *p;    // covered
+for (i = 1; i < n; i++) s += *p;    // verified against the peeled check, as in DE
 ```
 
 ---
@@ -361,13 +413,13 @@ int get(obj *o) {
 #### N1, inline hit test
 
 Most checks find that the same thread already recorded the same access in the shadow cell
-and return. N1 does that comparison in place and calls the runtime only on a miss. It costs code: about 25 machine
-instructions per check.
+and return. N1 does that comparison in place and calls the runtime only on a miss. It costs code: 133-140 bytes per
+check.
 
 ```c
 x = p->field;
 // before:  __tsan_read4(&p->field);
-// after:   if (*shadow(&p->field) != expected_record_of_this_thread)
+// after:   if (none of the cell's four records == this access by this thread)
 //              __tsan_read4_miss(&p->field);
 ```
 
@@ -391,7 +443,7 @@ time; everywhere else the plain runtime call stays.
 <a name="dynstc-rt"></a>
 #### DynSTC-RT
 
-DynSTC's idea inside the runtime instead of the compiled code: while one thread is alive the runtime
+[DynSTC](#dynstc)'s idea inside the runtime instead of the compiled code: while one thread is alive the runtime
 records nothing. It is a runtime option; the binary is unchanged.
 
 ---
@@ -399,11 +451,11 @@ records nothing. It is a runtime option; the binary is unchanged.
 <a name="n1-st"></a>
 #### N1-ST
 
-With DynSTC-RT on, the inline test itself is skipped while the program has one thread.
+With [DynSTC-RT](#dynstc-rt) on, the inline test of [N1](#n1) itself is skipped while the program has one thread.
 
 ```c
-// N1:     if (*shadow(p) != expected) __tsan_read4_miss(p);
-// N1-ST:  if (multithreaded && *shadow(p) != expected) __tsan_read4_miss(p);
+// N1:     if (no_matching_record(p)) __tsan_read4_miss(p);
+// N1-ST:  if (multithreaded && no_matching_record(p)) __tsan_read4_miss(p);
 ```
 
 ---
@@ -413,8 +465,10 @@ With DynSTC-RT on, the inline test itself is skipped while the program has one t
 
 [DE](#de)'s verified form extended to checks inside loops that no earlier check dominates: the check
 becomes the inline hit test of [N1](#n1) where an earlier check of the same address in the same epoch is likely (a
-static estimate), and only in loop blocks. An unconditional access in a loop needs none of this: peeling and DE cover
-it.
+static estimate), and only in loop blocks. An unconditional access in a loop needs none of this:
+[peeling](#peel) and DE cover it. It differs from [N1-L](#n1-place), which inlines the test at every check of a small
+loop: here the test goes only where an earlier check of the same address is likely. It is marked R because it comes
+with the verified mode of DE; the test itself is N1's.
 
 ```c
 for (i = 0; i < n; i++)
@@ -538,12 +592,13 @@ sqlite3_mutex_leave(pBt->mutex);
 <a name="lo-mark"></a>
 #### LO-MARK
 
-LO-OBJ-G without assertions or hand annotations; the object's lock is still known per type (where the
+[LO-OBJ-G](#lo-obj-g) without assertions or hand annotations; the object's lock is still known per type (where the
 object's owner pointer is and which field of the owner is the lock). A guard before the object's accesses tests
 whether the object's first shadow cell holds the marker of the lock this thread holds now; if not, the runtime checks
 that the thread holds the owner's lock and marks the object, else the accesses stay checked. The marker stays after
 unlock. A checked access by a thread that does not hold the lock and meets a marker voids the run, so an unprotected
-access is never lost silently. Measured once (1.26× on SQLite); not adopted.
+access is never lost silently. Measured in three legs (1.06× on Intel, 1.14× and 1.26× on AMD); not separated from
+[LO-OBJ-G](#lo-obj-g)'s generated spec; its premises are not decided; not adopted.
 
 ```c
 sqlite3_mutex_enter(pBt->mutex);
@@ -561,7 +616,7 @@ pBt->nPage++;                       // before: __tsan_write4(&pBt->nPage)
 |---|---|
 | Sound | [STC](#stc), [SWMR](#swmr), [LO](#lo), [EA](#ea) |
 | AllOpt | Sound + [DE](#de) + [peeling](#peel) |
-| CR1 | Sound + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) |
+| CR1 | Sound + [SWMR-ROOTS](#swmr-roots) (inert in Chromium's unit-by-unit build) + [FE-INL](#fe-inl) + [MEMINTR](#memintr) |
 | CR1+N1 | CR1 + [N1](#n1) at every check |
 | S56 | CR1 + [N1](#n1-place) only in functions of at most 56 IR instructions |
 | library-facts table | a list of facts about library functions for the analyses; CR1 reads the same without it |
@@ -576,5 +631,7 @@ pBt->nPage++;                       // before: __tsan_write4(&pBt->nPage)
 - Race preservation: 10 stock against 10 optimized runs per app, no race-report site lost (memcached 4 sites kept,
   SQLite 3, MySQL 232-236, Redis and FFmpeg seeded races, since their stock runs report none).
 - Compilers: `tsan-cr-8345a0396fa5` (camera-ready root), `tsan-cr2-429bd8cf76b9` (the same plus the static placement
-  rules), `tsan-n1s-e52d8787b59e` (the same line with Redis's phase derivation).
-- Premises used by results of record: `soundness-fixes.md` §6.
+  rules), `tsan-n1s-e52d8787b59e` (the same line with Redis's phase derivation). Three figures of section 1 come
+  from other roots: memcached's 1.80× (`tsan-ecc-b54ce0196884`), SQLite's 1.24× (`tsan-carve-da51c2dd8b3c`) and
+  LO-MARK (`tsan-lomark-718c7520052c`).
+- Premises used by the adopted figures: `soundness-fixes.md` §6.
