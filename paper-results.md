@@ -29,7 +29,7 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 |---|---|---|---|---|---|---|---|---|---|---|
 | SQLite | | | | | | | | | 1.23× [1.20, 1.27] | final (record leg 12-13 Oct, stress2, AMD, 4 offsets × N = 4, 64 of 64 runs valid, A/A 1.000 [0.974, 1.021]; other half of the host busy in 47 of 65 cells. With the other half idle, same trees, three hours earlier: 1.28× [1.23, 1.32]. LO-MARK v1; the assertion-derived spec reads the same; Intel 1.11×) |
 | FFmpeg | | | | | | | | | 1.29× | current |
-| Redis | | | | | | | | | 1.54× | current |
+| Redis | | | | | | | | | 1.52× [1.49, 1.53] | final (record leg 13 Oct, composite of seven commands, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; other half of the host busy in every cell. Per command: LRANGE 1.41-1.61, MSET 1.87, ZADD 1.28, ZPOPMIN 1.43) |
 | MySQL | | | | | | | | | 1.13× | current |
 | memcached | | | | | | | | | 1.80× | current |
 
@@ -74,6 +74,7 @@ Chromium needs a native build).
 | app | stock / native | AllOpt / native | peak RSS native / stock / AllOpt | memory overhead reduction | status |
 |---|---|---|---|---|---|
 | SQLite | 5.43× [5.12, 5.68] | 4.40× | 8.6 / 60.8 / 61.7 MiB | −1.7 % (an increase) | final |
+| Redis (server process) | 6.17× | 4.07× | 46 / 964 / 969 MiB | −0.5 % (an increase) | final; server CPU per run 6.8 / 177.7 / 108.9 s |
 
 Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.06×, AllOpt 1.54× on Intel
 (Speedometer); 1.09× and 1.77× on AMD (mapped code; allocated memory unchanged). current.
