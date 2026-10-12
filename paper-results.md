@@ -44,7 +44,16 @@ Chromium, Intel, N = 3 repetitions, speedup over stock:
 | AllOpt (+ N1) | 1.286 | 1.248 | final |
 
 Noise floor: a layout twin of the FE-INL configuration reads 1.013 over it. AllOpt on the AMD host: 1.081 and 1.017.
-Speedometer 3 on Intel: pending (AMD, Score over stock, N = 3: FE-INL configuration 1.082, AllOpt 1.006, A/A 1.009).
+
+Speedometer 3, Score over stock, N = 3 repetitions (range):
+
+| configuration | Intel | AMD | status |
+|---|---|---|---|
+| the four analyses + FE-INL + MEMINTR | 1.112 (1.082–1.158) | 1.082 (1.049–1.147) | final |
+| AllOpt (+ N1) | 1.225 (1.201, 1.250; N = 2, one run failed) | 1.006 (0.983–1.048) | final |
+| A/A | 1.012 (0.994–1.044) | 1.009 (0.972–1.042) | final |
+
+On Intel one repetition of the FE-INL configuration ran on a disturbed host; without it the figure is 1.090 (N = 2).
 Two of about 26 Speedometer runs of AllOpt died on a debug check of V8's garbage collector; no other build did; the
 compiled code points to a timing-dependent condition in V8, confirmation on stock pending.
 
@@ -56,8 +65,8 @@ Pending: no native arm has been measured yet (final record legs; Chromium needs 
 |---|---|---|---|---|
 | | | | | pending |
 
-Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.09×, AllOpt 1.77× (mapped
-code; allocated memory unchanged). current.
+Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.06×, AllOpt 1.54× on Intel
+(Speedometer); 1.09× and 1.77× on AMD (mapped code; allocated memory unchanged). current.
 
 ## 4. Instrumentation reduction and code size
 
