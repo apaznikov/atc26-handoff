@@ -1,7 +1,7 @@
 # ALS: skipping the no-op join of an acquire-order atomic load
 
-10 Oct 2026. Status: parked by the user's ruling of 10 Oct (the runtime is not to be touched). The code below was
-built, audited and timed on 10 Oct before that ruling, against the rule of 25/28 Sep; it is kept as an idea with
+10 Oct 2026. Status: parked (decided 10 Oct: the runtime is not to be touched). The code below was
+built, audited and timed on 10 Oct before that decision, against the rule of 25/28 Sep; it is kept as an idea with
 its evidence. Nothing from it is in the paper's tables.
 
 ## 1. The cost
@@ -33,7 +33,7 @@ does not join the previous user's clock, so the stamp does not imply dominance.
 
 ## 3. Audit
 
-`../audit-a84-atomic-load-skip.md`: SOUND WITH CONDITIONS at first (a hit skipped the slot lock, where a thread
+Audit A84 (its report is not in this repository): SOUND WITH CONDITIONS at first (a hit skipped the slot lock, where a thread
 notices a stolen slot; a race could be lost), SOUND after the slot-ownership check and through three deltas (empty
 clock version, read order, cache size flag). Not covered by tests: the window inside a compare-exchange, a reset
 racing another thread's load, fibers, fork. A blind spot of the base runtime was noted on the way: a report after a
@@ -54,17 +54,15 @@ runtime. The only figures taken on an unmodified runtime are the profiles of sec
 
 ## 5. Where it lives
 
-Branch `experiment/als` c911b1f1ff67 (on 8345a0396fa5, runtime only); frozen root
-`/extra/$USER/builds/tsan-als-c911b1f1ff67` (not for the paper); census and legs under
-`/extra/$USER/chromium/als1`, `als2`, `als2nf`, `als3`.
+Branch `experiment/als` c911b1f1ff67 (on 8345a0396fa5, runtime only); frozen root `tsan-als-c911b1f1ff67` (not for
+the paper). The census and timing data are kept on the Intel host, not in this repository.
 
-The relinked browsers were removed from the focs SSD scratch on 10 Oct 2026 (the line is parked and the room was
-needed for builds): `chrome-cr1n1-als` (chrome sha256 712a33bd626e1830), `chrome-cr1n1-als2` (5e5e6463cbf65941),
-`chrome-cr1n1-als-c911b1f1ff67` (121ddcc66e10dede). One relinked pair remains under
-`/extra/$USER/chromium/scratch/cr8345`: `chrome-cr1r` (CR1 rebuilt, with `obj/`) and
-`chrome-cr1r-als-c911b1f1ff67` (605e9d99b0ccbc5c). To make one again: an out dir of the configuration with its
-`obj/` tree (about an hour's build on focs), then `/extra/$USER/chromium/cr8345/relink.sh <tag> <archives dir>
-<out dir> <sibling dir>`, a 15-second link that replaces only `chrome`; only the executables embed the runtime. After the removal
-the frozen CR1+N1 browser (121ddcc66e10dede) exists only as the timing lane's copy on apollo
-(`~/p5-apollo/chromium/nvme/out/chrome-cr1n1alsf`), and the provisional one of commit 9dbd02c7cfac
-(5e5e6463cbf65941) exists nowhere; its archives are in `/extra/$USER/wt-dev2-r/als/rt-9dbd02c7cfac`.
+The relinked browsers were removed from the Intel host's scratch disk on 10 Oct 2026 (the line is parked and the
+room was needed for builds): `chrome-cr1n1-als` (chrome sha256 712a33bd626e1830), `chrome-cr1n1-als2`
+(5e5e6463cbf65941), `chrome-cr1n1-als-c911b1f1ff67` (121ddcc66e10dede). One relinked pair remains there:
+`chrome-cr1r` (CR1 rebuilt, with `obj/`) and `chrome-cr1r-als-c911b1f1ff67` (605e9d99b0ccbc5c). To make one again:
+an out dir of the configuration with its `obj/` tree (about an hour's build on the Intel host), then a relink script
+taking a tag, the directory of runtime archives, the out dir and a sibling dir: a 15-second link that replaces only
+`chrome`; only the executables embed the runtime. After the removal the frozen CR1+N1 browser (121ddcc66e10dede)
+exists only as a copy on the second host (`chrome-cr1n1alsf`), and the provisional one of commit 9dbd02c7cfac
+(5e5e6463cbf65941) exists nowhere; its runtime archives are kept on the Intel host.
