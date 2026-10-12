@@ -27,7 +27,7 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 
 | app | STC | SWMR | LO | EA | DE | DE+Peeling | DynSTC | FE-INL | AllOpt | status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| SQLite | | | | | | | | | 1.19× | current |
+| SQLite | | | | | | | | | 1.28× [1.23, 1.32] | current (quiet leg 12 Oct, 4 offsets × N = 4, A/A 1.013; LO-MARK v1, audit of the guarantee pending) |
 | FFmpeg | | | | | | | | | 1.29× | current |
 | Redis | | | | | | | | | 1.54× | current |
 | MySQL | | | | | | | | | 1.13× | current |
