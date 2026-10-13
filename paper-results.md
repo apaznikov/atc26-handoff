@@ -31,7 +31,15 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 | FFmpeg | 1.00 | 1.00 | 1.00 | 1.00 | 1.02 [1.02, 1.03] | 1.03 [1.03, 1.03] | 1.14 [1.13, 1.15] | 1.00 | 1.29× [1.28, 1.29] with N1 at every check; 1.24× [1.23, 1.25] with N1 placed statically | final (record leg 13 Oct, four transcodes, AMD, 4 offsets × N = 4, 80 of 80 valid, A/A 1.001 [0.994, 1.008]; other half of the host busy in 65 of 81 cells; which line is AllOpt: to be decided) |
 | Redis | 1.00 [0.99, 1.01] | 0.99 [0.99, 1.00] | = stock | 1.01 [1.00, 1.02] | 1.06 [1.05, 1.07] | 1.07 [1.05, 1.08] | 1.00 [1.00, 1.01] | 1.07 [1.06, 1.07] | 1.52× [1.49, 1.53] | final (record leg 13 Oct, composite of seven commands, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; other half of the host busy in every cell. Per command: LRANGE 1.41-1.61, MSET 1.87, ZADD 1.28, ZPOPMIN 1.43) |
 | MySQL | | | | | | | | | 1.13× | current |
-| memcached | 1.00 | 1.01 [1.01, 1.02] | 1.00 | 1.00 | 0.98 [0.96, 1.00] | 1.00 | 1.00 | 1.00 | 1.89× [1.89, 1.90] | final (record leg 13 Oct, AMD, 4 offsets × N = 4, 64 of 64 valid, 0 void, A/A 1.001 [0.997, 1.004]; other half of the host busy in 61 of 65 cells. Base: the stock program built by this root's compiler; the earlier 1.80× was over upstream's compiler, a check of the two bases is queued) |
+| memcached | 1.00 | 1.01 [1.01, 1.02] | 1.00 | 1.00 | 0.98 [0.96, 1.00] | 1.00 | 1.00 | 1.00 | 1.89× [1.89, 1.90] | final (record leg 13 Oct, AMD, 4 offsets × N = 4, 64 of 64 valid, 0 void, A/A 1.001 [0.997, 1.004]; other half of the host busy in 61 of 65 cells. Over UPSTREAM stock TSan: 1.81× [1.80, 1.81], see the note on the base below) |
+
+**The base.** "Stock" in this table is the stock program built by the same compiler root with every optimization
+off and run on that root's runtime. For memcached that base is 4.7 % slower than upstream LLVM's TSan (leg of
+13 Oct: upstream stock over the root's stock 1.049 [1.046, 1.051], A/A 1.001), so AllOpt is 1.89× over the root's
+stock and 1.81× [1.80, 1.81] over upstream stock, and upstream stock is about 8.05× slower than native. Whether the
+4.7 % is the compiler or the runtime is not separated. The same check: MySQL and FFmpeg queued; SQLite and Redis
+need an upstream-stock build first (ordered). Which base the paper states: to be decided; until then every figure
+above is over the root's own stock.
 
 Single configurations: 2 offsets × N = 2 (core arms 4 × 4), so their intervals are wide; the A/A of SQLite's
 singles leg reads 1.014 [0.938, 1.073], and every SQLite column but LO is inside it. Redis's singles leg: A/A 1.005
