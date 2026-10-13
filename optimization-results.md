@@ -49,7 +49,7 @@ lost except through [eviction](#evict).
 | FFmpeg | four transcodes of one film | 1.57× | **1.24×** (1.29× with N1 at every check, at +86 % compile time) | [DynSTC-RT](#dynstc-rt) + [N1 placed statically](#n1-place) + [N1-ST](#n1-st); decided 13 Oct | (2) no annotations, run-time checked | +18 % | +2.5 % |
 | Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.52×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % | +5.4 % |
 | MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.10×** | [FE-INL](#fe-inl) | (1) no annotations, static | +16 % | +18.0 % |
-| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | (2) no annotations, run-time checked | not measured | +8.6 % |
+| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | (2) no annotations, run-time checked | +75 % (+5 % without the whole-program step) | +8.6 % |
 | Chromium | blink_perf, [hold-out](#samples) sample, Intel host | 1.39× | **1.25×** | [CR1+N1](#cr1) | (1) no annotations, static | +10 % | +1.0 % |
 
 Claim classes, strongest first: (1) no annotations, decided at compile time; (2) no annotations, a condition
@@ -278,6 +278,7 @@ For Redis and memcached the optimized build includes the summary step: a pass ov
 |---|---|---|---|---|---|---|
 | memcached | no annotations (analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr)) | 1.02× | 7.25 s | 8.03 s | +11 % | +8.6 % |
 | memcached | [EVCONF](#evconf), 7 annotated fields ([EVCONF-CHECKED](#evconf-checked), 1.80×, was not timed) | 1.81× | 6.47 s | 8.71 s | +35 % |  |
+| memcached | [EVCONF-CHECKED](#evconf-checked) (13 Oct; native 6.85 s: stock +36 %, adopted +138 % over native; whole-program step 6.53 s) | 1.80× | 9.32 s | 16.32 s | **+75 %** | +8.6 % |
 | Redis | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | 1.49× | 5.37 s | 14.38 s | **+168 %** | +5.4 % |
 | SQLite | [LO-OBJ-G](#lo-obj-g), generated spec | 1.19× | 33.27 s | 43.28 s | +30 % | +11.6 % |
 | SQLite | [LO-MARK](#lo-mark) v1 (adopted), 13 Oct | 1.23× | 24.86 s | 37.53 s | +51 %; spec generation 98.7 s on one CPU, once per source version (5.5× stock if counted into one build) |  |
