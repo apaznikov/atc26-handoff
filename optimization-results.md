@@ -73,6 +73,7 @@ Other measured configurations of the same applications:
 | Redis | DynSTC column with [quiet threads](#quiet) (phase guard, no [N1](#n1), no [FE-INL](#fe-inl)), 13 Oct | 1.139× [1.104, 1.189] | | 2 offsets × N=2, 16 of 16 valid, A/A 0.985 [0.962, 1.007] (a noisy leg: the arm's offsets read 1.109 and 1.171); the adopted line 1.488 in the same leg; MSET 1.384, ZPOPMIN 1.168, ZADD 1.160, LRANGE 1.04-1.10; server CPU 153 s against stock's 174-180 s; guard active and 0 violations in every run; seeded preservation: no seed lost |
 | Redis | base check 13 Oct: this root's stock against upstream stock | root's stock over upstream 0.979 [0.969, 0.993]; adopted line over upstream stock 1.466× [1.423, 1.493] | | 2 offsets × N=2, 16 of 16 valid; a second copy of the root's stock 0.982 [0.968, 0.993]; two cells ran during bursts on the host's housekeeping CPUs, the offset without them reads 0.975; per command 0.958-0.997 |
 | SQLite | base check 13 Oct: this root's stock against upstream stock | not resolved: 0.974 [0.940, 1.009], a second copy 0.954; AllOpt over upstream stock 1.245× [1.221, 1.286] | | 2 offsets × N=2, 16 of 16 valid, three cells disturbed; undisturbed pass alone: 0.983 and AllOpt 1.228× [1.220, 1.235] |
+| memcached | EA column with [EVCONF-CHECKED](#evconf-checked) and nothing else of the adopted line, 13 Oct | 1.855× [1.842, 1.866] | | 2 offsets × N=2, 20 of 20 valid, 0 void, A/A 1.004 [0.999, 1.007]; the adopted line 1.897 in the same leg, the arm over it 0.978 [0.971, 0.984]; EA without the owner check 1.001; preservation run pending |
 | memcached | thread-count sweep 13 Oct ([EVCONF-CHECKED](#evconf-checked) over the root's stock, by server threads) | 8: 1.897× [1.889, 1.904]; 6: 1.968× [1.951, 1.983]; 4: 2.105× [2.086, 2.124]; 2: 2.230× [2.194, 2.266] | | 2 offsets × N=2 (N=1 at 2 threads), 36 of 36 valid; at 4 threads one pass retired as disturbed; at 2 threads every cell ran with the housekeeping CPUs busy; throughput stock 85k/161k/195k/216k, adopted 190k/340k/383k/410k ops/s at 2/4/6/8 threads |
 | FFmpeg | corrected single arms and the split of the run-time options, 13 Oct | static line with `dynstc_rt=1` only 1.271× [1.255, 1.288] (with `phase_guard=1` too: 1.246); N1 at every check with `dynstc_rt=1` only 1.322× [1.301, 1.342]; DynSTC column (options + [N1-ST](#n1-st) + static [N1](#n1)) 1.280 [1.257, 1.299]; DE 1.016 [1.004, 1.032]; DE+Peeling 1.008 [0.997, 1.024] | | 2 offsets × N=2, 48 of 48 valid, A/A 1.002 [0.991, 1.016]; `phase_guard=1` costs h264 5-6 % (0.947-0.959 with it, 0.998-1.015 without) and nothing else beyond 1-2 %; over upstream stock in the same leg: static line 1.259 [1.242, 1.282] with `dynstc_rt=1` only, 1.234 with both; root's stock over upstream 0.990 [0.972, 1.009]; the 4 × 4 record cell with `dynstc_rt=1` only is queued |
 | FFmpeg | base check 13 Oct: this root's stock against upstream stock | root's stock over upstream 0.981 [0.973, 0.986]; N1 at every check over upstream stock 1.257× [1.241, 1.269] | | 2 offsets × N=2, 16 of 16 valid; a second copy of the root's stock reads 0.984 [0.974, 0.991]; per transcode: copy 0.978, mjpeg 0.981, h264 0.974, h265 0.989; the adopted static line was not an arm of this leg |
@@ -155,7 +156,7 @@ it).
 - **compiler-rt TSan tests with the flags** (391 tests run): [CR1](#cr1), [CR1+N1](#cr1) and [S56](#n1-place) pass
   all. The [hit-test](#n1) flag alone fails one test at -O0 (a link error from an unused declaration; fix decided
   12 Oct, not yet in a frozen compiler).
-- **Open**: three CR1+N1 Speedometer runs (of about 35) died on the same V8 debug check in the garbage collector
+- **Open**: three CR1+N1 Speedometer runs (of about 46) died on the same V8 debug check in the garbage collector
   (`cppheap-pointer-table.cc:167`, compaction of the pointer table), with no sanitizer output. No other build shows
   it in about 5,700 run and story logs on three hosts, and no CR1+N1 run of the Blink stories (about 250) does. The
   compiled code of the 29 functions involved has the same checks in CR1+N1 as in CR1, each as an inline test that
@@ -164,8 +165,8 @@ it).
   to the hit test. Confirmed on stock (12 Oct, Speedometer with V8's `--stress-compaction`, untimed host): stock dies
   on the same check, same file, line and condition, in 1 of 5 runs, and CR1 in 1 of 4. So
   the check fails without any of our changes. Still open: whether CR1+N1 hits it more often than stock without the
-  stress flag: 3 of about 35 Speedometer runs on three hosts (about 9 %, rough 95 % range 2-23 %), stock 0 of about
-  20 on the Intel host and none on the third host (upper bound about 14 %). The counting loop of 12-13 Oct on the
+  stress flag: 3 of about 46 Speedometer runs on three hosts (about 6.5 %, rough 95 % range 1.4-18 %), stock 0 of about
+  30 on the Intel host and none on the third host (upper bound about 14 %). The counting loop of 12-13 Oct on the
   Intel host, the two builds in turn: CR1+N1 1 of 10, stock 0 of 9. The difference is suggestive, not established.
 
 **Race preservation.** Runs that report the race, over all sessions (10 runs of the Blink stories and at least 2 of
