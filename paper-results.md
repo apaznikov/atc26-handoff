@@ -345,6 +345,12 @@ DE+Peeling, FE-INL): stock reports 4 sites, each in 10 of 10 runs; every arm rep
 site lost. The LO arm shows 12 further sites in one of its 10 runs that stock and the other arms never show (extra
 reports, not read further). The EA arm with EVCONF-CHECKED: 4 of 10 runs complete, each of stock's 4 sites in 4 of 4, no void. current.
 
+Redis with DE in removal form (13 Oct, 11 seeds × 10 runs per arm, seeded builds of the same lines): the adopted
+line with the guard reports ten seeds in 10 of 10 runs, as its verified twin; on the timing-dependent seed, runs
+with neither a race nor a violation 2 of 10 (verified twin 4 of 10); the DE and DE+Peeling arms report every seed
+in 10 of 10 except the one stock itself reports in 8 of 10 (9 and 8 of 10). No seed that the verified form reports
+is lost. current.
+
 FFmpeg with `dynstc_rt=1` only (the options of the candidate adopted line; 13 Oct): the static line, the line with
 N1 at every check and the DynSTC arm report each of the 9 seeds in 10 of 10 runs, as stock. That the option was
 active rests on the runner's option line (no statistics line is printed without the phase-guard option). current.
