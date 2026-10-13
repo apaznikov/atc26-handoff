@@ -327,6 +327,22 @@ adopted medians of Redis and SQLite are from earlier windows, so those two ratio
 | Redis | 4.96 s | 5.29 s | 14.31 s | +7 % | +189 % | current (across windows) |
 | SQLite | 22.20 s | 25.25 s | 37.53 s | +14 % | +69 % | current (across windows) |
 | MySQL | 863.4 s | 925.0 s | 1,075.9 s | +7 % | +25 % (+16 % over stock) | current (means of 2 builds per arm, 13 Oct; Release, the verified form of DE) |
+
+**With DE in removal form, one window** (14 Oct, the adopted removal lines; native, stock and adopted alternating,
+3 builds per arm, medians, 8 jobs; the host was not quiet, load 2.7 to 16, so the status is current):
+
+| app | native | stock TSan | adopted | stock over native | adopted over native | adopted over stock | status |
+|---|---|---|---|---|---|---|---|
+| memcached | 4.97 s | 6.85 s | 12.08 s | +38 % | +143 % | +76 % | current (whole-program step 4.86 s of the 12.08 s) |
+| Redis | 4.97 s | 5.35 s | 15.85 s | +8 % | +219 % | +196 % | current (whole-program step 4.77 s of the 15.85 s) |
+| SQLite | 22.88 s | 25.81 s | 39.74 s | +13 % | +74 % | +54 % | current |
+| FFmpeg (N1 placed statically) | 70.61 s | 82.81 s | 93.47 s | +17 % | +32 % | +13 % | current |
+
+memcached and Redis are from a second pass at the end of the window (builds agree within 2 % and 5 %); SQLite's and
+FFmpeg's spread is at most 8 %. Redis reads 15.85 s here against 14.31 s for the verified form on 12 Oct; the two
+were built on different nights, so this is not a measured difference between the forms. MySQL keeps the row above.
+Range over the five applications, adopted over native: +25 % (MySQL) to +219 % (Redis); over stock +13 % to
++196 %.
 | Chromium | | | | | | pending (native build) |
 
 
