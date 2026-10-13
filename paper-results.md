@@ -202,7 +202,11 @@ entries on stress2 does not by itself account for 1.23-1.28×. Checked 13 Oct: t
 the harness (same command, fresh directory, three alternating runs: 38.0k against 47.7k statements, 1.26×). A
 sampling profiler attached to the process removes the difference (1.03×: stock 9 % faster, the adopted line 11 %
 slower), so a sampled profile of this lock-heavy test is not a profile of the measured run and is not used; a
-counting run (CPU and cycles per statement) is being taken instead.
+counting run (CPU and cycles per statement) is being taken instead. From the final leg's own records (16 runs per
+arm, medians, whole 120 s run): CPU 145.0 s in stock and 147.7 s in AllOpt, statements 37,544 and 46,522, so CPU per
+statement falls by 17.7 % at the same total CPU. The test is almost serialized: about 1.2 of its 16 CPUs are busy
+on average, one thread working at a time under the database lock, so a shorter statement under the lock is the
+whole gain.
 
 MySQL, runtime entries per statement, stock → AllOpt (one window per workload): oltp_read_write 53,454 → 46,011
 (13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
