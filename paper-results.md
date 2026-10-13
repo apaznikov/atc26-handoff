@@ -198,8 +198,11 @@ instrumented code (three windows per transcode, one per SQLite test):
 | SQLite | the other twelve comparable tests of threadtest3 | −5.0 % to 38.8 %; within 8 % of stock in nine of them | current |
 
 FFmpeg agrees with its timing: the gain is in the stream copy. **SQLite does not:** a drop of 12 % in runtime
-entries on stress2 does not by itself account for 1.23-1.28×; where the time goes (by symbol, both arms, several
-windows of the record command) is being measured.
+entries on stress2 does not by itself account for 1.23-1.28×. Checked 13 Oct: the figure itself reproduces outside
+the harness (same command, fresh directory, three alternating runs: 38.0k against 47.7k statements, 1.26×). A
+sampling profiler attached to the process removes the difference (1.03×: stock 9 % faster, the adopted line 11 %
+slower), so a sampled profile of this lock-heavy test is not a profile of the measured run and is not used; a
+counting run (CPU and cycles per statement) is being taken instead.
 
 MySQL, runtime entries per statement, stock → AllOpt (one window per workload): oltp_read_write 53,454 → 46,011
 (13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
