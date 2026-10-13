@@ -206,6 +206,16 @@ every check in the seeded functions is an inline test, so all 11 seeds exercise 
 stack attribution; in STC, SWMR and EA the seeded functions are compiled as in stock, so no seed is aimed at those
 three (their code changes are not tested by the seeds). current.
 
+Redis, the DynSTC column with quiet threads (new arm of 13 Oct) and the adopted line, both built with the seeded
+base spec, 11 seeds × 10 runs each: ten seeds reported in 10 of 10 runs in both; no seed reported less often in the
+arm than in the adopted line. 21 of 22 seed functions carry phase entries, so the set is aimed at the guard. Open:
+on the timing-dependent seed, runs with neither a race report nor a guard violation: 2 of 10 in the arm, 4 of 10 in
+the adopted line (stock reports that seed in 1 of 10), not explained; one stray guard violation per arm in 110
+runs. On one seed the arm switches the guard off at a background job (it has no loop peeling, so the start-up
+latch sits in the only copy of the loop); the race is reported. current.
+
+FFmpeg, the four new arms of 13 Oct (DynSTC with N1-ST in both placements, DE and DE+Peeling with static placement): every seed in 10 of 10 runs, as stock; seed functions whose checks differ from stock's, of 6: 5 (N1 at every check), 3 (DE+Peeling), 2 (DE), 1 (DynSTC with static placement). current.
+
 FFmpeg, single configurations: stock reports no race, so 8 seeded races were run, 10 runs per arm (stock, STC,
 SWMR, LO, EA, DE, DE+Peeling, FE-INL): every seed reported in 10 of 10 runs in every arm. Aimed: DE and DE+Peeling
 (inline test on every check in the seeded functions), SWMR and EA (they remove checks inside seed-carrying
