@@ -217,8 +217,26 @@ Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries
 
 ## 7. Regression suite
 
-compiler-rt's TSan tests with the flags of the Chromium configurations (391 tests run): all pass. Per application
-configuration: pending.
+compiler-rt's TSan tests with the flags of the Chromium configurations (391 tests run): all pass. 
+Adopted lines (13 Oct; the tests of each root's own commit, flags and run-time options of the line; flags bound to
+one program — specs, candidate lists, summaries — left out; 90 tests unsupported on the host in every row):
+
+| app | line | run | passed | expected failures | failed | status |
+|---|---|---|---|---|---|---|
+| MySQL | FE-INL line | 392 | 391 | 1 | 0 | final |
+| FFmpeg | stock and the six analyses | 391 | 391 | 0 | 0 | final |
+| FFmpeg | AllOpt (N1 placed statically), with its options | 391 | 379 | 0 | 12 | current |
+| FFmpeg | N1 at every check, with its options | 391 | 382 | 0 | 9 | current |
+| SQLite | AllOpt without its spec flags | 445 | 424 | 1 | 20 | current |
+| memcached | AllOpt without spec and summaries | 422 | 402 | 1 | 19 | current |
+| Redis | AllOpt without the phase flags | 411 | 408 | 1 | 2 | current |
+
+No failure read is a missing race report. 19 of SQLite's, 19 of memcached's and 7 of FFmpeg's failures are one
+defect: a unit compiled without optimization under verified DE or the inline hit test does not link on these roots
+(a thread-local placeholder is referenced before its first use is set up). The fix exists (decided 12 Oct) but is
+in none of the measured roots; the applications are built at -O2 and are not affected. The remaining failures are
+tests that check the emitted form of stock instrumentation, control twins whose expected loss does not occur, one
+pinned frame, and one report added by the phase-guard option. Single configurations: pending.
 
 ## 8. Thread-count sweep
 
