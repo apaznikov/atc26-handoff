@@ -18,7 +18,7 @@ submission's (they were chosen for a larger share of TSan overhead); the text mu
 | Redis | 7 data-heavy commands, 8 I/O threads | AMD | `tsan-n1s-e52d8787b59e` | |
 | MySQL | sysbench insert/update/delete, 24 connections | AMD | `tsan-cr-8345a0396fa5` | `-O2 -g` |
 | memcached | pipelined 32-key gets, 190-byte keys | AMD | `tsan-ecc-b54ce0196884` | |
-| Chromium 127.0.6533.119 | blink_perf (two story samples), Speedometer 3 | Intel | `tsan-cr-8345a0396fa5` | component build, DCHECKs on |
+| Chromium 127.0.6533.119 | blink_perf (two story samples), Speedometer 3.0 (the tree's `speedometer3` benchmark; it has no 3.1) | Intel | `tsan-cr-8345a0396fa5` | component build, DCHECKs on |
 
 **Host condition of the AMD legs of 12-13 Oct (found 13 Oct).** Until 13:09 on 13 Oct, interactive sessions of
 the measuring account that are not part of the benchmark were allowed on the CPUs of the host's second measuring
