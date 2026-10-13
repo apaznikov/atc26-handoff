@@ -385,7 +385,22 @@ defect: a unit compiled without optimization under verified DE or the inline hit
 (a thread-local placeholder is referenced before its first use is set up). The fix exists (decided 12 Oct) but is
 in none of the measured roots; the applications are built at -O2 and are not affected. The remaining failures are
 tests that check the emitted form of stock instrumentation, control twins whose expected loss does not occur, one
-pinned frame, and one report added by the phase-guard option. Single configurations: pending.
+pinned frame, and one report added by the phase-guard option.
+
+Single configurations as built (13 Oct), failed tests per application (run: SQLite 445, memcached 422, Redis 411,
+FFmpeg and MySQL 392):
+
+| configuration | SQLite | memcached | Redis | FFmpeg | MySQL |
+|---|---|---|---|---|---|
+| STC, SWMR, LO, EA | 0 | 0 | 0 | 0 | 0 |
+| FE-INL | 1 (a form check) | 0 | 0 | 0 | 0 |
+| DE, DE+Peeling, verified form | 12 | 11 | 3 | 1 (static placement: 10) | 11 |
+| DE, DE+Peeling, removal form | 0 | 0 | 3 (with the inline test) | 1-11 (with the inline test) | 0 |
+| adopted line, removal form | 0 | 0 | 2 | 12 | 0 |
+
+No failure in any row is a missing race report. Every nonzero cell is the link defect of the inline test on
+unoptimized code (fix exists, in no measured root) plus checks of the emitted form written for other flags. In
+the removal form of DE the inline test is not emitted, so SQLite's, memcached's and MySQL's rows are clean. final.
 
 ## 8. Thread-count sweep
 
