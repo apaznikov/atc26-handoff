@@ -341,7 +341,7 @@ DE+Peeling, where both functions are instruction-for-instruction identical to st
 in the wait array in DE and in LO, the latter carrying exactly stock's checks; and one pair in DE that the arm
 reports with the read and write roles exchanged. No server death other than those caused by the full disk. So at
 7 runs the rule also fires on an arm with stock's instrumentation; a hit is settled by reading the binary. The
-same two start-up functions in the adopted line's binary: to be read. current.
+adopted line's binary keeps both checks of the start-up race as well. current.
 
 Other applications: 10 stock against 10 optimized runs each, no site lost (memcached 4 sites, MySQL 232-236;
 Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries).
