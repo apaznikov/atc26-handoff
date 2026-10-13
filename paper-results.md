@@ -281,7 +281,8 @@ instrumented code (three windows per transcode, one per SQLite test):
 
 | app | test | drop in runtime entries, AllOpt against stock | status |
 |---|---|---|---|
-| FFmpeg (static line, DE in removal form, `dynstc_rt=1` only) | stream copy / mjpeg / h264 / h265 | about 85 % (one adopted window) / 18.6 % / 5.0 % / 2.2 % | final (14 Oct; verified form with both options about 78 % / 23 % / 5 % / 3 %) |
+| FFmpeg (static line, DE in removal form, `dynstc_rt=1` only) | stream copy / mjpeg / h264 / h265 | 85.0 % / 18.0 % / 5.1 % / 1.5 % (pooled over each transcode's windows; means of windows 85 / 18.6 / 5.0 / 2.2 %) | final (14 Oct; verified form with both options about 78 % / 23 % / 5 % / 3 %) |
+| FFmpeg, composite over the four transcodes | weights: stock runtime entries over the whole run (shares: copy 1.1 %, mjpeg 50.7, h264 32.6, h265 15.5) | 12.0 % | current (recount of 14 Oct: a transcode's rate from windows at 1, 4 and 8 s is assumed to hold for its whole run; the encoder libraries are not instrumented) |
 | SQLite | stress2 (the record workload) | 9.9 % (15,486 → 13,952) | final (14 Oct, DE in removal form; verified form 11.8 %) |
 | SQLite | the other thirteen tests of threadtest3 | −5.6 % to 6.2 %; within 4 % of stock in ten of them | final (14 Oct, removal form) |
 
