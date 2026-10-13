@@ -225,6 +225,11 @@ handler check can miss an entry is covered by the suite's deterministic tests, n
 runs. On one seed the arm switches the guard off at a background job (it has no loop peeling, so the start-up
 latch sits in the only copy of the loop); the race is reported. current.
 
+memcached, single configurations (13 Oct, non-timed host, 10 runs of stock and of each of STC, SWMR, LO, EA, DE,
+DE+Peeling, FE-INL): stock reports 4 sites, each in 10 of 10 runs; every arm reports each of them in 10 of 10; no
+site lost. The LO arm shows 12 further sites in one of its 10 runs that stock and the other arms never show (extra
+reports, not read further). The EA arm with EVCONF-CHECKED: pending. current.
+
 FFmpeg, the four new arms of 13 Oct (DynSTC with N1-ST in both placements, DE and DE+Peeling with static placement): every seed in 10 of 10 runs, as stock; seed functions whose checks differ from stock's, of 6: 5 (N1 at every check), 3 (DE+Peeling), 2 (DE), 1 (DynSTC with static placement). current.
 
 FFmpeg, single configurations: stock reports no race, so 8 seeded races were run, 10 runs per arm (stock, STC,
