@@ -553,6 +553,11 @@ request count unchanged; 2 offsets × N = 2, 36 of 36 timed runs valid):
 The gain grows as the thread count falls, each step outside the previous interval. Base: the root's own stock;
 upstream stock over it at 8 threads 1.046 [1.040, 1.051]. Peak over all points: 2.23× (flagged) or 2.11× (clean).
 
+Second sweep with the adopted line in removal form (14 Oct; points at 8, 6 and 4 threads follow). 2 server threads,
+2 offsets × N = 2, 12 of 12 valid, 0 void: **2.27× [2.25, 2.29]** over stock (offsets 2.283 / 2.251); stock 85.7k
+ops/s, AllOpt 194.3k; server CPU per run 1166 s and 510 s. Read under a declared co-load on the housekeeping CPUs
+(0.07-0.26 per cell, 7 of 13 cells below 0.10, none above 0.40). Peak over all points: 2.27×. final.
+
 SQLite (13 Oct, on walthread1, the submitted paper's sweep workload, since stress2 has a fixed thread set; 20 s
 per run, 4 runs per arm, 32 of 32 valid): AllOpt over stock 1.00 [0.99, 1.00] at 16 threads, 1.01 [1.00, 1.03] at
 8, 1.00 [0.97, 1.03] at 4, 1.01 [0.98, 1.03] at 2. The run-time census reads 0 marks and 0 held hits in every run:
