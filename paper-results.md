@@ -355,4 +355,15 @@ per run, 4 runs per arm, 32 of 32 valid): AllOpt over stock 1.00 [0.99, 1.00] at
 walthread1 never reaches the objects LO-MARK covers (stress2: about 1 M mark calls and 10-14 M held hits per run).
 So this sweep shows only that the adopted line costs nothing where it does not apply; SQLite's gain has no
 thread-count series. final.
-FFmpeg (`-threads` 2, 4, 8, 16): pending.
+FFmpeg (13 Oct, AMD; `-threads` on the final leg's protocol, composite of four transcodes over stock; 2 offsets ×
+N = 2, 64 of 64 valid; intervals about ±0.015):
+
+| threads | static line, `dynstc_rt=1` only | static line, both options | N1 at every check, both options | h264 with `phase_guard=1` | h264 with `dynstc_rt=1` only | status |
+|---|---|---|---|---|---|---|
+| 16 | 1.25× | 1.18× | 1.22× | 0.80 | 1.00 | final |
+| 8 | 1.26× | 1.22× | 1.27× | 0.90 | 1.01 | final |
+| 4 | 1.28× | 1.25× | 1.30× | 0.95 | 1.00 | final |
+| 2 | 1.29× | 1.25× | 1.29× | 0.95 | 1.02 | final |
+
+The gain (the stream copy, 2.4-2.6×) does not depend on the thread count. What scales with threads is the cost of
+`phase_guard=1` on h264: 5 % at 2-4 threads, 10 % at 8, 21 % at 16; with `dynstc_rt=1` alone the line is flat.
