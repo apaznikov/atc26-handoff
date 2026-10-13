@@ -241,6 +241,14 @@ against 11.0. So the adopted line spends 21 % less CPU per attempt, attempts 28 
 total CPU, and completes 22 % more. Two perturbations remove the gain: a perf attachment, and fewer than about
 four CPUs. current.
 
+**In a timed leg, with DE in removal form beside the verified form** (13 Oct, 2 offsets × N = 2, 16 of 16 valid, 0
+void, A/A 1.006 [0.984, 1.038]): over stock, removal 1.27 [1.25, 1.29] and verified 1.27 [1.24, 1.29]; removal
+over verified 1.00 [0.99, 1.03]. Statements OK of attempted, mean per run: stock 37,592 of 137,831; verified 47,638
+of 186,701; removal 47,841 of 187,640. By thread class, stock → removal: the always-successful loop 12,362 →
+16,498; the three half-successful loops about 5.75k of 11.2k → 7.9k of 15.5k each; the seven contended loops
+438-628 of 11.4-14.6k → 350-530 of 15.8-19.7k. Every loop attempts about 35 % more; the loops that mostly succeed
+complete 20-40 % more; the contended loops complete 10-20 % fewer. current.
+
 MySQL, runtime entries per statement, stock → AllOpt (one window per workload): oltp_read_write 53,454 → 46,011
 (13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
 select_random_ranges 2.8 %; select_random_points 4.2 %. Calls at function entry and exit per statement fall from
