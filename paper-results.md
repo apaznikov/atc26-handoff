@@ -348,6 +348,10 @@ DE+Peeling, FE-INL): stock reports 4 sites, each in 10 of 10 runs; every arm rep
 site lost. The LO arm shows 12 further sites in one of its 10 runs that stock and the other arms never show (extra
 reports, not read further). The EA arm with EVCONF-CHECKED, 10 runs against 10: each of stock's 4 sites in 10 of 10, no void line, owner census 7.84 M marks in every run. final.
 
+MySQL with DE in removal form (13 Oct, 5 runs per arm on the non-timed host, 108 sites of stock): no site lost.
+Kept / undetermined, adopted line 92 / 3, DE 97 / 0, DE+Peeling 93 / 1; no server death, no disk error. At 5
+runs a site that stock shows in 1-2 runs and the arm in none is undetermined. current.
+
 FFmpeg with DE in removal form (13 Oct, 9 seeds × 10 runs per arm): the adopted line and the line with N1 at every
 check (both with `dynstc_rt=1`), DE and DE+Peeling in both placements report every seed in 10 of 10 runs, as stock.
 current.
