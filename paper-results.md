@@ -60,7 +60,7 @@ of 12-13 Oct were built from one template, not from each application's adopted l
 the optimization the mapping reports under them. Being replaced by new trees (built 13 Oct, preservation running,
 not timed yet): Redis DynSTC: REPLACED 13 Oct, quiet threads with the phase guard and without N1 reads 1.14 [1.10, 1.19] (separate leg, 2 offsets × N = 2, 16 of 16 valid, A/A 0.985 [0.962, 1.007], AllOpt 1.49 in that leg; MSET 1.38, the other commands 1.04-1.17; the run-time option `dynstc_rt` alone read 1.00); memcached EA: REPLACED 13 Oct, EA with EVCONF-CHECKED reads 1.86 [1.84, 1.87] (separate leg, 2 offsets × N = 2,
 20 of 20 valid, 0 void, A/A 1.004 [0.999, 1.007]; AllOpt 1.90 in that leg, the arm over AllOpt 0.978 [0.971, 0.984];
-EA without it 1.00; server CPU 963 s against stock's 1,888 s; preservation, first 4 of 10 runs per arm: stock's 4 sites in 4 of 4 runs in this arm, 0 void, owner census 7.8 M marks per run; the 10-run tally follows); FFmpeg DynSTC, DE and DE+Peeling: REPLACED 13 Oct (leg of 2 offsets × N = 2, 48 of 48 valid, A/A 1.002 [0.991,
+EA without it 1.00; server CPU 963 s against stock's 1,888 s; preservation 10 against 10: stock's 4 sites in 10 of 10 runs in this arm, 0 void); FFmpeg DynSTC, DE and DE+Peeling: REPLACED 13 Oct (leg of 2 offsets × N = 2, 48 of 48 valid, A/A 1.002 [0.991,
 1.016]): DynSTC = `dynstc_rt=1` with N1-ST and statically placed N1, 1.28 [1.26, 1.30] (the run-time option alone
 read 1.14); DE and DE+Peeling with statically placed N1, 1.02 and 1.01 (with N1 at every check 1.02 and 1.03).
 **FFmpeg's options, same leg:** `phase_guard=1`, which the adopted line carried although FFmpeg has no phase code,
@@ -343,7 +343,7 @@ latch sits in the only copy of the loop); the race is reported. current.
 memcached, single configurations (13 Oct, non-timed host, 10 runs of stock and of each of STC, SWMR, LO, EA, DE,
 DE+Peeling, FE-INL): stock reports 4 sites, each in 10 of 10 runs; every arm reports each of them in 10 of 10; no
 site lost. The LO arm shows 12 further sites in one of its 10 runs that stock and the other arms never show (extra
-reports, not read further). The EA arm with EVCONF-CHECKED: 4 of 10 runs complete, each of stock's 4 sites in 4 of 4, no void. current.
+reports, not read further). The EA arm with EVCONF-CHECKED, 10 runs against 10: each of stock's 4 sites in 10 of 10, no void line, owner census 7.84 M marks in every run. final.
 
 FFmpeg with DE in removal form (13 Oct, 9 seeds × 10 runs per arm): the adopted line and the line with N1 at every
 check (both with `dynstc_rt=1`), DE and DE+Peeling in both placements report every seed in 10 of 10 runs, as stock.
