@@ -199,7 +199,12 @@ instrumented code (three windows per transcode, one per SQLite test):
 
 FFmpeg agrees with its timing: the gain is in the stream copy. **SQLite does not:** a drop of 12 % in runtime
 entries on stress2 does not by itself account for 1.23-1.28×; where the time goes (by symbol, both arms, several
-windows of the record command) is being measured. MySQL: pending.
+windows of the record command) is being measured.
+
+MySQL, runtime entries per statement, stock → AllOpt (one window per workload): oltp_read_write 53,454 → 46,011
+(13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
+select_random_ranges 2.8 %; select_random_points 4.2 %. Calls at function entry and exit per statement fall from
+42-109 thousand to 91-228: they are inlined, which is where MySQL's gain comes from. current.
 Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0×. current.
 
 ## 5. Compile time
