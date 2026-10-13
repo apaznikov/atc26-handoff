@@ -208,9 +208,13 @@ three (their code changes are not tested by the seeds). current.
 
 Redis, the DynSTC column with quiet threads (new arm of 13 Oct) and the adopted line, both built with the seeded
 base spec, 11 seeds × 10 runs each: ten seeds reported in 10 of 10 runs in both; no seed reported less often in the
-arm than in the adopted line. 21 of 22 seed functions carry phase entries, so the set is aimed at the guard. Open:
-on the timing-dependent seed, runs with neither a race report nor a guard violation: 2 of 10 in the arm, 4 of 10 in
-the adopted line (stock reports that seed in 1 of 10), not explained; one stray guard violation per arm in 110
+arm than in the adopted line. 21 of 22 seed functions carry phase entries, so the set is aimed at the guard. On
+the timing-dependent seed, runs with neither a race report nor a guard violation: 2 of 10 in the arm, 4 of 10 in
+the adopted line (stock reports that seed in 1 of 10). Read in both binaries: the main thread's racing store is never skipped (a
+plain check in the arm, an inline test with no single-mode branch in the adopted line), so a skip interval cannot
+hide this race; a run without a report is the detector's own miss of the pair, as in stock. The violation is raised
+by a signal handler entering on a quiet thread while the main thread skips, not by the racing access; whether that
+handler check can miss an entry is covered by the suite's deterministic tests, not by this seed. One stray guard violation per arm in 110
 runs. On one seed the arm switches the guard off at a background job (it has no loop peeling, so the start-up
 latch sits in the only copy of the loop); the race is reported. current.
 
