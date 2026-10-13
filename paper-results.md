@@ -126,6 +126,20 @@ Status: final for the hold-out sample (N = 3) and for the FE-INL configuration o
 AllOpt on the first sample (N = 1). Story counts per suite are those of the hold-out sample; four suites have 2 to
 7 stories, so their medians are indicative only.
 
+The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
+
+| | first sample, FE-INL configuration | first sample, AllOpt | hold-out, FE-INL configuration | hold-out, AllOpt |
+|---|---|---|---|---|
+| geometric mean | 1.063 [1.053, 1.075] | 1.077 [1.036, 1.123] | 1.057 [1.045, 1.070] | 1.017 [0.992, 1.047] |
+| median | 1.058 [1.048, 1.070] | 1.027 [1.002, 1.053] | 1.054 | 0.988 [0.977, 1.011] |
+| range | 1.004-1.192 | 0.920-1.746 | 0.918-1.186 | |
+| stories below 1.00 | 0 of 49 | 17 of 49 | 3 of 48 | 27 of 48 |
+| per suite, median: dom / image_decoder / layout / paint / parser / svg | 1.055 / 1.023 / 1.069 / 1.067 / 1.027 / 1.041 | 0.985 / 1.056 / 1.027 / 1.655 / 1.006 / 1.019 | 1.062 / 1.026 / 1.066 / 1.053 / 1.014 / 1.046 | 1.017 / 1.023 / 0.987 / 1.047 / 1.004 / 0.972 |
+
+The FE-INL configuration is a narrow distribution on both hosts (about 1.10 on Intel, 1.06 on AMD). AllOpt depends
+on the host: on Intel the median story gains 1.26 and one story is below stock; on AMD the median story is at 1.03
+and 0.99, and a third to more than half of the stories are slower than stock. final (as a tabulation).
+
 Speedometer 3, Score over stock, N = 3 repetitions (range):
 
 | configuration | Intel | AMD | status |
