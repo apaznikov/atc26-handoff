@@ -151,6 +151,21 @@ without lowering Q; loop peeling and SQLite's function copies duplicate code tog
 adds 11-17 % to Q). The single analyses that remove checks are small here: EA 0.6-5.9 %, STC up to 3.2 %, SWMR up
 to 2.7 %. A reduction per source access (before duplication) needs the pass's own statistics for each arm's
 compile: pending.
+
+**Checks entering the runtime, per operation** (13 Oct; processor trace of all threads of the process for 0.25 s
+under the leg's load; calls from program code into the runtime's access entries per call of a once-per-operation
+function; a check that makes no call — an inline hit, a skipped check, an inline owner or lock test — is not
+counted, so this is the drop in runtime entries, not the paper's dynamic reduction; one window per test, counts,
+not times; method checked on 7 Oct against a run-time census to 0.1 %):
+
+| app | stock | AllOpt | drop | status |
+|---|---|---|---|---|
+| memcached, per request | 1,887.5 | 435.3 | 76.9 % | current |
+| Redis, weighted over the seven commands | | | 94.5 % | current |
+| Redis LRANGE_100 / _300 / _500 / _600, per command | 504 / 23,913 / 39,533 / 47,374 | 50 / 311 / 510 / 612 | 90.1 / 98.7 / 98.7 / 98.7 % | current |
+| Redis ZADD / ZPOPMIN / MSET, per command | 510 / 343 / 2,442 | 47 / 32 / 48 | 90.8 / 90.6 / 98.1 % | current |
+
+SQLite, FFmpeg: decoding. MySQL: pending.
 Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0×. current.
 
 ## 5. Compile time
