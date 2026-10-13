@@ -42,12 +42,24 @@ upstream before a fix, 0.959 after); a leg that separates compiler from runtime 
 need an upstream-stock build first (ordered). Which base the paper states: to be decided; until then every figure
 above is over the root's own stock.
 
+**Cells under correction (audit of 13 Oct, `audits/audit-a89-mapping-vs-arms.md`).** The single-configuration trees
+of 12-13 Oct were built from one template, not from each application's adopted line, so some columns do not contain
+the optimization the mapping reports under them. Being replaced by new trees (built 13 Oct, preservation running,
+not timed yet): Redis DynSTC (now the run-time option alone; becomes quiet threads with the phase guard); memcached
+EA (now without EVCONF-CHECKED; becomes EA with it); FFmpeg DynSTC (now the run-time options alone; becomes the
+options with N1-ST and the N1 it needs); FFmpeg DE and DE+Peeling (now with N1 at every check, the second line's
+placement; become the adopted line's static placement). Stated as they are, not replaced: the DynSTC column of
+SQLite, memcached and MySQL is the run-time form (`dynstc_rt=1`), which their adopted lines do not use; the EA and
+SWMR columns of SQLite, FFmpeg and MySQL carry MEMINTR and SWMR-ROOTS, which their adopted lines do not use; FE-INL
+is part of AllOpt only for Redis, MySQL and Chromium; SQLite's adopted line is built with DE and peeling. The
+MySQL figure of 1.13× quoted earlier was over upstream stock, the 1.10× here is over the root's own stock.
+
 Single configurations: 2 offsets × N = 2 (core arms 4 × 4), so their intervals are wide; the A/A of SQLite's
 singles leg reads 1.014 [0.938, 1.073], and every SQLite column but LO is inside it. Redis's singles leg: A/A 1.005
 [0.998, 1.012]; DE, DE+Peeling and FE-INL are above it, the rest within 1 %; its gain is in quiet threads, which
 only AllOpt contains (preservation of Redis's single configurations: pending). FFmpeg's singles leg: A/A 0.998 [0.991, 1.004]; STC, SWMR,
 LO, EA and FE-INL are inside 0.992-1.007; DynSTC is the run-time option on the stock binary (copy 1.79, h264 0.93);
-DE's gain is on mjpeg (1.10). AllOpt's compiled code adds 1.13 on top of the option, on the copy transcode. memcached's singles leg: A/A
+DE's gain is on mjpeg (1.10). The compiled code adds 1.09 on top of the option in the adopted line (1.238 / 1.138) and 1.13 with N1 at every check, on the copy transcode. memcached's singles leg: A/A
 1.002 [0.998, 1.005]; only SWMR is resolved above it (1.4 %); DE's 0.98 comes from one of the two offsets; the gain
 is EVCONF-CHECKED (the run-time form of EA), which only AllOpt contains. "= stock": the build is
 byte-identical to stock and was not timed.
@@ -115,9 +127,9 @@ Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead aga
 | app | configuration | speedup | stock build | optimized build | overhead | status |
 |---|---|---|---|---|---|---|
 | SQLite | AllOpt (LO-MARK v1) | 1.23× | 24.86 s | 37.53 s | +51 % | final. Generating the spec: 98.7 s on one CPU, once per source version (with it counted into one build: 136.2 s, 5.5× stock); the same analyses without the spec: 30.77 s, +24 % |
-| FFmpeg | AllOpt with N1 at every check | 1.29× | 73 s | 136 s | +86 % | final (3 builds per arm) |
+| FFmpeg | second line: N1 at every check, `fcn` | 1.29× | 73 s | 136 s | +86 % | final (3 builds per arm) |
 | Redis | adopted | 1.49× | 5.37 s | 14.38 s | +168 % | current (static placement under test) |
-| FFmpeg | alternative: N1 placed statically, `fk6` | 1.24× | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds) |
+| FFmpeg | AllOpt (N1 placed statically, `fk6`) | 1.24× | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds; 3 builds by the method: pending) |
 | FFmpeg | alternative: N1 placed statically, `fc4` | 1.24× | 72 s | 95.5 s | +33 % | current (2 builds per arm, whole seconds) |
 | Redis | alternative: N1 placed statically, `rk4` | 1.39× | 5.25 s | 11.99 s | +128 % | current; not adopted (adopted line 1.51× in the same leg, 14.31 s, +173 %) |
 | MySQL | FE-INL | 1.13× | 874.75 s | 1015.13 s | +16 % | current |
