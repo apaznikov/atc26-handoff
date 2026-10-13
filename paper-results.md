@@ -35,7 +35,7 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 | app | STC | SWMR | LO | EA | DE | DE+Peeling | DynSTC | FE-INL | AllOpt | status |
 |---|---|---|---|---|---|---|---|---|---|---|
 | SQLite | = stock | = stock | 1.26× [1.22, 1.31] | 0.97 [0.94, 1.00] | 1.01 [0.96, 1.06] | 1.00 [0.96, 1.04] | 1.00 [0.96, 1.03] | 1.02 [0.97, 1.05] | 1.23× [1.20, 1.27] | final (record leg 12-13 Oct, stress2, AMD, 4 offsets × N = 4, 64 of 64 runs valid, A/A 1.000 [0.974, 1.021]; other half of the host busy in 47 of 65 cells. With the other half idle, same trees, three hours earlier: 1.28× [1.23, 1.32]. LO-MARK v1; the assertion-derived spec reads the same; Intel 1.11×) |
-| FFmpeg | 1.00 | 1.00 | 1.00 | 1.00 | 1.02 [1.02, 1.03] | 1.03 [1.03, 1.03] | 1.14 [1.13, 1.15] | 1.00 | **1.24× [1.23, 1.25]** with N1 placed statically (AllOpt, decided 13 Oct); 1.29× [1.28, 1.29] with N1 at every check (kept beside it) | final (record leg 13 Oct, four transcodes, AMD, 4 offsets × N = 4, 80 of 80 valid, A/A 1.001 [0.994, 1.008]; other half of the host busy in 65 of 81 cells) |
+| FFmpeg | 1.00 | 1.00 | 1.00 | 1.00 | 1.02 [1.00, 1.03] | 1.01 [1.00, 1.02] | 1.28 [1.26, 1.30] | 1.00 | **1.24× [1.23, 1.25]** with N1 placed statically (AllOpt, decided 13 Oct); 1.29× [1.28, 1.29] with N1 at every check (kept beside it) | final (record leg 13 Oct, four transcodes, AMD, 4 offsets × N = 4, 80 of 80 valid, A/A 1.001 [0.994, 1.008]; other half of the host busy in 65 of 81 cells) |
 | Redis | 1.00 [0.99, 1.01] | 0.99 [0.99, 1.00] | = stock | 1.01 [1.00, 1.02] | 1.06 [1.05, 1.07] | 1.07 [1.05, 1.08] | 1.14 [1.10, 1.19] | 1.07 [1.06, 1.07] | 1.52× [1.49, 1.53] | final (record leg 13 Oct, composite of seven commands, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 0.998 [0.990, 1.004]; other half of the host busy in every cell. Per command: LRANGE 1.41-1.61, MSET 1.87, ZADD 1.28, ZPOPMIN 1.43) |
 | MySQL | 1.00 | 1.00 | 1.00 | 1.01 [1.00, 1.01] | 1.00 [0.99, 1.00] | 0.99 [0.99, 1.00] | 1.00 | 1.09 [1.08, 1.09] | 1.10× [1.09, 1.11] | final (singles leg 13 Oct: 2 offsets × N = 2, 40 of 40 valid, A/A 0.995 [0.992, 0.999]; FE-INL per script: delete 1.13, insert 1.08, update 1.06. Record leg 13 Oct, three write scripts, `-O2 -g`, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 1.001 [0.997, 1.004]; other half of the host busy in 97 of 101 cells. Per script: delete 1.14, insert 1.09, update 1.07) |
 | memcached | 1.00 | 1.01 [1.01, 1.02] | 1.00 | 1.00 | 0.98 [0.96, 1.00] | 1.00 | 1.00 | 1.00 | 1.89× [1.89, 1.90] | final (record leg 13 Oct, AMD, 4 offsets × N = 4, 64 of 64 valid, 0 void, A/A 1.001 [0.997, 1.004]; other half of the host busy in 61 of 65 cells. Over UPSTREAM stock TSan: 1.81× [1.80, 1.81], see the note on the base below) |
@@ -59,9 +59,15 @@ above is over the root's own stock.
 of 12-13 Oct were built from one template, not from each application's adopted line, so some columns do not contain
 the optimization the mapping reports under them. Being replaced by new trees (built 13 Oct, preservation running,
 not timed yet): Redis DynSTC: REPLACED 13 Oct, quiet threads with the phase guard and without N1 reads 1.14 [1.10, 1.19] (separate leg, 2 offsets × N = 2, 16 of 16 valid, A/A 0.985 [0.962, 1.007], AllOpt 1.49 in that leg; MSET 1.38, the other commands 1.04-1.17; the run-time option `dynstc_rt` alone read 1.00); memcached
-EA (now without EVCONF-CHECKED; becomes EA with it); FFmpeg DynSTC (now the run-time options alone; becomes the
-options with N1-ST and the N1 it needs); FFmpeg DE and DE+Peeling (now with N1 at every check, the second line's
-placement; become the adopted line's static placement). Stated as they are, not replaced: the DynSTC column of
+EA (now without EVCONF-CHECKED; becomes EA with it); FFmpeg DynSTC, DE and DE+Peeling: REPLACED 13 Oct (leg of 2 offsets × N = 2, 48 of 48 valid, A/A 1.002 [0.991,
+1.016]): DynSTC = `dynstc_rt=1` with N1-ST and statically placed N1, 1.28 [1.26, 1.30] (the run-time option alone
+read 1.14); DE and DE+Peeling with statically placed N1, 1.02 and 1.01 (with N1 at every check 1.02 and 1.03).
+**FFmpeg's options, same leg:** `phase_guard=1`, which the adopted line carried although FFmpeg has no phase code,
+costs the h264 transcode 5-6 % (0.947 with it, 0.998-1.015 without). The adopted line with `dynstc_rt=1` only
+reads 1.27× [1.26, 1.29] over the root's stock and 1.26× [1.24, 1.28] over upstream stock, against 1.25× and 1.23×
+with both options; N1 at every check with `dynstc_rt=1` only 1.32× [1.30, 1.34]. The 4 × 4 record cell with
+`dynstc_rt=1` only is queued; until it is in, the table keeps 1.24×. The root's stock over upstream stock in this
+leg: 0.990 [0.972, 1.009]. Stated as they are, not replaced: the DynSTC column of
 SQLite, memcached and MySQL is the run-time form (`dynstc_rt=1`), which their adopted lines do not use; the EA and
 SWMR columns of SQLite, FFmpeg and MySQL carry MEMINTR and SWMR-ROOTS, which their adopted lines do not use; FE-INL
 is part of AllOpt only for Redis, MySQL and Chromium; SQLite's adopted line is built with DE and peeling. The
