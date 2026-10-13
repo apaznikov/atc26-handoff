@@ -202,11 +202,16 @@ entries on stress2 does not by itself account for 1.23-1.28×. Checked 13 Oct: t
 the harness (same command, fresh directory, three alternating runs: 38.0k against 47.7k statements, 1.26×). A
 sampling profiler attached to the process removes the difference (1.03×: stock 9 % faster, the adopted line 11 %
 slower), so a sampled profile of this lock-heavy test is not a profile of the measured run and is not used; a
-counting run (CPU and cycles per statement) is being taken instead. From the final leg's own records (16 runs per
-arm, medians, whole 120 s run): CPU 145.0 s in stock and 147.7 s in AllOpt, statements 37,544 and 46,522, so CPU per
-statement falls by 17.7 % at the same total CPU. The test is almost serialized: about 1.2 of its 16 CPUs are busy
-on average, one thread working at a time under the database lock, so a shorter statement under the lock is the
-whole gain.
+counting run was taken instead, and **it removes the gain as well**: under `perf stat` (counters only, no
+sampling) the record command reads 1.00 (stock 42.5-44.4k, the adopted line 42.4-43.0k) and stress2 alone 1.08;
+in both perf modes stock gets about 12 % faster and the adopted line 9-11 % slower. Without perf the gain is there
+in every form tried on 13 Oct: 1.26 (bare command), 1.22 (through the test script), 1.23 and 1.28 (record legs).
+The test makes about 53,000 voluntary context switches a second and keeps about 1.2 of its 16 CPUs busy: it is
+governed by hand-offs of the database lock, and work added to each context switch is enough to erase the
+difference. From the final leg's records total CPU is equal in both arms (145.0 and 147.7 s) and statements are
+37,544 and 46,522. **How much of the gain is cheaper checks under the lock and how much is a change in who wins
+the lock is not measured.** The figure is reproducible but sensitive to scheduling; a robustness series over
+pinnings without perf is running.
 
 MySQL, runtime entries per statement, stock → AllOpt (one window per workload): oltp_read_write 53,454 → 46,011
 (13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
