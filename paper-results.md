@@ -285,4 +285,18 @@ pinned frame, and one report added by the phase-guard option. Single configurati
 
 ## 8. Thread-count sweep
 
-Pending (after the record legs; SQLite, memcached, FFmpeg).
+memcached (13 Oct, AMD; server threads = `-t`, on the final leg's pinning of 8 logical CPUs; client, workload and
+request count unchanged; 2 offsets × N = 2, 36 of 36 timed runs valid):
+
+| server threads | AllOpt over stock | stock, ops/s | AllOpt, ops/s | status |
+|---|---|---|---|---|
+| 8 | 1.90× [1.89, 1.90] | 216k | 410k | final (A/A 1.000 [0.998, 1.002]) |
+| 6 | 1.97× [1.95, 1.98] | 195k | 383k | final |
+| 4 | 2.11× [2.09, 2.12] | 161k | 340k | final (one of two passes disturbed and retired; the clean pass 2.12× [2.11, 2.12]) |
+| 2 | 2.23× [2.19, 2.27] | 85k | 190k | current (N = 1 per offset; every cell ran with the housekeeping CPUs busy) |
+
+The gain grows as the thread count falls, each step outside the previous interval. Base: the root's own stock;
+upstream stock over it at 8 threads 1.046 [1.040, 1.051]. Peak over all points: 2.23× (flagged) or 2.11× (clean).
+
+SQLite (on walthread1, the submitted paper's sweep workload; stress2 has a fixed thread set): running.
+FFmpeg (`-threads` 2, 4, 8, 16): pending.
