@@ -506,6 +506,33 @@ reports with the read and write roles exchanged. No server death other than thos
 7 runs the rule also fires on an arm with stock's instrumentation; a hit is settled by reading the binary. The
 adopted line's binary keeps both checks of the start-up race as well. current.
 
+Rows of 14 Oct, non-timed host, 10 stock against 10 arm runs, all exit 0, no void; site = function pair; identical
+= same line pair, equivalent = same functions at other lines (0 everywhere):
+
+| app | arm | stock pairs | identical | undetermined | lost by the rule | only in the arm |
+|---|---|---|---|---|---|---|
+| memcached | adopted line, removal form | 11 | 11 | 0 | 0 | 0 |
+| memcached | DE, removal form | 11 | 10 | 0 | 1 | 0 |
+| memcached | DE+Peeling, removal form | 11 | 11 | 0 | 0 | 0 |
+| memcached | DynSTC | 11 | 11 | 0 | 0 | 0 |
+| MySQL | DynSTC (stock's binary with the run-time option) | 184 | 179 | 4 | 1 | 5 |
+| MySQL | FE-INL | 184 | 183 | 1 | 0 | 7 |
+| MySQL | adopted line (verified form) | 184 | 180 | 3 | 1 | 6 |
+| SQLite | DynSTC | 4 line pairs | 3 | 1 (3 of 10 against 0 of 10) | 0 | 0 |
+| SQLite | adopted line, removal form (13 Oct) | 5 line pairs | 5 | 0 | 0 | 0 |
+
+memcached's writer sites: 4 of 4 in 10 of 10 runs in every arm. The rule fires three times and none is a removed
+check: (1) MySQL adopted line, read and write of a monitor counter in `monitor_set_max_value`: stock 5 of 10, arm 0
+of 10; the arm's binary keeps both checks as unconditional runtime calls, as stock; the same line in removal form
+reported it in 3 of 5 runs, FE-INL and DynSTC in 3 of 10; (2) MySQL DynSTC, a write/write pair in the binlog ticket
+manager: stock 3 of 10, arm 0 of 10, and the arm is stock's own binary; (3) memcached DE, a read of the clock in
+`lru_pull_tail` against its writer: stock 3 of 10, arm 0 of 10; the check is in the arm's binary, the sibling
+reader is reported in 7 of 10 (stock 3 of 10), the writer site in 10 of 10. With about 400 pair-arm comparisons at
+the 5 % rule, hits on unchanged checks are expected; each is settled by reading the binary. The three arms are
+being extended by further runs. Chromium's PartitionAlloc race (stock 11 of 21, AllOpt 2 of 19): the same race in
+every build; AllOpt's library keeps both checks (the read through the inline test's miss path, the write
+unconditional), so no check is removed; the logs do not separate timing from shadow eviction. current.
+
 Other applications: 10 stock against 10 optimized runs each, no site lost (memcached 4 sites, MySQL 232-236;
 Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries).
 
