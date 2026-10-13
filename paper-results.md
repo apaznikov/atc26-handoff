@@ -155,8 +155,24 @@ causes, both visible in the single-configuration rows (`experiments.md`, "M4 and
 verified DE keeps a check as an inline test where the submitted DE removed it, so it moves accesses out of Q_call
 without lowering Q; loop peeling and SQLite's function copies duplicate code together with its checks (DE+Peeling
 adds 11-17 % to Q). The single analyses that remove checks are small here: EA 0.6-5.9 %, STC up to 3.2 %, SWMR up
-to 2.7 %. A reduction per source access (before duplication) needs the pass's own statistics for each arm's
-compile: pending.
+to 2.7 %. The pass's own statistics follow.
+
+**Checks by form, from the pass's statistics** (13 Oct; each arm's flag line compiled once with statistics saved
+per object, summed over the program; counts are after duplication by peeling and function copies, which the pass
+cannot tell apart, so they are not per source access):
+
+| app | checks in stock | removed by the paper's analyses (STC / SWMR / LO / EA) | share of stock | AllOpt: plain call | AllOpt: inline test | AllOpt: behind a run-time guard | status |
+|---|---|---|---|---|---|---|---|
+| SQLite | 58,778 | 835 (0 / 0 / 0 / 835) | 1.4 % | 70,417 | 910 | 1,871 (lock-ownership marks) | final |
+| FFmpeg, N1 placed statically | 522,110 | 14,085 (0 / 0 / 0 / 14,085) | 2.7 % | 522,609 | 70,644 | 0 | final |
+| Redis | 38,557 | 2,752 (920 / 60 / 0 / 1,772) | 7.1 % | 3,232 | 39,361 | 0 | final |
+| MySQL | 993,181 | 6,250 (0 / 0 / 0 / 6,250) | 0.6 % | 1,037,536 | 42,417 | 0 | final |
+| memcached | 6,911 | 860 (221 / 239 / 13 / 387) | 12.4 % | 6,846 | 213 | 527 (owner checks) | final |
+
+SQLite, FFmpeg and MySQL are compiled unit by unit, where STC, SWMR and LO remove nothing; Redis and memcached use
+the whole-program step. Peeling adds copies of checks: 677 loops peeled in SQLite, 8,834 in FFmpeg, 21,029 in
+MySQL, about 7,190 copied checks in Redis and 974 in memcached. Control: every single configuration that does not
+duplicate code sees exactly stock's number of accesses.
 
 **Checks entering the runtime, per operation** (13 Oct; processor trace of all threads of the process for 0.25 s
 under the leg's load; calls from program code into the runtime's access entries per call of a once-per-operation
