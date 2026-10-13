@@ -43,7 +43,9 @@ upstream before a fix, 0.959 after); a leg that separates compiler from runtime 
 (1.29× over the root's); the adopted line over upstream stock: pending (in the corrected-arm leg). SQLite (leg of 13 Oct, 2 offsets × N = 2, 16 of 16 valid, three cells disturbed): not resolved at this size, the
 root's stock over upstream stock 0.974 [0.940, 1.009] with a second copy of the root's stock at 0.954; AllOpt over
 upstream stock 1.25× [1.22, 1.29] (undisturbed pass alone 1.23×), so the base does not move SQLite's figure beyond
-its interval; upstream stock is an arm of the idle-half recheck. The same check for Redis and MySQL: running. Which base the paper states: to be decided; until then every figure
+its interval; upstream stock is an arm of the idle-half recheck. Redis (leg of 13 Oct, 2 offsets × N = 2, 16 of 16 valid): the root's stock over upstream stock 0.979 [0.969,
+0.993] (a second copy 0.982), so 2 % slower; AllOpt over upstream stock 1.47× [1.42, 1.49] (1.52× over the root's).
+MySQL: queued. Which base the paper states: to be decided; until then every figure
 above is over the root's own stock.
 
 **Cells under correction (audit of 13 Oct, `audits/audit-a89-mapping-vs-arms.md`).** The single-configuration trees
