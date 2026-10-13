@@ -105,6 +105,27 @@ Chromium, Intel, N = 3 repetitions, speedup over stock:
 
 Noise floor: a layout twin of the FE-INL configuration reads 1.013 over it. AllOpt on the AMD host: 1.081 and 1.017.
 
+Per story, Intel, tabulated 14 Oct from the same runs (intervals: bootstrap over stories, 10,000 draws; per-story
+tables for the plot under `chromium/legs/story-tables/` of the measuring tree):
+
+| | hold-out, FE-INL configuration | hold-out, AllOpt | first sample, FE-INL configuration | first sample, AllOpt (one repetition on the corrected harness) |
+|---|---|---|---|---|
+| geometric mean | 1.101 [1.086, 1.116] | 1.248 [1.199, 1.299] | 1.103 [1.084, 1.124] | 1.292 [1.236, 1.354] |
+| median | 1.107 [1.099, 1.113] | 1.260 [1.177, 1.288] | 1.093 [1.085, 1.119] | 1.269 [1.221, 1.328] |
+| quartiles | 1.081-1.123 | 1.147-1.317 | | |
+| range | 0.991-1.223 | 0.983-1.867 | 0.992-1.375 | 0.981-2.012 |
+| stories below 1.00 / at least 1.10 / 1.25 / 1.50 | 2 / 30 / 0 / 0 | 1 / 39 / 25 / 6 | | |
+| per suite, median: dom (3 stories) | 1.030 | 1.259 | 1.085 | 1.114 |
+| image_decoder (2) | 1.010 | 1.038 | 1.014 | 1.045 |
+| layout (29) | 1.112 | 1.288 | 1.110 | 1.321 |
+| paint (2) | 1.079 | 1.211 | 1.051 | 1.601 |
+| parser (7) | 1.033 | 1.044 | 1.070 | 1.268 |
+| svg (5) | 1.120 | 1.268 | 1.079 | 1.253 |
+
+Status: final for the hold-out sample (N = 3) and for the FE-INL configuration on the first sample; current for
+AllOpt on the first sample (N = 1). Story counts per suite are those of the hold-out sample; four suites have 2 to
+7 stories, so their medians are indicative only.
+
 Speedometer 3, Score over stock, N = 3 repetitions (range):
 
 | configuration | Intel | AMD | status |
