@@ -223,6 +223,24 @@ in sum, 1.34×), about three quarters of which fail on a lock. With about one CP
 0.44 → 0.33 ms (25 % less). So the figure as quoted is a count dominated by trivial statements; the paper must
 name the metric (statements OK, or attempts) and state that successful data-modifying statements fall.
 
+**Robustness of SQLite's figure without perf** (13 Oct, 3 alternating runs per arm per variant, bare command):
+
+| variant | AllOpt over stock, statements OK (three pairs) | stock: OK of attempts | AllOpt: OK of attempts |
+|---|---|---|---|
+| record pinning, 16 logical CPUs | 1.26 (1.27 / 1.20 / 1.30) | 38.0k of 142k | 47.7k of 190k |
+| 8 CPUs, one per core | 1.25 (1.22 / 1.26 / 1.27) | 40.1k of 152k | 50.1k of 201k |
+| 4 CPUs | 1.27 (1.24 / 1.29 / 1.27) | 43.4k of 165k | 55.0k of 218k |
+| 2 CPUs | 1.06 (1.04 / 1.04 / 1.09) | 28.8k of 50.9k | 30.4k of 54.3k |
+| record pinning, stress2 alone | 1.22 (1.22 / 1.25 / 1.18) | 38.9k of 147k | 47.4k of 190k |
+
+CPU is the same in both arms in every variant. The figure holds (1.22-1.27) wherever the 15 threads have CPUs to
+contend for the lock, and is small (1.06) at 2 CPUs, where they queue for a CPU instead and attempts fall to a
+third. A probe that only reads /proc (no perf) on an undisturbed run of stress2 alone: 1.09 and 1.10 CPUs busy,
+CPU per attempted statement 0.444 ms against 0.351 ms (21 % less), voluntary context switches per attempt 13.5
+against 11.0. So the adopted line spends 21 % less CPU per attempt, attempts 28 % more statements with the same
+total CPU, and completes 22 % more. Two perturbations remove the gain: a perf attachment, and fewer than about
+four CPUs. current.
+
 MySQL, runtime entries per statement, stock → AllOpt (one window per workload): oltp_read_write 53,454 → 46,011
 (13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
 select_random_ranges 2.8 %; select_random_points 4.2 %. Calls at function entry and exit per statement fall from
