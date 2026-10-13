@@ -168,12 +168,40 @@ Text size includes the statically linked runtime.
 
 | app | AllOpt | Q_call | inline | guarded | Q (stock's Q) | Q over stock | runtime calls avoided | text over stock | status |
 |---|---|---|---|---|---|---|---|---|---|
-| SQLite | LO-MARK v1 | 70,904 | 904 | 1,871 | 73,679 (57,997) | +27.0 % | −22.3 % | 1.18× | current |
-| memcached | EVCONF-CHECKED | 6,580 | 213 | ≥ 313 | ≥ 7,106 (6,748) | ≥ +5.3 % | +2.5 % | 1.06× | current (owner checks: lower bound) |
-| Redis | adopted | 3,187 | 38,731 | 19 | 41,937 (37,941) | +10.5 % | +91.6 % | 2.58× | current |
-| FFmpeg | N1 placed statically | 513,147 | 70,431 | 0 | 583,578 (514,609) | +13.4 % | +0.3 % | 1.40× | current |
-| FFmpeg | N1 at every check | 58,643 | 525,319 | 0 | 583,962 (514,609) | +13.5 % | +88.6 % | 3.24× | current |
-| MySQL | FE-INL line | 638,391 | 26,566 | 0 | 664,957 (599,000) | +11.0 % | −6.6 % | 1.31× | current |
+| SQLite | LO-MARK v1, DE in removal form | 70,516 | 0 | 1,836 | 72,352 (57,997) | +24.8 % | −21.6 % | 1.14× | final |
+| memcached | EVCONF-CHECKED, DE in removal form | 6,525 | 0 | ≥ 313 | ≥ 6,838 (6,748) | ≥ +1.3 % | +3.3 % | 1.04× | final (owner checks: lower bound) |
+| Redis | adopted, DE in removal form | 3,484 | 37,706 | 19 | 41,209 (37,941) | +8.6 % | +90.8 % | 2.55× | final |
+| FFmpeg | N1 placed statically, DE in removal form | 509,974 | 39,265 | 0 | 549,239 (514,609) | +6.7 % | +0.9 % | 1.26× | final |
+| FFmpeg | N1 at every check, DE in removal form | 65,086 | 484,774 | 0 | 549,860 (514,609) | +6.9 % | +87.4 % | 3.06× | final |
+| MySQL | FE-INL line (DE in its verified form, MySQL's adopted form) | 638,391 | 26,566 | 0 | 664,957 (599,000) | +11.0 % | −6.6 % | 1.31× | final |
+| Chromium, stock | | 13,588,706 | 0 | 0 | 13,588,706 | | | 773.7 MB | final |
+| Chromium | the four analyses + FE-INL + MEMINTR | 13,483,741 | 0 | 0 | 13,483,741 (13,588,706) | −0.8 % | +0.8 % | 1.18× | final |
+| Chromium | AllOpt (+ N1) | 1,173,107 | 12,331,507 | 0 | 13,504,614 (13,588,706) | −0.6 % | +91.4 % | 2.99× | final |
+
+Recount of 14 Oct from the binaries, after DE took its removal form. A covering write kept by removal DE is a
+plain runtime call and counts in Q_call. Against the verified form (Q over stock; text over stock): SQLite +27.0 →
++24.8 %, 1.18 → 1.14×; memcached ≥ +5.3 → ≥ +1.3 %, 1.06 → 1.04×; Redis +10.5 → +8.6 %, 2.58 → 2.55×; FFmpeg
+static +13.4 → +6.7 %, 1.40 → 1.26×; FFmpeg every check +13.5 → +6.9 %, 3.24 → 3.06×. The adopted lines still
+carry more checks than stock in every application: peeling and SQLite's function copies duplicate checks.
+Chromium: counted over the main binary and all 486 libraries of the existing builds, loaded or not; an inline
+test is counted by its slow-path call site.
+
+Single configurations with DE in removal form, Q over stock (verified form in brackets) and text over stock:
+
+| app | DE | DE+Peeling |
+|---|---|---|
+| SQLite | −1.7 % (+0.1), 1.00× | +8.6 % (+10.8), 1.05× |
+| memcached | −3.6 % (0.0), 1.00× | +7.8 % (+12.1), 1.02× |
+| Redis (with the inline test) | −1.4 % (+0.1), 2.04× | +15.3 % (+17.4), 2.27× |
+| FFmpeg, N1 placed statically | −4.5 % (0.0), 1.20× | +9.2 % (+16.0), 1.26× |
+| FFmpeg, N1 at every check | −4.4 % (+0.1), 2.71× | +9.3 % (+16.2), 3.05× |
+
+DE alone is the one configuration whose check count falls below stock, by 1.4 to 4.5 %. final.
+
+Checks by form from the pass's statistics with DE in removal form exist for SQLite's `sqlite3.c` only (56,636
+checks in stock; EA removes 625, as in the verified form; DE removes 1,161: 865 by dominance, 296 by
+post-dominance; kept in any form 69,466 against 70,627 verified; 1,836 lock-ownership marks). For FFmpeg, Redis and
+memcached the table of removals by analysis below is still that of the verified form.
 
 **These are counts of checks in the binary, not the paper's static reduction, and they are not below stock.** Two
 causes, both visible in the single-configuration rows (`experiments.md`, "M4 and M7 on the final legs' binaries"):
@@ -277,7 +305,7 @@ MySQL, runtime entries per statement, stock → AllOpt (one window per workload)
 (13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
 select_random_ranges 2.8 %; select_random_points 4.2 %. Calls at function entry and exit per statement fall from
 42-109 thousand to 91-228: they are inlined, which is where MySQL's gain comes from. current.
-Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0×. current.
+Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0× (2.99×), over the main binary and all libraries. final.
 
 ## 5. Compile time
 
