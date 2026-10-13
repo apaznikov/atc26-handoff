@@ -119,7 +119,27 @@ Chromium, largest process's peak resident memory over stock: FE-INL configuratio
 
 ## 4. Instrumentation reduction and code size
 
-Pending (static and dynamic reduction by the protocol's definitions, from the final legs' binaries).
+Counted in the final legs' binaries (offset-00 trees, 13 Oct; call sites of the runtime's entries from outside the
+runtime). Q_call = accesses checked by a plain runtime call; inline = accesses checked by an inline test; guarded =
+accesses behind a run-time guard; Q = their sum. "Runtime calls avoided" = (Q_call,stock − Q_call) / Q_call,stock.
+Text size includes the statically linked runtime.
+
+| app | AllOpt | Q_call | inline | guarded | Q (stock's Q) | Q over stock | runtime calls avoided | text over stock | status |
+|---|---|---|---|---|---|---|---|---|---|
+| SQLite | LO-MARK v1 | 70,904 | 904 | 1,871 | 73,679 (57,997) | +27.0 % | −22.3 % | 1.18× | current |
+| memcached | EVCONF-CHECKED | 6,580 | 213 | ≥ 313 | ≥ 7,106 (6,748) | ≥ +5.3 % | +2.5 % | 1.06× | current (owner checks: lower bound) |
+| Redis | adopted | 3,187 | 38,731 | 19 | 41,937 (37,941) | +10.5 % | +91.6 % | 2.58× | current |
+| FFmpeg | N1 placed statically | 513,147 | 70,431 | 0 | 583,578 (514,609) | +13.4 % | +0.3 % | 1.40× | current |
+| FFmpeg | N1 at every check | 58,643 | 525,319 | 0 | 583,962 (514,609) | +13.5 % | +88.6 % | 3.24× | current |
+| MySQL | FE-INL line | 638,391 | 26,566 | 0 | 664,957 (599,000) | +11.0 % | −6.6 % | 1.31× | current |
+
+**These are counts of checks in the binary, not the paper's static reduction, and they are not below stock.** Two
+causes, both visible in the single-configuration rows (`experiments.md`, "M4 and M7 on the final legs' binaries"):
+verified DE keeps a check as an inline test where the submitted DE removed it, so it moves accesses out of Q_call
+without lowering Q; loop peeling and SQLite's function copies duplicate code together with its checks (DE+Peeling
+adds 11-17 % to Q). The single analyses that remove checks are small here: EA 0.6-5.9 %, STC up to 3.2 %, SWMR up
+to 2.7 %. A reduction per source access (before duplication) needs the pass's own statistics for each arm's
+compile: pending.
 Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0×. current.
 
 ## 5. Compile time
