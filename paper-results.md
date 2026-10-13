@@ -316,9 +316,17 @@ SWMR, LO, EA, DE, DE+Peeling, FE-INL): every seed reported in 10 of 10 runs in e
 functions; not mapped to the seeded lines), FE-INL (stack attribution). Not aimed: STC and LO (seeded functions as
 in stock). current.
 
-MySQL, single configurations (STC, SWMR, LO, EA, DE, DE+Peeling), 5 runs per arm, 115 sites reported by stock: no
-site lost, no server death; kept 86 to 94 per arm, the rest undetermined (sites stock itself reports in 1 of 5
-runs); 5 more runs per arm are queued. current.
+MySQL, single configurations (STC, SWMR, LO, EA, DE, DE+Peeling), 7 runs per arm on the non-timed host (13 Oct;
+5 runs of 12 Oct and 2 more; a further 3 were cut short by a full disk and are not counted), reports keyed by
+function pair: 187 sites reported by stock. Per arm, kept with the same lines / kept with other lines /
+undetermined (stock in 1-2 of 7 runs, the arm in none): STC 175 / 0 / 12; SWMR 177 / 1 / 9; LO 176 / 0 / 10; EA
+172 / 1 / 14; DE 176 / 0 / 9; DE+Peeling 177 / 1 / 8. The rule (stock k of 7, arm 0, (1 − k/7)^7 < 0.05) fires
+four times, each with stock at 3 of 7, and none is a lost check: a start-up race on the temporary tablespace in
+DE+Peeling, where both functions are instruction-for-instruction identical to stock's in the arm's binary; a pair
+in the wait array in DE and in LO, the latter carrying exactly stock's checks; and one pair in DE that the arm
+reports with the read and write roles exchanged. No server death other than those caused by the full disk. So at
+7 runs the rule also fires on an arm with stock's instrumentation; a hit is settled by reading the binary. The
+same two start-up functions in the adopted line's binary: to be read. current.
 
 Other applications: 10 stock against 10 optimized runs each, no site lost (memcached 4 sites, MySQL 232-236;
 Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries).
