@@ -214,7 +214,7 @@ Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead aga
 | FFmpeg | alternative: N1 placed statically, `fc4` | 1.24× | 72 s | 95.5 s | +33 % | current (2 builds per arm, whole seconds) |
 | Redis | alternative: N1 placed statically, `rk4` | 1.39× | 5.25 s | 11.99 s | +128 % | current; not adopted (adopted line 1.51× in the same leg, 14.31 s, +173 %) |
 | MySQL | FE-INL | 1.13× | 874.75 s | 1015.13 s | +16 % | current |
-| memcached | adopted | 1.80× | | | not measured | pending |
+| memcached | AllOpt (EVCONF-CHECKED) | 1.81× over upstream stock | 9.32 s | 16.32 s | +75 % | final (3 builds per arm; native 6.85 s: stock +36 % and AllOpt +138 % over native; the whole-program summary step is 6.53 s of the 16.32 s, without it +5 % over stock) |
 | Chromium | AllOpt | 1.25× | | | +10 % (CPU time, 400 sampled units) | final |
 
 ## 6. Race preservation
