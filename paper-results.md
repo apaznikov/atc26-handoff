@@ -242,7 +242,7 @@ adopted medians of Redis and SQLite are from earlier windows, so those two ratio
 | FFmpeg (N1 placed statically) | 65.23 s | 76.44 s | 89.70 s | +17 % | +38 % (N1 at every check: 136 s, +108 %) | final |
 | Redis | 4.96 s | 5.29 s | 14.31 s | +7 % | +189 % | current (across windows) |
 | SQLite | 22.20 s | 25.25 s | 37.53 s | +14 % | +69 % | current (across windows) |
-| MySQL | | | | | | pending (native build) |
+| MySQL | 863.4 s | 925.0 s | 1,075.9 s | +7 % | +25 % (+16 % over stock) | current (means of 2 builds per arm, 13 Oct; Release, the verified form of DE) |
 | Chromium | | | | | | pending (native build) |
 
 
