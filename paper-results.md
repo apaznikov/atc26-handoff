@@ -213,6 +213,16 @@ difference. From the final leg's records total CPU is equal in both arms (145.0 
 the lock is not measured.** The figure is reproducible but sensitive to scheduling; a robustness series over
 pinnings without perf is running.
 
+**What the SQLite figure counts** (13 Oct, from the per-thread "ok/attempted" lines of the two undisturbed
+sessions, 3 runs per arm each): "statements OK" rises 38,001 → 47,731 (1.26×), carried by four threads that run
+trivial statements (PRAGMA integrity_check, CREATE TABLE IF NOT EXISTS, DROP TABLE IF EXISTS, a second PRAGMA
+loop: 1.30-1.37× each); the two SELECT threads gain 1.12-1.14×; **the seven data-modifying threads (INSERT,
+UPDATE, DELETE, VACUUM) succeed less often: 3,493 → 2,925 statements OK in sum (0.75-0.88× each).** What rises
+uniformly is the attempt rate: every contending loop attempts 1.33-1.37× as many statements (141,978 → 190,127
+in sum, 1.34×), about three quarters of which fail on a lock. With about one CPU busy that is CPU per attempt
+0.44 → 0.33 ms (25 % less). So the figure as quoted is a count dominated by trivial statements; the paper must
+name the metric (statements OK, or attempts) and state that successful data-modifying statements fall.
+
 MySQL, runtime entries per statement, stock → AllOpt (one window per workload): oltp_read_write 53,454 → 46,011
 (13.9 % fewer); oltp_read_only 58,146 → 48,466 (16.6 %); oltp_write_only 27,660 → 27,456 (0.7 %);
 select_random_ranges 2.8 %; select_random_points 4.2 %. Calls at function entry and exit per statement fall from
