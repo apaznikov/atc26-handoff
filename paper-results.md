@@ -148,6 +148,16 @@ Speedometer 3, Score over stock, N = 3 repetitions (range):
 | AllOpt (+ N1) | 1.225 (1.201, 1.250; N = 2, one run failed) | 1.006 (0.983–1.048) | final |
 | A/A | 1.012 (0.994–1.044) | 1.009 (0.972–1.042) | final |
 
+Second Intel leg with a native arm (14 Oct 02:43-06:53, N = 3, 12 of 12 runs valid, host quiet, no A/A), Score over
+stock per repetition and geometric mean: the four analyses + FE-INL + MEMINTR 1.066 / 1.045 / 1.073 = 1.06; AllOpt
+1.200 / 1.113 / 1.133 = 1.15; native 9.14 / 9.78 / 9.25 = 9.4. Slowdown over native on Speedometer 3.0: stock 9.4×,
+FE-INL configuration 8.8×, AllOpt 8.2×. Over the 20 per-test rows (bootstrap over tests): 1.05 [1.02, 1.09], 1.13
+[1.09, 1.17], native 7.8 [6.9, 8.9]. The gains are lower than in the first leg (1.11, 1.23); the two legs are not
+pooled, so on Intel Speedometer reads 1.06-1.11 and 1.15-1.23. Memory, mean of 3: sampled peak of the browser's
+cgroup (anonymous + shared) native 0.96 GiB, stock 7.46, FE-INL configuration 7.58, AllOpt 7.91: stock 7.8× native,
+memory overhead reduction −1.8 % and −6.9 % (an increase); largest process's peak resident memory native 0.36 GiB,
+stock 1.20, AllOpt 1.88. CPU time of the browser was not recorded in this leg. final.
+
 On Intel one repetition of the FE-INL configuration ran on a disturbed host; without it the figure is 1.090 (N = 2).
 Three of about 46 Speedometer runs of AllOpt died on a debug check of V8's garbage collector; no other build did; the
 compiled code points to a timing-dependent condition in V8. Confirmed: with V8's forced compaction the stock TSan
