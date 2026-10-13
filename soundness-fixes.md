@@ -442,7 +442,7 @@ In a program a premise excludes, a race may be lost. State 12 Oct (6e added 11 O
 | **FD-LIFETIME** | 5 Oct | descriptor-reuse model behind P-X86-FD | Whoever frees descriptor `n` holds the instance at `n`. |
 | **G1** | 5 Oct | binaries with EVCONF elisions | Within one file table, freeing `n` happens before any later call returning `n`. |
 | **MALLOC-ATTR**, general | 4 Oct | quiet mode's fresh-allocation rule | An `__attribute__((malloc))` function returns unaliased memory. |
-| **No use-after-free, wide reading** | 12 Oct (audits A79 Q3, A88) | LO-MARK | No access and no lock call races a free: wider than the adopted row in 6a ("no access through a dangling pointer to freed or reused memory"). LO-MARK's premises 9 and 10 need it. Not decided: whether the paper's no-use-after-free premise is read this widely is for the paper's owner; until then LO-MARK's figure is quoted with this premise named as pending. |
+| **No use-after-free, wide reading** | 12 Oct (audits A79 Q3, A88) | LO-MARK | No access and no lock call races a free: wider than the adopted row in 6a ("no access through a dangling pointer to freed or reused memory"). LO-MARK's premises 9 and 10 need it. Adopted 13 Oct: the paper's no-use-after-free premise is read this widely. |
 | **PROVENANCE**, **P-ALIAS**, **A12-DATA for EVCONF**, **POSIX fresh descriptors** | 5-6 Oct | only the parked EVCONF-DERIVE; no result rests on them | constant-overwritten pointers; strict aliasing; A12-DATA for the derivation's slots; fresh descriptor numbers. |
 
 - **P-SUBOBJ** (8 Oct): an address derived from a member array stays inside that member. For SQLite's `MemPage.aiOvfl[]`, `MemPage.apOvfl[]` and `Pager.aStat[]` it is no longer a premise: `bound` lines make the compiler test the index, and the length of a variable-length copy, before the access and void the run on a miss (root `tsan-carve-b575340c1ee8`, audit A76; 13 tests, 0.003 % of executed checks). For `BtCursor.aiIdx[]` and `apPage[]` (cursor descent, ~1 % of checks by count) it stays a named premise for now: the confirm leg (zdc4, disturbed) read the tested variant at 0.976 of the untested one, inside a wide A/A, which neither shows a cost nor excludes one; a quiet re-run decides; indexing past a member array is undefined behaviour in C in either case.
@@ -581,7 +581,7 @@ checked access meets a marker it does not hold. Full statement, the void rule an
 | added by the final audit | M1 the pass is correct (established by reading and by IR tests only; nothing checks on the built unit that every unchecked access is dominated by its test); M2 a retired marker keeps three record cells instead of four until overwritten (eviction-class difference from the baseline); M3 the arm's other analyses and their premises (the figure is the whole arm's, not LO-MARK's alone); M4 PM and A12 of the lock filter (6a) |
 
 Open on 12 Oct: A79 Q6(i) item 7 (the Q3 premise and its place in this ledger) is closed by this subsection except
-for the wide no-use-after-free reading, which is pending in 6b. v2 (cursors) adds premises of its own and its pass
+for the wide no-use-after-free reading, which was adopted on 13 Oct (6b). v2 (cursors) adds premises of its own and its pass
 and gate conditions (A81 C1, C2) are not recorded as closed; nothing quotes v2.
 
 ## 7. What is not known
