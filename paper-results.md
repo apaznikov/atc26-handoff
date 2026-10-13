@@ -235,19 +235,25 @@ not times; method checked on 7 Oct against a run-time census to 0.1 %):
 
 | app | stock | AllOpt | drop | status |
 |---|---|---|---|---|
-| memcached, per request | 1,887.5 | 435.3 | 76.9 % | current |
-| Redis, weighted over the seven commands | | | 94.5 % | current |
-| Redis LRANGE_100 / _300 / _500 / _600, per command | 504 / 23,913 / 39,533 / 47,374 | 50 / 311 / 510 / 612 | 90.1 / 98.7 / 98.7 / 98.7 % | current |
-| Redis ZADD / ZPOPMIN / MSET, per command | 510 / 343 / 2,442 | 47 / 32 / 48 | 90.8 / 90.6 / 98.1 % | current |
+| memcached, per request | 1,887.4 | 429.0 | 77.3 % | final (14 Oct, DE in removal form; verified form 435.3, 76.9 %) |
+| Redis, weighted over the seven commands | | | 93.6 % | final (14 Oct, DE in removal form; verified form 94.5 %) |
+| Redis LRANGE_100 / _300 / _500 / _600, per command | 508 / 23,904 / 39,538 / 47,361 | 51 / 1,518 / 2,520 / 3,026 | 90.0 / 93.7 / 93.6 / 93.6 % | final (removal form; verified form 50 / 311 / 510 / 612) |
+| Redis ZADD / ZPOPMIN / MSET, per command | 510 / 339 / 2,442 | 24 / 37 / 82 | 95.3 / 89.0 / 96.7 % | final (removal form; verified form 47 / 32 / 48) |
+
+Redis in removal form enters the runtime more often than the verified form on LRANGE and MSET: the covering write
+of a removed pair is made by a runtime call (about 1,200 per LRANGE_300 command) that gets neither the inline test
+nor the phase skip. ZADD goes the other way. The timed figures of the two forms are equal (1.47× and 1.48×).
+MySQL keeps the verified form; its rows of 13 Oct stand. Only runtime entries are counted: the paper's L, checks
+executed in any form, would need counting code in the pass or the runtime and is not measured.
 
 FFmpeg and SQLite have no once-per-operation call, so their unit is runtime entries per 1,000 function entries of
 instrumented code (three windows per transcode, one per SQLite test):
 
 | app | test | drop in runtime entries, AllOpt against stock | status |
 |---|---|---|---|
-| FFmpeg (static line, both options) | stream copy / mjpeg / h264 / h265 | about 78 % / 23 % / 5 % / 3 % | current |
-| SQLite | stress2 (the record workload) | 11.8 % | current |
-| SQLite | the other twelve comparable tests of threadtest3 | −5.0 % to 38.8 %; within 8 % of stock in nine of them | current |
+| FFmpeg (static line, DE in removal form, `dynstc_rt=1` only) | stream copy / mjpeg / h264 / h265 | about 85 % (one adopted window) / 18.6 % / 5.0 % / 2.2 % | final (14 Oct; verified form with both options about 78 % / 23 % / 5 % / 3 %) |
+| SQLite | stress2 (the record workload) | 9.9 % (15,486 → 13,952) | final (14 Oct, DE in removal form; verified form 11.8 %) |
+| SQLite | the other thirteen tests of threadtest3 | −5.6 % to 6.2 %; within 4 % of stock in ten of them | final (14 Oct, removal form) |
 
 FFmpeg agrees with its timing: the gain is in the stream copy. **SQLite does not:** a drop of 12 % in runtime
 entries on stress2 does not by itself account for 1.23-1.28×. Checked 13 Oct: the figure itself reproduces outside
