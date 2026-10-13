@@ -52,7 +52,10 @@ root's stock over upstream stock 0.974 [0.940, 1.009] with a second copy of the 
 upstream stock 1.25× [1.22, 1.29] (undisturbed pass alone 1.23×), so the base does not move SQLite's figure beyond
 its interval; upstream stock is an arm of the idle-half recheck. Redis (leg of 13 Oct, 2 offsets × N = 2, 16 of 16 valid): the root's stock over upstream stock 0.979 [0.969,
 0.993] (a second copy 0.982), so 2 % slower; AllOpt over upstream stock 1.47× [1.42, 1.49] (1.52× over the root's).
-MySQL: queued. Which base the paper states: to be decided; until then every figure
+MySQL (leg of 13 Oct evening, 2 offsets × N = 2, 20 of 20 valid): upstream stock over the root's stock 1.001
+[0.997, 1.006], no base difference. In the same leg, DE in removal form against the verified form: 0.994 [0.990,
+0.998], so 0.6 % slower with an interval that excludes 1; over stock the verified form 1.105 [1.100, 1.110], removal
+1.099 [1.092, 1.104], A/A 0.999 [0.995, 1.004]. Which base the paper states: to be decided; until then every figure
 above is over the root's own stock.
 
 **Cells under correction (audit of 13 Oct, `audits/audit-a89-mapping-vs-arms.md`).** The single-configuration trees
