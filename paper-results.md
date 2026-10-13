@@ -278,6 +278,10 @@ DE+Peeling, FE-INL): stock reports 4 sites, each in 10 of 10 runs; every arm rep
 site lost. The LO arm shows 12 further sites in one of its 10 runs that stock and the other arms never show (extra
 reports, not read further). The EA arm with EVCONF-CHECKED: pending. current.
 
+FFmpeg with `dynstc_rt=1` only (the options of the candidate adopted line; 13 Oct): the static line, the line with
+N1 at every check and the DynSTC arm report each of the 9 seeds in 10 of 10 runs, as stock. That the option was
+active rests on the runner's option line (no statistics line is printed without the phase-guard option). current.
+
 FFmpeg, the four new arms of 13 Oct (DynSTC with N1-ST in both placements, DE and DE+Peeling with static placement): every seed in 10 of 10 runs, as stock; seed functions whose checks differ from stock's, of 6: 5 (N1 at every check), 3 (DE+Peeling), 2 (DE), 1 (DynSTC with static placement). current.
 
 FFmpeg, single configurations: stock reports no race, so 8 seeded races were run, 10 runs per arm (stock, STC,
