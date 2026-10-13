@@ -542,6 +542,7 @@ FFmpeg and MySQL 392):
 | DE, DE+Peeling, verified form | 12 | 11 | 3 | 1 (static placement: 10) | 11 |
 | DE, DE+Peeling, removal form | 0 | 0 | 3 (with the inline test) | 1-11 (with the inline test) | 0 |
 | adopted line, removal form | 0 | 0 | 2 | 12 | 0 |
+| the four analyses without DE and without run-time-checked parts (14 Oct) | 0 (445 run, 444 passed, 1 expected failure) | 0 (422, 421, 1) | 0 (411, 410, 1) | 0 (392, 391, 1) | not built |
 
 No failure in any row is a missing race report. Every nonzero cell is the link defect of the inline test on
 unoptimized code (fix exists, in no measured root) plus checks of the emitted form written for other flags. In
