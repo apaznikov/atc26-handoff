@@ -36,8 +36,9 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 **The base.** "Stock" in this table is the stock program built by the same compiler root with every optimization
 off and run on that root's runtime. For memcached that base is 4.7 % slower than upstream LLVM's TSan (leg of
 13 Oct: upstream stock over the root's stock 1.049 [1.046, 1.051], A/A 1.001), so AllOpt is 1.89× over the root's
-stock and 1.81× [1.80, 1.81] over upstream stock, and upstream stock is about 8.05× slower than native. Whether the
-4.7 % is the compiler or the runtime is not separated. The same check: MySQL and FFmpeg queued; SQLite and Redis
+stock and 1.81× [1.80, 1.81] over upstream stock, and upstream stock is about 8.05× slower than native. The known
+cause is the root's runtime (the ownership-marker test in the access slow path is always on; 8 Oct: 0.895 of
+upstream before a fix, 0.959 after); a leg that separates compiler from runtime is queued. The same check: MySQL and FFmpeg queued; SQLite and Redis
 need an upstream-stock build first (ordered). Which base the paper states: to be decided; until then every figure
 above is over the root's own stock.
 
@@ -165,6 +166,12 @@ timing-dependent one in 8 of 10 by stock and 6 to 9 of 10 by the arms. What this
 every check in the seeded functions is an inline test, so all 11 seeds exercise it; in FE-INL they exercise the
 stack attribution; in STC, SWMR and EA the seeded functions are compiled as in stock, so no seed is aimed at those
 three (their code changes are not tested by the seeds). current.
+
+FFmpeg, single configurations: stock reports no race, so 8 seeded races were run, 10 runs per arm (stock, STC,
+SWMR, LO, EA, DE, DE+Peeling, FE-INL): every seed reported in 10 of 10 runs in every arm. Aimed: DE and DE+Peeling
+(inline test on every check in the seeded functions), SWMR and EA (they remove checks inside seed-carrying
+functions; not mapped to the seeded lines), FE-INL (stack attribution). Not aimed: STC and LO (seeded functions as
+in stock). current.
 
 MySQL, single configurations (STC, SWMR, LO, EA, DE, DE+Peeling), 5 runs per arm, 115 sites reported by stock: no
 site lost, no server death; kept 86 to 94 per arm, the rest undetermined (sites stock itself reports in 1 of 5
