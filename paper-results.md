@@ -204,14 +204,27 @@ Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0×. curren
 
 ## 5. Compile time
 
-Over the stock TSan build; fresh trees, medians of 3, wall seconds. Overhead against the native build: pending.
+Over the stock TSan build; fresh trees, medians of 3, wall seconds.
+
+**Against the native build** (the submitted paper's definition; 13 Oct, one quiet window, 3 builds per arm; the
+adopted medians of Redis and SQLite are from earlier windows, so those two ratios are across windows):
+
+| app | native | stock TSan | adopted | stock over native | adopted over native | status |
+|---|---|---|---|---|---|---|
+| memcached | 6.85 s | 9.32 s | 16.32 s | +36 % | +138 % | final |
+| FFmpeg (N1 placed statically) | 65.23 s | 76.44 s | 89.70 s | +17 % | +38 % (N1 at every check: 136 s, +108 %) | final |
+| Redis | 4.96 s | 5.29 s | 14.31 s | +7 % | +189 % | current (across windows) |
+| SQLite | 22.20 s | 25.25 s | 37.53 s | +14 % | +69 % | current (across windows) |
+| MySQL | | | | | | pending (native build) |
+| Chromium | | | | | | pending (native build) |
+
 
 | app | configuration | speedup | stock build | optimized build | overhead | status |
 |---|---|---|---|---|---|---|
 | SQLite | AllOpt (LO-MARK v1) | 1.23× | 24.86 s | 37.53 s | +51 % | final. Generating the spec: 98.7 s on one CPU, once per source version (with it counted into one build: 136.2 s, 5.5× stock); the same analyses without the spec: 30.77 s, +24 % |
 | FFmpeg | second line: N1 at every check, `fcn` | 1.29× | 73 s | 136 s | +86 % | final (3 builds per arm) |
 | Redis | adopted | 1.49× | 5.37 s | 14.38 s | +168 % | current (static placement under test) |
-| FFmpeg | AllOpt (N1 placed statically, `fk6`) | 1.24× | 72 s | 85 s | +18 % | current (2 builds per arm, whole seconds; 3 builds by the method: pending) |
+| FFmpeg | AllOpt (N1 placed statically, `fk6`) | 1.24× | 76.44 s | 89.70 s | +17 % | final (3 builds per arm, 13 Oct) |
 | FFmpeg | alternative: N1 placed statically, `fc4` | 1.24× | 72 s | 95.5 s | +33 % | current (2 builds per arm, whole seconds) |
 | Redis | alternative: N1 placed statically, `rk4` | 1.39× | 5.25 s | 11.99 s | +128 % | current; not adopted (adopted line 1.51× in the same leg, 14.31 s, +173 %) |
 | MySQL | FE-INL | 1.13× | 874.75 s | 1015.13 s | +16 % | current |
