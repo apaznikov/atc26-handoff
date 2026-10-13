@@ -186,6 +186,14 @@ layout (29) 0.983 / 1.224 / 1.288 / 1.373 / 1.867; paint (2) 1.161 / 1.186 / 1.2
 1.000 / 1.028 / 1.044 / 1.100 / 1.185; svg (5) 1.130 / 1.185 / 1.268 / 1.302 / 1.413; all 48: 0.983 / 1.147 / 1.260 /
 1.317 / 1.867. CDF points: `/extra/alexey/chromium/legs/story-tables/hold-intel-cdf-cr1n1.tsv`. final.
 
+Chromium, native on the Intel hold-out sample (14 Oct, 6 of 6 runs valid; stock from the hold-out runs of 11-12 Oct,
+same binary, pinning and harness, another session): stock is 13.4× [11.4, 15.4] slower than native as a geometric
+mean over the 48 stories (median 15.5, range 1.9-25.0); per suite, geometric mean (median): dom 11.6 (15.4),
+image_decoder 6.0 (7.0), layout 14.1 (16.0), paint 5.4 (5.9), parser 18.8 (20.9), svg 13.3 (13.8). With the
+hold-out gains: FE-INL configuration 12.1×, AllOpt 10.7× slower than native. Memory, stock over native: sampled
+peak of the browser's cgroup 4.3× (3.2-6.6 over the six suites); largest process 3.6×. No CPU ratio (the stock runs
+predate the record). final.
+
 Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.06×, AllOpt 1.54× on Intel
 (Speedometer); 1.09× and 1.77× on AMD (mapped code; allocated memory unchanged). current.
 
