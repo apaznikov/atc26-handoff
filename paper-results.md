@@ -382,7 +382,7 @@ FFmpeg's spread is at most 8 %. Redis reads 15.85 s here against 14.31 s for the
 were built on different nights, so this is not a measured difference between the forms. MySQL keeps the row above.
 Range over the five applications, adopted over native: +25 % (MySQL) to +219 % (Redis); over stock +13 % to
 +196 %.
-| Chromium | | | | | | pending (native build) |
+| Chromium (compile CPU seconds over a fixed sample of 400 units, sum of per-unit medians, 3 repetitions) | 1476.9 s | 1459.0 s | 1621.0 s (FE-INL configuration 1480.8 s) | −1.2 % | +9.8 % [7.3, 12.7] (+11.1 % [8.5, 14.7] over stock); FE-INL configuration +0.3 % (+1.5 % over stock) | current (14 Oct, Intel, 4800 compiles, 0 failed; host busy outside the measuring cores; stock compiles faster than native because the native configuration of the browser adds hardening flags that its sanitizer configuration drops; per-unit compile time, not build wall time, link not included) |
 
 
 | app | configuration | speedup | stock build | optimized build | overhead | status |
