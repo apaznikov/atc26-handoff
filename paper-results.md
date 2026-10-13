@@ -38,8 +38,10 @@ off and run on that root's runtime. For memcached that base is 4.7 % slower than
 13 Oct: upstream stock over the root's stock 1.049 [1.046, 1.051], A/A 1.001), so AllOpt is 1.89× over the root's
 stock and 1.81× [1.80, 1.81] over upstream stock, and upstream stock is about 8.05× slower than native. The known
 cause is the root's runtime (the ownership-marker test in the access slow path is always on; 8 Oct: 0.895 of
-upstream before a fix, 0.959 after); a leg that separates compiler from runtime is queued. The same check: MySQL and FFmpeg queued; SQLite and Redis
-need an upstream-stock build first (ordered). Which base the paper states: to be decided; until then every figure
+upstream before a fix, 0.959 after); a leg that separates compiler from runtime is queued. FFmpeg (leg of 13 Oct, 2 offsets × N = 2, 16 of 16 valid): the root's stock over upstream stock 0.981
+[0.973, 0.986], so 1.9 % slower; the line with N1 at every check reads 1.26× [1.24, 1.27] over upstream stock
+(1.29× over the root's); the adopted line over upstream stock: pending (in the corrected-arm leg). The same check
+for Redis, SQLite and MySQL: running. Which base the paper states: to be decided; until then every figure
 above is over the root's own stock.
 
 **Cells under correction (audit of 13 Oct, `audits/audit-a89-mapping-vs-arms.md`).** The single-configuration trees
