@@ -20,6 +20,13 @@ submission's (they were chosen for a larger share of TSan overhead); the text mu
 | memcached | pipelined 32-key gets, 190-byte keys | AMD | `tsan-ecc-b54ce0196884` | |
 | Chromium 127.0.6533.119 | blink_perf (two story samples), Speedometer 3 | Intel | `tsan-cr-8345a0396fa5` | component build, DCHECKs on |
 
+**Host condition of the AMD legs of 12-13 Oct (found 13 Oct).** Until 13:09 on 13 Oct, interactive sessions of
+the measuring account that are not part of the benchmark were allowed on the CPUs of the host's second measuring
+half (16-31, 48-63): mostly idle, at times a burst of a compile or a search for one to two minutes. Every leg on
+that half before that time (Redis, FFmpeg and MySQL: core, singles and base checks) ran under this condition; it
+is the same for all arms of a leg, so the ratios stand, and the legs' "other half busy" statements do not cover
+it. From 13:09 those sessions are confined to the housekeeping CPUs (0-7, 32-39).
+
 ## 2. Speedup over stock TSan
 
 Applications. Columns are the paper's configurations with the new optimizations merged in; AllOpt is the adopted
