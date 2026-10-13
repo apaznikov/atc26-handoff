@@ -187,7 +187,18 @@ not times; method checked on 7 Oct against a run-time census to 0.1 %):
 | Redis LRANGE_100 / _300 / _500 / _600, per command | 504 / 23,913 / 39,533 / 47,374 | 50 / 311 / 510 / 612 | 90.1 / 98.7 / 98.7 / 98.7 % | current |
 | Redis ZADD / ZPOPMIN / MSET, per command | 510 / 343 / 2,442 | 47 / 32 / 48 | 90.8 / 90.6 / 98.1 % | current |
 
-SQLite, FFmpeg: decoding. MySQL: pending.
+FFmpeg and SQLite have no once-per-operation call, so their unit is runtime entries per 1,000 function entries of
+instrumented code (three windows per transcode, one per SQLite test):
+
+| app | test | drop in runtime entries, AllOpt against stock | status |
+|---|---|---|---|
+| FFmpeg (static line, both options) | stream copy / mjpeg / h264 / h265 | about 78 % / 23 % / 5 % / 3 % | current |
+| SQLite | stress2 (the record workload) | 11.8 % | current |
+| SQLite | the other twelve comparable tests of threadtest3 | −5.0 % to 38.8 %; within 8 % of stock in nine of them | current |
+
+FFmpeg agrees with its timing: the gain is in the stream copy. **SQLite does not:** a drop of 12 % in runtime
+entries on stress2 does not by itself account for 1.23-1.28×; where the time goes (by symbol, both arms, several
+windows of the record command) is being measured. MySQL: pending.
 Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0×. current.
 
 ## 5. Compile time
