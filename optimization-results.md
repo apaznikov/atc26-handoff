@@ -37,18 +37,20 @@ version of this file, commit `9126669`. Soundness, premises and audits: [`soundn
 <a name="summary"></a>
 ## 1. Summary
 
-Speedup = stock TSan's run time over the optimized build's; compile time is over stock TSan's build. The bold figures
+Speedup = stock TSan's run time over the optimized build's; compile time is over stock TSan's build. The last column is
+the submitted paper's compile-time overhead, which is over a native build ((T_opt − T_nat) / T_nat), so the two
+columns have different bases; see [section 5](#compile). The bold figures
 are sound under the premises of [`soundness-fixes.md`](soundness-fixes.md) §6: no race that stock TSan reports is
 lost except through [eviction](#evict).
 
-| app | workload | submitted paper | adopted figure | configuration | claim class | compile time |
-|---|---|---|---|---|---|---|
-| SQLite | threadtest3 stress2 | 1.71× | **1.23×** (1.28× with the other half of the host idle) | [LO-MARK](#lo-mark) v1 | (2) no annotations, run-time checked; configuration: the names of the mutex API and the object types to cover | +51 %, and 99 s of spec generation per source version |
-| FFmpeg | four transcodes of one film | 1.57× | **1.24×** (1.29× with N1 at every check, at +86 % compile time) | [DynSTC-RT](#dynstc-rt) + [N1 placed statically](#n1-place) + [N1-ST](#n1-st); decided 13 Oct | (2) no annotations, run-time checked | +18 % |
-| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.52×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % |
-| MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.10×** | [FE-INL](#fe-inl) | (1) no annotations, static | +16 % |
-| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | (2) no annotations, run-time checked | not measured |
-| Chromium | blink_perf, [hold-out](#samples) sample, Intel host | 1.39× | **1.25×** | [CR1+N1](#cr1) | (1) no annotations, static | +10 % |
+| app | workload | submitted paper | adopted figure | configuration | claim class | compile time | compile time in the submitted paper (over a native build) |
+|---|---|---|---|---|---|---|---|
+| SQLite | threadtest3 stress2 | 1.71× | **1.23×** (1.28× with the other half of the host idle) | [LO-MARK](#lo-mark) v1 | (2) no annotations, run-time checked; configuration: the names of the mutex API and the object types to cover | +51 %, and 99 s of spec generation per source version | +11.6 % |
+| FFmpeg | four transcodes of one film | 1.57× | **1.24×** (1.29× with N1 at every check, at +86 % compile time) | [DynSTC-RT](#dynstc-rt) + [N1 placed statically](#n1-place) + [N1-ST](#n1-st); decided 13 Oct | (2) no annotations, run-time checked | +18 % | +2.5 % |
+| Redis | 7 data-heavy commands, 8 I/O threads | 1.45× | **1.52×** | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | (2) no annotations, run-time checked | +168 % | +5.4 % |
+| MySQL | Release, sysbench insert/update/delete, 24 connections | 1.16× | **1.10×** | [FE-INL](#fe-inl) | (1) no annotations, static | +16 % | +18.0 % |
+| memcached | pipelined 32-key gets, 190-byte keys | 1.07× | **1.80×** | [EVCONF-CHECKED](#evconf-checked) | (2) no annotations, run-time checked | not measured | +8.6 % |
+| Chromium | blink_perf, [hold-out](#samples) sample, Intel host | 1.39× | **1.25×** | [CR1+N1](#cr1) | (1) no annotations, static | +10 % | +1.0 % |
 
 Claim classes, strongest first: (1) no annotations, decided at compile time; (2) no annotations, a condition
 tested at run time decides; (3) a spec generated from the program's own assertions, tested at run time; (4) a
@@ -272,21 +274,30 @@ Fresh trees, no ccache, 8 jobs (MySQL 6), stock and the optimized build alternat
 For Redis and memcached the optimized build includes the summary step: a pass over the whole program that
 [quiet threads](#quiet) and the cross-unit analyses need before the units are compiled.
 
-| app | configuration | speedup | stock build | optimized build | compile-time overhead |
-|---|---|---|---|---|---|
-| memcached | no annotations (analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr)) | 1.02× | 7.25 s | 8.03 s | +11 % |
-| memcached | [EVCONF](#evconf), 7 annotated fields ([EVCONF-CHECKED](#evconf-checked), 1.80×, was not timed) | 1.81× | 6.47 s | 8.71 s | +35 % |
-| Redis | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | 1.49× | 5.37 s | 14.38 s | **+168 %** |
-| SQLite | [LO-OBJ-G](#lo-obj-g), generated spec | 1.19× | 33.27 s | 43.28 s | +30 % |
-| SQLite | [LO-MARK](#lo-mark) v1 (adopted), 13 Oct | 1.23× | 24.86 s | 37.53 s | +51 %; spec generation 98.7 s on one CPU, once per source version (5.5× stock if counted into one build) |
-| FFmpeg | adopted line, by the method, 13 Oct | 1.285× | 73 s | 136 s | +86 % |
-| FFmpeg | [N1](#n1) at every check | 1.285× | 76.10 s | 149.88 s | +97 % |
-| FFmpeg | [N1 by static rule s1](#n1-place) | 1.241× | 76.10 s | 110.77 s | +46 % |
-| FFmpeg | [N1 by static rule s4](#n1-place) | 1.227× | 76.10 s | 103.53 s | +36 % |
-| MySQL | Release, [FE-INL](#fe-inl) | 1.13× | 874.75 s | 1015.13 s | +16 % |
-| Chromium | [CR1](#cr1) (400 sampled units, CPU time) | 1.10× ([`f`](#host-f)) | — | — | +1.1 % (1.004-1.018) |
-| Chromium | [CR1+N1](#cr1) (same sample) | 1.25× ([`f`](#host-f)) | — | — | +10.4 % (1.076-1.142) |
+| app | configuration | speedup | stock build | optimized build | compile-time overhead | submitted paper, AllOpt over a native build |
+|---|---|---|---|---|---|---|
+| memcached | no annotations (analyses + [EA-CONTENTS](#ea-contents) + [SWMR-ROOTS](#swmr-roots) + [FE-INL](#fe-inl) + [MEMINTR](#memintr)) | 1.02× | 7.25 s | 8.03 s | +11 % | +8.6 % |
+| memcached | [EVCONF](#evconf), 7 annotated fields ([EVCONF-CHECKED](#evconf-checked), 1.80×, was not timed) | 1.81× | 6.47 s | 8.71 s | +35 % |  |
+| Redis | [FE-INL](#fe-inl) + [N1](#n1) + [quiet threads](#quiet) | 1.49× | 5.37 s | 14.38 s | **+168 %** | +5.4 % |
+| SQLite | [LO-OBJ-G](#lo-obj-g), generated spec | 1.19× | 33.27 s | 43.28 s | +30 % | +11.6 % |
+| SQLite | [LO-MARK](#lo-mark) v1 (adopted), 13 Oct | 1.23× | 24.86 s | 37.53 s | +51 %; spec generation 98.7 s on one CPU, once per source version (5.5× stock if counted into one build) |  |
+| FFmpeg | adopted line, by the method, 13 Oct | 1.285× | 73 s | 136 s | +86 % | +2.5 % |
+| FFmpeg | [N1](#n1) at every check | 1.285× | 76.10 s | 149.88 s | +97 % |  |
+| FFmpeg | [N1 by static rule s1](#n1-place) | 1.241× | 76.10 s | 110.77 s | +46 % |  |
+| FFmpeg | [N1 by static rule s4](#n1-place) | 1.227× | 76.10 s | 103.53 s | +36 % |  |
+| MySQL | Release, [FE-INL](#fe-inl) | 1.13× | 874.75 s | 1015.13 s | +16 % | +18.0 % |
+| Chromium | [CR1](#cr1) (400 sampled units, CPU time) | 1.10× ([`f`](#host-f)) | — | — | +1.1 % (1.004-1.018) | +1.0 % |
+| Chromium | [CR1+N1](#cr1) (same sample) | 1.25× ([`f`](#host-f)) | — | — | +10.4 % (1.076-1.142) |  |
 
+- **Last column**: the compile-time overhead printed in the submitted paper (its compile-time figure and the
+  sentences "only 2.5 % for FFmpeg", "do not exceed 18 %", "1-18 %"), given once per application. It is not
+  comparable to the column beside it as it stands: the paper's base is a native build, this table's is stock TSan's
+  build, and the configuration (the five analyses with removal DE), the compiler and the host were the submitted
+  ones. The paper's figure source also holds stock TSan over native from the same campaign, not printed in the
+  paper (memcached +12.1 %, Redis +8.2 %, FFmpeg +11.7 %, SQLite +16.6 %, Chromium −1.3 %; none for MySQL); with
+  it the submitted AllOpt compiled 3-8 % FASTER than stock TSan on four applications (memcached −3 %, Redis −3 %,
+  FFmpeg −8 %, SQLite −4 %; Chromium +2 %), because it emitted fewer checks. Overhead of the adopted lines over a
+  native build: pending.
 - Redis's 1.49× is the build that was timed here; the leg behind section 1 read 1.54×.
 - SQLite: generating the spec takes 52.9 s more, once per program version. The earlier generator's spec (1.17× in the
   same leg) builds at +28 %.
