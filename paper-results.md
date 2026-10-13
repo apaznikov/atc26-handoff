@@ -345,6 +345,11 @@ DE+Peeling, FE-INL): stock reports 4 sites, each in 10 of 10 runs; every arm rep
 site lost. The LO arm shows 12 further sites in one of its 10 runs that stock and the other arms never show (extra
 reports, not read further). The EA arm with EVCONF-CHECKED: 4 of 10 runs complete, each of stock's 4 sites in 4 of 4, no void. current.
 
+SQLite with DE in removal form (13 Oct, 15 tests, 10 runs per arm): no site lost in the adopted line, DE or
+DE+Peeling against stock. Runs reporting each of stock's three sites, stock | adopted | DE | DE+Peeling: 9 | 8 |
+10 | 10; 6 | 8 | 9 | 9; 4 | 3 | 2 | 4. The adopted line: no void line in 10 runs, 19.6-23.6 M held hits per run.
+current.
+
 Redis with DE in removal form (13 Oct, 11 seeds × 10 runs per arm, seeded builds of the same lines): the adopted
 line with the guard reports ten seeds in 10 of 10 runs, as its verified twin; on the timing-dependent seed, runs
 with neither a race nor a violation 2 of 10 (verified twin 4 of 10); the DE and DE+Peeling arms report every seed
