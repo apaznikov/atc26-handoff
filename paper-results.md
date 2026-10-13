@@ -331,5 +331,10 @@ request count unchanged; 2 offsets × N = 2, 36 of 36 timed runs valid):
 The gain grows as the thread count falls, each step outside the previous interval. Base: the root's own stock;
 upstream stock over it at 8 threads 1.046 [1.040, 1.051]. Peak over all points: 2.23× (flagged) or 2.11× (clean).
 
-SQLite (on walthread1, the submitted paper's sweep workload; stress2 has a fixed thread set): running.
+SQLite (13 Oct, on walthread1, the submitted paper's sweep workload, since stress2 has a fixed thread set; 20 s
+per run, 4 runs per arm, 32 of 32 valid): AllOpt over stock 1.00 [0.99, 1.00] at 16 threads, 1.01 [1.00, 1.03] at
+8, 1.00 [0.97, 1.03] at 4, 1.01 [0.98, 1.03] at 2. The run-time census reads 0 marks and 0 held hits in every run:
+walthread1 never reaches the objects LO-MARK covers (stress2: about 1 M mark calls and 10-14 M held hits per run).
+So this sweep shows only that the adopted line costs nothing where it does not apply; SQLite's gain has no
+thread-count series. final.
 FFmpeg (`-threads` 2, 4, 8, 16): pending.
