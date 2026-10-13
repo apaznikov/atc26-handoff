@@ -561,3 +561,19 @@ N = 2, 64 of 64 valid; intervals about ±0.015):
 
 The gain (the stream copy, 2.4-2.6×) does not depend on the thread count. What scales with threads is the cost of
 `phase_guard=1` on h264: 5 % at 2-4 threads, 10 % at 8, 21 % at 16; with `dynstc_rt=1` alone the line is flat.
+
+FFmpeg, the sweep of record with the adopted line (DE in removal form, static placement, `dynstc_rt=1` only) and
+the DynSTC arm alone (stock instrumentation plus the run-time test), 14 Oct 04:02-05:34, AMD, 2 offsets × N = 2,
+48 of 48 valid:
+
+| threads | adopted line (AllOpt) over stock | DynSTC alone over stock | adopted over DynSTC | status |
+|---|---|---|---|---|
+| 16 | 1.27× [1.25, 1.28] | 1.27× [1.25, 1.29] | 1.00 [0.99, 1.01] | final |
+| 8 | 1.27× [1.25, 1.28] | 1.28× [1.27, 1.29] | 0.99 [0.98, 1.00] | final |
+| 4 | 1.28× [1.27, 1.28] | 1.28× [1.27, 1.28] | 1.00 [0.99, 1.00] | final |
+| 2 | 1.28× [1.27, 1.28] | 1.29× [1.28, 1.30] | 0.99 [0.99, 1.00] | final |
+
+Per transcode at 4 threads, adopted / DynSTC: copy 2.52 / 2.55, h264 1.00 / 1.00, h265 1.00 / 1.00, mjpeg 1.05 /
+1.05. The adopted line does not depend on the encoder thread count, and the DynSTC arm alone equals it at every
+point: on FFmpeg the gain is the run-time single-thread test on the stream copy; the static analyses and DE add
+nothing measurable on top of it.
