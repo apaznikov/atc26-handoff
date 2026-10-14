@@ -205,6 +205,13 @@ layout (29) 0.983 / 1.224 / 1.288 / 1.373 / 1.867; paint (2) 1.161 / 1.186 / 1.2
 1.000 / 1.028 / 1.044 / 1.100 / 1.185; svg (5) 1.130 / 1.185 / 1.268 / 1.302 / 1.413; all 48: 0.983 / 1.147 / 1.260 /
 1.317 / 1.867. CDF points: `/extra/alexey/chromium/legs/story-tables/hold-intel-cdf-cr1n1.tsv`. final.
 
+Speedometer 3.0 pooled over both Intel legs (crkv3 + crkv4, six repetitions, each ratio over its own repetition's
+stock; crkv4 has an A/A of 1.005): AllOpt score over stock 1.17× (per repetition 1.10-1.25); native over stock
+9.55× (raw scores, geometric means: native 2.39, stock 0.25, AllOpt 0.29), so AllOpt is 8.2× slower than native;
+per test (20 tests): AllOpt min 1.06 / q1 1.08 / median 1.14 / q3 1.20 / max 1.27, geometric mean 1.15 [1.12, 1.18],
+no test below 1.00. The FE-INL configuration (crkv3 only): score 1.06, tests 0.90 / 0.99 / 1.07 / 1.09 / 1.19.
+crkv4 also recorded the browser's CPU time: stock over AllOpt 1.18, native 9.5× faster than stock. final.
+
 Chromium, stock and native on the Intel hold-out sample in one session (14 Oct 09:27-10:17, 12 of 12 runs valid,
 host quiet): stock is 13.2× [11.3, 15.4] slower than native as a geometric mean over the 48 stories (median 15.4,
 quartiles 11.1-19.5, range 1.8-24.9); per suite, geometric mean (median): dom 11.4 (15.4), image_decoder 5.8 (7.0),
