@@ -414,7 +414,7 @@ replace the two tables around them:
 
 | app | native | stock TSan | adopted | stock over native | adopted over native | adopted over stock | status |
 |---|---|---|---|---|---|---|---|
-| Redis | 4.82 s | 5.09 s | 15.08 s (whole-program step 4.61 s + build 10.48 s) | +6 % | +213 % | +197 % | final |
+| Redis (8 jobs, 14 Oct 15:04; replaces the row of the window, which built Redis with 48 jobs) | 6.26 s | 6.73 s | 19.00 s (whole-program step 4.72 s + build 14.32 s) | +8 % | +204 % | +182 % (CPU sum: +202 %) | final |
 | SQLite | 22.31 s | 24.93 s | 38.64 s | +12 % | +73 % | +55 % | final |
 | FFmpeg (N1 placed statically) | 64.10 s | 74.62 s | 84.86 s | +16 % | +32 % | +14 % | final |
 | memcached (configure run once) | 6.84 s | 9.40 s | 11.38 s (whole-program step with the one configure 9.12 s + build 2.23 s) | +37 % | +66 % | +21 % (19-21 % over four sets of nine builds; with configure run twice it read +76 %) | final (quote the ratio: configure ran in a slower mode in this window in every arm, so the seconds are this window's) |
@@ -425,7 +425,7 @@ Summed CPU time of the build's processes (50 Hz sampler, second number only), ad
 Redis +162 %, SQLite +45 %, FFmpeg +23 %, MySQL +19 % (round 3). Wall and CPU differ in a known direction: FFmpeg
 and MySQL read higher by CPU (a serial setup shared by all arms dilutes the wall ratio), Redis and SQLite lower (the
 adopted build is bounded by its largest unit). Range of the wall figure, adopted over native: +10 % (Chromium, CPU
-time of sampled units) and +25 % (MySQL) to +213 % (Redis); over stock +11 % to +197 %.
+time of sampled units) and +25 % (MySQL) to +204 % (Redis); over stock +11 % to +182 %.
 
 **With DE in removal form, one window** (14 Oct, the adopted removal lines; native, stock and adopted alternating,
 3 builds per arm, medians, 8 jobs; the host was not quiet, load 2.7 to 16, so the status is current):
