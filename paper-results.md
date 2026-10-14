@@ -200,6 +200,8 @@ build dies on the same check (1 of 5 runs; the FE-INL configuration 1 of 4). Whe
 is not established: 3 of about 46 (about 6.5 %, rough 95 % range 1.4-18 %) against 0 of about 30 (upper bound
 about 10 %); in the counting loops of 12-13 Oct, the two builds in turn, AllOpt 1 of 19 and stock 0 of 19.
 
+**SQLite headline, FINAL (s9r4, apollo A, 15 Oct 01:40-03:51, 4 offsets × N = 4, 64/64 valid, declared co-load 0.40):** s9H over the root's stock, attempts 1.312 [1.278, 1.366] (OK 1.242 [1.212, 1.280]); A/A attempts 0.986 [0.949, 1.035]; native over stock attempts 5.393 [5.264, 5.610] (OK 4.991) → slowdown 5.4×, AllOpt slowdown 5.393/1.312 = 4.1×.
+
 **MySQL compile time, RelWithDebInfo (as the measured binaries), partial (15 Oct 01:12-03:07, stopped by order, resumes later):** rounds 1-2: native 767.1 / 773.3, stock 900.9 / 866.9, adopted 1012.3 / 1016.2 s; added over stock 111.4 / 149.3 s (round 3 pending). Flags: TSan arms -O2 with MySQL's sanitizer default -O1 -fno-inline appended (check which -O wins), native -O2 -g1.
 
 **Decision 15 Oct ~00:10: one base in the whole paper, "Original TSan" = the root's own stock (as in the submitted paper); no upstream/stock distinction in the text.** Headline over the root's stock: max 1.91× (memcached), peak 2.27× (memcached, 2 threads); slowdowns over native: memcached 8.5, Redis 6.2, FFmpeg 2.8, SQLite 5.8 (attempts), MySQL 10.0, Chromium 9.6; FFmpeg per transcode H.264 1.29, MJPEG 6.3.
