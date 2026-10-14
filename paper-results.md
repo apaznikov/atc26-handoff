@@ -40,13 +40,14 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 | MySQL | 1.00 [0.993, 1.008] | 1.00 [0.994, 1.003] | 1.00 [0.996, 1.006] | 1.01 [1.00, 1.01] | 1.00 [0.99, 1.00] | 0.99 [0.99, 1.00] | 1.00 [0.992, 1.002] | 1.09 [1.08, 1.09] | 1.10× [1.09, 1.11] | final (singles leg 13 Oct: 2 offsets × N = 2, 40 of 40 valid, A/A 0.995 [0.992, 0.999]; FE-INL per script: delete 1.13, insert 1.08, update 1.06. Record leg 13 Oct, three write scripts, `-O2 -g`, AMD, 4 offsets × N = 4, 64 of 64 valid, A/A 1.001 [0.997, 1.004]; other half of the host busy in 97 of 101 cells. Per script: delete 1.14, insert 1.09, update 1.07) |
 | memcached | 1.00 [0.999, 1.006] | 1.01 [1.012, 1.016] | 1.00 [0.995, 1.003] | 1.86 [1.84, 1.87] | 1.00 [1.00, 1.01] | 1.00 [0.99, 1.02] | 1.00 [0.995, 1.003] | 1.00 [1.000, 1.004] | **1.91× [1.90, 1.92]** with DE in removal form (1.82× [1.81, 1.83] over upstream stock) | final (record cell 13-14 Oct night, AMD, 4 offsets × N = 4, 80 of 80 valid, 0 void, A/A 1.001 [0.998, 1.006]; offset medians 1.900 / 1.909 / 1.909 / 1.911; other half of the host busy in 79 of 81 cells. The verified form read 1.89× [1.89, 1.90] in the record leg of 13 Oct, 1.81× over upstream stock; DE and DE+Peeling in removal form: leg of 14 Oct, 2 offsets × N = 2, 16 of 16 valid, 0 void, A/A 0.993 [0.984, 1.001], read under a declared co-load on the housekeeping CPUs (threshold 0.40; at 0.10 fourteen of sixteen cells would be retired); the verified form read 0.98 and 1.00. See the note on the base below) |
 
-**The four analyses together** (STC + SWMR + LO + EA as in the submitted paper, no DE, nothing checked at run
-time, no run-time option), over stock, 2 offsets × N = 2:
+**The four analyses together** (STC + SWMR + LO + EA, each as in its single-configuration column, no DE, no
+peeling, no DynSTC, no FE-INL), over stock, 2 offsets × N = 2:
 
 | app | speedup | status |
 |---|---|---|
 | FFmpeg | 1.00 [1.00, 1.01] (copy 1.01, h264 1.01, h265 1.00, mjpeg 1.00; A/A 1.00 [0.99, 1.00]; 12 of 12 valid) | final (14 Oct) |
-| Redis, SQLite, memcached | | pending (running 14 Oct) |
+| SQLite | 1.23 [1.18, 1.27] (offsets 1.250 / 1.207; A/A 0.99 [0.95, 1.04]; 12 of 12 valid, 0 void; housekeeping CPUs quiet) | final (14 Oct): the four analyses carry the whole figure of the adopted line (1.24) |
+| Redis, memcached | | pending (running 14 Oct) |
 | MySQL | not built | |
 
 **The base.** "Stock" in this table is the stock program built by the same compiler root with every optimization
