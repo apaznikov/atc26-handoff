@@ -372,6 +372,8 @@ difference. From the final leg's records total CPU is equal in both arms (145.0 
 the lock is not measured.** The figure is reproducible but sensitive to scheduling; a robustness series over
 pinnings without perf is running.
 
+**Decision 14 Oct: the paper's SQLite metric is statements attempted per run (sum over threads), not statements OK; every SQLite figure is recomputed in attempts (requested from the timing lane).**
+
 **What the SQLite figure counts** (13 Oct, from the per-thread "ok/attempted" lines of the two undisturbed
 sessions, 3 runs per arm each): "statements OK" rises 38,001 → 47,731 (1.26×), carried by four threads that run
 trivial statements (PRAGMA integrity_check, CREATE TABLE IF NOT EXISTS, DROP TABLE IF EXISTS, a second PRAGMA
