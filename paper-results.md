@@ -595,7 +595,7 @@ Rows of 14 Oct, non-timed host, 10 stock against 10 arm runs, all exit 0, no voi
 | MySQL | DynSTC (stock's binary with the run-time option) | 184 | 179 | 4 | 1 | 5 |
 | MySQL | FE-INL | 184 | 183 | 1 | 0 | 7 |
 | MySQL | adopted line (verified form) | 184 | 180 | 3 | 1 | 6 |
-| MySQL | adopted line, removal form (14 Oct, my16) | 188 | 181 | 6 | 1, settled as kept: the wait-array pair, stock 3 of 10, arm 0 of 10; in the extension the arm reports it (3 of 15 so far, stock 4 of 15); both functions keep their checks | 9 |
+| MySQL | adopted line, removal form (14 Oct, my16) | 188 | 181 | 6 | 1, settled as kept: the wait-array pair, stock 3 of 10, arm 0 of 10; over 20 runs the arm 5, stock 6 (Fisher two-sided 1.0); both functions keep their checks | 9 |
 | SQLite | DynSTC | 4 line pairs | 3 | 1 (3 of 10 against 0 of 10) | 0 | 0 |
 | SQLite | adopted line, removal form (13 Oct) | 5 line pairs | 5 | 0 | 0 | 0 |
 
