@@ -438,6 +438,10 @@ replace the two tables around them:
 | MySQL (Release, verified form, 6 jobs) | 853.8 s | 920.3 s | 1067.8 s | +8 % | +25 % | +16 % | final (rounds 1-2 of 13 Oct and round 3 of 14 Oct; per arm 820-873, 858-930, 1018-1084 s) |
 | Chromium | see the row below | | | −1 % | +10 % | +11 % | current |
 
+One run of the paper workload, wall seconds (record cells): memcached (fixed requests) upstream 226, root's stock 237, AllOpt 126;
+Redis (fixed requests) 47.1 / 48.2 / 37.7; FFmpeg (four transcodes) 86.3 / 88.2 / 86.6; SQLite and MySQL run for a fixed time;
+Chromium Speedometer stock ~1,686, AllOpt ~1,477, native ~215. final.
+
 Summed CPU time of the build's processes (50 Hz sampler, second number only), adopted over stock: memcached +35 %,
 Redis +162 %, SQLite +45 %, FFmpeg +23 %, MySQL +19 % (round 3). Wall and CPU differ in a known direction: FFmpeg
 and MySQL read higher by CPU (a serial setup shared by all arms dilutes the wall ratio), Redis and SQLite lower (the
