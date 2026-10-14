@@ -260,6 +260,10 @@ Chromium needs a native build).
 | MySQL (server process, sampled every 5 s) | 10.03× [9.94, 10.15] | 9.11× | 583 / 3394 / 3413 MiB | −0.7 % (an increase) | final; server CPU per cell 1341 / 2181 / 2132 s; per script stock is 17.7× (delete), 8.7× (insert), 6.6× (update) slower than native |
 | FFmpeg, N1 at every check | 2.76× [2.75, 2.79] (upstream stock 2.71×) | 2.09× with DE in removal form | 521 / 1440 / 1465 MiB (this cell, 16 runs per arm) | −2.7 % (an increase) | final (record cell 13-14 Oct night, `dynstc_rt=1` only) |
 | FFmpeg, N1 placed statically | 2.76× [2.75, 2.79] | 2.17× with DE in removal form | 521 / 1440 / 1441 MiB (this cell, 16 runs per arm) | −0.1 % (no reduction) | final (record cell 13-14 Oct night, `dynstc_rt=1` only); CPU per run native 373 s, stock 711, AllOpt 707 |
+SQLite's paper line s9H (record cell s9r4, 15 Oct 01:40-03:51, GNU time peak RSS of threadtest3, medians, 16 runs
+pooled): native 9.2 / stock 60.2 / s9H 60.9 MiB → s9H over stock 1.011 (per offset 0.99-1.02; A/A 1.003, A/A runs
+57.8-64.0 MiB), not resolved from 1.00; slowdown 5.4×, s9H 4.1×. In the paper (PR #45, 15 Oct): memory bar 1.01. final.
+
 Over upstream LLVM TSan (Original TSan), native over upstream stock in the same record cells: memcached 8.09× (mcm4),
 Redis 6.00× [5.88, 6.07] (rdm4, offsets 00/16), FFmpeg 2.71× (ffm4), SQLite 5.18× [5.04, 5.46] (sqm4); MySQL 10.0×
 (the root's stock equals upstream within 0.1 %); Chromium has no upstream arm (9.6×, the root's stock). final.
