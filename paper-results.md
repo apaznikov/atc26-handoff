@@ -47,6 +47,12 @@ configuration. All cells but AllOpt wait for the final record legs (13-14 Oct).
 reads 1.24-1.26 by session. The thread-count panel: no threadtest3 test with a thread knob reaches LO-MARK
 (walthread1 and walthread3 make 0 marks), so it has no data; the substitute is the stress2 CPU-count series. final.
 
+**MySQL, select_random_points** (14 Oct 15:27-16:19, AMD half B, 2 offsets × N = 2, 44 of 44 valid, all nine
+configurations in one leg, A/A 1.001 [1.000, 1.002]), transactions over stock: STC 1.00 [1.000, 1.003], SWMR 1.00
+[0.999, 1.001], LO 1.00 [1.002, 1.005], EA 1.01 [1.007, 1.011], DE (removal) 1.01 [1.003, 1.008], DE+Peeling
+(removal) 1.00 [1.000, 1.004], DynSTC 1.00 [0.999, 1.001], FE-INL 1.07 [1.062, 1.067], **AllOpt (removal) 1.07
+[1.073, 1.076]** (1.074). final.
+
 **The four analyses together** (STC + SWMR + LO + EA, each as in its single-configuration column, no DE, no
 peeling, no DynSTC, no FE-INL), over stock, 2 offsets × N = 2:
 
