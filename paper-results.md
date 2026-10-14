@@ -372,6 +372,8 @@ difference. From the final leg's records total CPU is equal in both arms (145.0 
 the lock is not measured.** The figure is reproducible but sensitive to scheduling; a robustness series over
 pinnings without perf is running.
 
+**SQLite line of record (checked 14 Oct from build_info):** the adopted arm of sqm4, sql4 and the CPU series is z9R (root 913cae99c263): DE in removal form + loop peeling + EA + LO with LO-MARK + STC + SWMR. The decision of 12 Oct ("no DE, no peeling") is not what was measured. The compile-time row (+12.7 s) is z9L, the verified-DE form; the removal form is queued in the focs compile leg of 15 Oct night, together with memcached, Redis and FFmpeg in removal form.
+
 **Decision 14 Oct: the paper's SQLite metric is statements attempted per run (sum over threads), not statements OK; every SQLite figure is recomputed in attempts (14 Oct, from the kept per-thread lines; no leg lacks them).**
 
 SQLite in statements attempted (final for the paper; OK figures in brackets):
