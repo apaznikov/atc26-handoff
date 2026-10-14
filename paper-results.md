@@ -200,6 +200,33 @@ build dies on the same check (1 of 5 runs; the FE-INL configuration 1 of 4). Whe
 is not established: 3 of about 46 (about 6.5 %, rough 95 % range 1.4-18 %) against 0 of about 30 (upper bound
 about 10 %); in the counting loops of 12-13 Oct, the two builds in turn, AllOpt 1 of 19 and stock 0 of 19.
 
+**Preliminary bars of 14 Oct night (apollo, 2 offsets × N = 1-2, merged STC = STC + DynSTC form per app).**
+Decision 14 Oct ~23:00: the per-application panels are drawn over the root's own stock (caption says so); headline
+text over Original TSan. Ratios over the ROOT'S STOCK (over upstream in brackets where given):
+- memcached (mcsh, N=1): STC+DynSTC 0.999; SWMR 1.012; LO 0.999; EA 1.853; DE 1.004; DE+P 1.004; FE-INL 0.997;
+  AllOpt 1.905 (over upstream 1.820 [1.811, 1.830]); upstream over root's stock 1.046; A/A 1.000.
+- Redis (rdsh): STC+DynSTC (r5Z) 1.161; SWMR 1.011; EA 1.013; DE 1.090; DE+P 1.102; FE-INL 1.062; AllOpt 1.455
+  (over upstream 1.424 [1.399, 1.456]); upstream 1.022; A/A 1.003; LO = stock.
+- FFmpeg (ffsh): STC+DynSTC (f2Z) 1.263; SWMR 0.996; LO 0.992; EA 0.986; DE 1.011; DE+P 1.009; FE-INL 0.999;
+  AllOpt 1.262 (over upstream 1.239 [1.230, 1.249]); upstream 1.019; A/A 0.994.
+- SQLite (sqt2, attempts; over upstream as measured, divide by 1.028 for the root's stock): s9H over root's stock
+  1.338 [1.298, 1.383]; LO 1.332; z9R 1.276; over upstream: stock 1.028, STC+DynSTC 1.035, LO 1.369, EA 1.031,
+  DE 1.003, DE+P 1.011, FE-INL 0.996, s9H 1.376 [1.309, 1.452], z9R 1.312, A/A 1.017 (co-load declared).
+- SQLite CPU series, s9H over root's stock (attempts): 16 CPUs 1.368, 8 1.469, 4 1.352, 2 1.108 (offset 00 × N=2).
+- memcached 4 threads: AllOpt over upstream 2.048, over root's stock 2.122.
+- MySQL (mysh) and memcached 6 threads: running.
+Chromium short panels (Intel, over root stock; Sound = four analyses, CR1 = four analyses + FE-INL + MEMINTR,
+CR1+N1 = AllOpt): Parser html5-full-render (N=2): Sound 1.007, +DE 1.021, +DE+peeling 0.995, CR1 1.104, CR1+N1 1.203,
+A/A 1.009. WebP (N=3): 1.006 / 1.031 / 1.048 / 1.068 / 1.078, A/A 1.051 (noise as large as the effects). Paint
+transform-changes: 1.007 / 0.957 / 1.023 / 1.132 / 1.401, A/A 1.012. SVG SvgCubics: 0.999 / 0.995 / 0.976 / 1.134 /
+1.341, A/A 1.013.
+DMIR (a-p13, one run each unless noted): Redis 97.6 % (1,607,120 → 38,921 granules); memcached 30.0 % (2,753,714 →
+1,926,327, fixed 50 M ops); SQLite ~20 % (5 runs, z9R 19.5 %, s9H 20.0 %; time-bounded, stock did more work: 11-20 %
+depending on how work is matched); FFmpeg, MySQL after ~02:05.
+Preservation (a-p13, 10 vs 10): memcached merged STC: no site lost (11/11 identical). MySQL merged STC: 188 identical,
+6 undetermined, 1 lost by rule (PFS_statement_stat::aggregate_memory_size, stock 3/10, arm 0/10) — extension after
+~02:05.
+
 ## 3. Slowdown over native, memory
 
 Slowdown = figure of merit of native over the build's. Memory: peak resident memory of the timed process; the
