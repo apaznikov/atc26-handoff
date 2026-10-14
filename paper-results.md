@@ -313,6 +313,7 @@ not times; method checked on 7 Oct against a run-time census to 0.1 %):
 |---|---|---|---|---|
 | memcached, per request | 1,887.4 | 429.0 | 77.3 % | final (14 Oct, DE in removal form; verified form 435.3, 76.9 %) |
 | Redis, weighted over the seven commands | | | 93.6 % | final (14 Oct, DE in removal form; verified form 94.5 %) |
+| Redis, quiet threads alone (the DynSTC column, no inline test), weighted | | | −0.6 % (+0.6 % entries: every access still calls the runtime, which returns early for a quiet thread) | current (14 Oct 14:32, one session apart from stock's count; the guard active, 0 violations). Mechanism of Redis's synergy, checked in the e52d source: with the inline test the code branches on the thread's quiet bit (read at function entry and after each call), so a quiet-phase access is a branch and no call; outside quiet phases the inline shadow test avoids the call on a hit; together −93.6 % |
 | Redis LRANGE_100 / _300 / _500 / _600, per command | 508 / 23,904 / 39,538 / 47,361 | 51 / 1,518 / 2,520 / 3,026 | 90.0 / 93.7 / 93.6 / 93.6 % | final (removal form; verified form 50 / 311 / 510 / 612) |
 | Redis ZADD / ZPOPMIN / MSET, per command | 510 / 339 / 2,442 | 24 / 37 / 82 | 95.3 / 89.0 / 96.7 % | final (removal form; verified form 47 / 32 / 48) |
 
