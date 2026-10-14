@@ -16,9 +16,11 @@ submission's (they were chosen for a larger share of TSan overhead); the text mu
 | SQLite | threadtest3, stress2 (60 s) | AMD | `tsan-lomark-913cae99c263` | |
 | FFmpeg | four transcodes of one film | AMD | `tsan-cr2-429bd8cf76b9` | |
 | Redis | 7 data-heavy commands, 8 I/O threads | AMD | `tsan-n1s-e52d8787b59e` | |
-| MySQL | sysbench insert/update/delete, 24 connections | AMD | `tsan-cr-8345a0396fa5` | `-O2 -g` |
+| MySQL | sysbench insert/update/delete, 24 connections | AMD | `tsan-cr-8345a0396fa5` | RelWithDebInfo `-O2 -g`; MySQL's default OPTIMIZE_SANITIZER_BUILDS adds `-fno-inline` to the TSan arms (native inlines) |
 | memcached | pipelined 32-key gets, 190-byte keys | AMD | `tsan-ecc-b54ce0196884` | |
 | Chromium 127.0.6533.119 | blink_perf (two story samples), Speedometer 3.0 (the tree's `speedometer3` benchmark; it has no 3.1) | Intel | `tsan-cr-8345a0396fa5` | component build, DCHECKs on |
+
+Optimization level (14 Oct, from build scripts and compile lines): `-O2` in every arm of memcached, Redis, FFmpeg, SQLite; Chromium is_debug=false, mostly `-O2` (a few units `-O3`); MySQL as in the table. **The MySQL compile-time rows (13-14 Oct) were built as Release (`-O3`), not as the measured RelWithDebInfo binaries: re-measure queued on focs after the Chromium chain.**
 
 Compiler: every root reports `clang version 19.0.0git` (checked 14 Oct on `tsan-cr-8345a0396fa5`). Native arm of each record cell: one build (the unpadded tree), run once per offset slot and pass, 4 × 4 = 16 runs (memcached m4n__, Redis r5n__, FFmpeg f2n__, SQLite s9n__, MySQL y8n__); Chromium native: one build, six Speedometer runs, one run per hold-out story.
 
