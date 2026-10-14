@@ -92,7 +92,8 @@ Single configurations: 2 offsets × N = 2 (core arms 4 × 4), so their intervals
 singles leg reads 1.014 [0.938, 1.073], and every SQLite column but LO is inside it. Redis's singles leg: A/A 1.005
 [0.998, 1.012]; DE, DE+Peeling and FE-INL are above it, the rest within 1 %; its gain is in quiet threads, which
 only AllOpt contains (preservation of Redis's single configurations: pending). FFmpeg's singles leg: A/A 0.998 [0.991, 1.004]; STC, SWMR,
-LO, EA and FE-INL are inside 0.992-1.007; DynSTC is the run-time option on the stock binary (copy 1.79, h264 0.93);
+LO, EA and FE-INL are inside 0.992-1.007; DynSTC in that leg is the run-time option on the stock binary, 1.14 (copy 1.79, h264 0.93; the DynSTC column above is
+another arm: stock plus N1-ST with `dynstc_rt=1`, 1.28);
 DE's gain is on mjpeg (1.10). The compiled code adds 1.09 on top of the option in the adopted line (1.238 / 1.138) and 1.13 with N1 at every check, on the copy transcode. memcached's singles leg: A/A
 1.002 [0.998, 1.005]; only SWMR is resolved above it (1.4 %); DE's 0.98 comes from one of the two offsets; the gain
 is EVCONF-CHECKED (the run-time form of EA), which only AllOpt contains. "= stock": the build is
