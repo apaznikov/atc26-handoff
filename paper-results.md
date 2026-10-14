@@ -662,9 +662,9 @@ ops/s, AllOpt 194.3k; server CPU per run 1166 s and 510 s. Read under a declared
 
 | server threads | AllOpt (removal) over stock | EA with the run-time ownership check merged in, over stock | AllOpt over that EA | status |
 |---|---|---|---|---|
-| 8 | 1.89× (offsets 1.875 / 1.904) | 1.85× (1.836 / 1.863) | 1.02 | current (2 offsets × N = 1; second repetition running) |
-| 6 | 1.96× (1.971 / 1.955) | 1.86× (1.898 / 1.831) | 1.05 | current |
-| 4 | 2.10× (2.089 / 2.110) | 2.05× (2.021 / 2.078) | 1.02 | current |
+| 8 | 1.90× [1.88, 1.90] | 1.85× [1.84, 1.86] | 1.03 | final (two repetitions pooled, four offset cells) |
+| 6 | 1.97× [1.94, 2.01] | 1.88× [1.83, 1.92] | 1.05 | final |
+| 4 | 2.11× [2.09, 2.11] | 2.06× [2.03, 2.07] | 1.02 | final |
 | 2 | 2.27× [2.25, 2.29] | 2.23× [2.22, 2.24] (a second leg over its own stock, 8 of 8 valid, housekeeping CPUs quiet; plain EA without the merge: 1.00) | 1.02 (across the two legs) | final |
 
 14 Oct 07:05-08:27, 18 of 18 valid, 0 void, declared co-load 0.02-0.20. Server CPU per run at 8 / 6 / 4 threads:
