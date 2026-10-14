@@ -387,10 +387,16 @@ replace the two tables around them:
 |---|---|---|---|---|---|---|---|
 | Redis | 4.82 s | 5.09 s | 15.08 s (whole-program step 4.61 s + build 10.48 s) | +6 % | +213 % | +197 % | final |
 | SQLite | 22.31 s | 24.93 s | 38.64 s | +12 % | +73 % | +55 % | final |
-| FFmpeg (N1 placed statically) | 64.10 s | 74.62 s | 84.86 s | +16 % | +32 % | +14 % (compiler CPU time: +26 %) | final |
-| memcached (configure run once) | | | | | | about +20 % (earlier, with configure run twice: +76 %) | pending (rerun of the window's nine builds; the first read was slowed in all arms) |
-| MySQL | | | | | | | pending (third round running; means of two: +25 % over native, +16 % over stock, verified form) |
+| FFmpeg (N1 placed statically) | 64.10 s | 74.62 s | 84.86 s | +16 % | +32 % | +14 % | final |
+| memcached (configure run once) | 6.84 s | 9.40 s | 11.38 s (whole-program step with the one configure 9.12 s + build 2.23 s) | +37 % | +66 % | +21 % (19-21 % over four sets of nine builds; with configure run twice it read +76 %) | final (quote the ratio: configure ran in a slower mode in this window in every arm, so the seconds are this window's) |
+| MySQL (Release, verified form, 6 jobs) | 853.8 s | 920.3 s | 1067.8 s | +8 % | +25 % | +16 % | final (rounds 1-2 of 13 Oct and round 3 of 14 Oct; per arm 820-873, 858-930, 1018-1084 s) |
 | Chromium | see the row below | | | −1 % | +10 % | +11 % | current |
+
+Summed CPU time of the build's processes (50 Hz sampler, second number only), adopted over stock: memcached +35 %,
+Redis +162 %, SQLite +45 %, FFmpeg +23 %, MySQL +19 % (round 3). Wall and CPU differ in a known direction: FFmpeg
+and MySQL read higher by CPU (a serial setup shared by all arms dilutes the wall ratio), Redis and SQLite lower (the
+adopted build is bounded by its largest unit). Range of the wall figure, adopted over native: +10 % (Chromium, CPU
+time of sampled units) and +25 % (MySQL) to +213 % (Redis); over stock +11 % to +197 %.
 
 **With DE in removal form, one window** (14 Oct, the adopted removal lines; native, stock and adopted alternating,
 3 builds per arm, medians, 8 jobs; the host was not quiet, load 2.7 to 16, so the status is current):
