@@ -682,3 +682,8 @@ Per transcode at 4 threads, adopted / DynSTC: copy 2.52 / 2.55, h264 1.00 / 1.00
 point: on FFmpeg the gain is the inline hit test with the run-time single-thread test, on the stream copy; the
 static analyses and DE add
 nothing measurable on top of it.
+
+Pooled with the second repetition (14 Oct 11:51-13:20; 25 of its 36 runs at 16, 8 and 4 threads retired by
+provenance: a compile ran on the measuring CPUs 12:00-13:04), adopted | DynSTC: 16 threads 1.27 [1.25, 1.28] |
+1.27 [1.25, 1.30]; 8 (first repetition only) 1.27 [1.25, 1.28] | 1.28 [1.27, 1.30]; 4: 1.27 [1.27, 1.28] | 1.28
+[1.26, 1.28]; 2: 1.27 [1.27, 1.28] | 1.28 [1.27, 1.29]. Flat in threads in every transcode. final.
