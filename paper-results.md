@@ -48,8 +48,8 @@ peeling, no DynSTC, no FE-INL), over stock, 2 offsets × N = 2:
 | FFmpeg | 1.00 [1.00, 1.01] (copy 1.01, h264 1.01, h265 1.00, mjpeg 1.00; A/A 1.00 [0.99, 1.00]; 12 of 12 valid) | final (14 Oct) |
 | SQLite | 1.23 [1.18, 1.27] (offsets 1.250 / 1.207; A/A 0.99 [0.95, 1.04]; 12 of 12 valid, 0 void; housekeeping CPUs quiet) | final (14 Oct): the four analyses carry the whole figure of the adopted line (1.24) |
 | Redis | 0.99 [0.98, 1.00] (offsets 0.983 / 0.992; A/A 1.00 [0.98, 1.01]; 12 of 12 valid; MSET 0.98, ZPOPMIN 0.95 [0.90, 1.00], the other five commands 0.99-1.00) | final (14 Oct) |
-| memcached | | pending (14 Oct, about 11:00) |
-| MySQL | not built | |
+| memcached | 1.90 [1.89, 1.90] (offsets 1.897 / 1.892; A/A 1.00 [1.00, 1.01]; 12 of 12 valid, 0 void; housekeeping CPUs quiet; server CPU 917 s against 1841 s; peak resident memory 102 against 107 MiB) | final (14 Oct): the four analyses carry the whole figure of the adopted line (1.91) |
+| MySQL | not built; of the four only EA changes anything, 1.01 [1.00, 1.01] as a single | |
 
 **The base.** "Stock" in this table is the stock program built by the same compiler root with every optimization
 off and run on that root's runtime. For memcached that base is 4.7 % slower than upstream LLVM's TSan (leg of
