@@ -222,7 +222,8 @@ Text size includes the statically linked runtime.
 | Redis | adopted, DE in removal form | 3,484 | 37,706 | 19 | 41,209 (37,941) | +8.6 % | +90.8 % | 2.55× | final |
 | FFmpeg | N1 placed statically, DE in removal form | 509,974 | 39,265 | 0 | 549,239 (514,609) | +6.7 % | +0.9 % | 1.26× | final |
 | FFmpeg | N1 at every check, DE in removal form | 65,086 | 484,774 | 0 | 549,860 (514,609) | +6.9 % | +87.4 % | 3.06× | final |
-| MySQL | FE-INL line (DE in its verified form, MySQL's adopted form) | 638,391 | 26,566 | 0 | 664,957 (599,000) | +11.0 % | −6.6 % | 1.31× | final |
+| MySQL | FE-INL line, DE in removal form (adopted 14 Oct) | 635,872 (10,398 of them `__tsan_write*_keep`) | 0 | 0 | 635,872 (599,000) | +6.2 % | −6.2 % | 1.28× | final (single configurations in removal form: DE Q 577,478, −3.6 %, text 0.998×; DE+Peeling 639,765, +6.8 %, 1.023×) |
+| MySQL | FE-INL line (DE in its verified form, MySQL's adopted form) | 638,391 | 26,566 | 0 | 664,957 (599,000) | +11.0 % | −6.6 % | 1.31× | final (the verified form, for reference) |
 | Chromium, stock | | 13,588,706 | 0 | 0 | 13,588,706 | | | 773.7 MB | final |
 | Chromium | the four analyses + FE-INL + MEMINTR | 13,483,741 | 0 | 0 | 13,483,741 (13,588,706) | −0.8 % | +0.8 % | 1.18× | final |
 | Chromium | AllOpt (+ N1) | 1,173,107 | 12,331,507 | 0 | 13,504,614 (13,588,706) | −0.6 % | +91.4 % | 2.99× | final |
