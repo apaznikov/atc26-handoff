@@ -506,6 +506,13 @@ Range over the five applications, adopted over native: +25 % (MySQL) to +219 % (
 | memcached | AllOpt (EVCONF-CHECKED) | 1.81× over upstream stock | 9.32 s | 16.32 s | +75 % | final (3 builds per arm; native 6.85 s: stock +36 % and AllOpt +138 % over native; the whole-program summary step is 6.53 s of the 16.32 s, without it +5 % over stock) |
 | Chromium | AllOpt | 1.25× | | | +10 % (CPU time, 400 sampled units) | final |
 
+**Build time recovered by testing (14 Oct, for the text of section 4 and the conclusion).** Testing time under Original
+TSan after which the added build time is recovered, at the measured speedup S over Original TSan: added build time /
+(1 − 1/S). Memcached: measured directly, one workload run is 100 s shorter (226 → 126 s) against +2.0 s of build.
+Redis 12.3 s / (1 − 1/1.43) ≈ 41 s; SQLite 13.7 s / (1 − 1/1.30) ≈ 59 s (z9R line; s9H's row comes tonight);
+MySQL 149.6 s / (1 − 1/1.10) ≈ 27 min (Release build row; RelWithDebInfo row tonight). FFmpeg is not quoted: its
+speedup is a geometric mean over transcodes, and the wall time of the four transcodes does not shrink (86.3 → 86.6 s).
+
 ## 6. Race preservation
 
 Runs that report the site, of runs made; reporting on; stock and the configuration under the same load.
