@@ -612,7 +612,7 @@ manager: stock 3 of 10, arm 0 of 10, and the arm is stock's own binary; (3) memc
 reader is reported in 7 of 10 (stock 3 of 10), the writer site in 10 of 10. With about 400 pair-arm comparisons at
 the 5 % rule, hits on unchanged checks are expected; each is settled by reading the binary. Extension of 14 Oct,
 10 more runs per arm: both MySQL pairs are kept: (1) arm 2 of 20, stock 9 of 20 (kept at a lower rate, both
-checks present); (2) arm 2 of 20, stock 3 of 20. memcached's pair: extension running. Chromium's PartitionAlloc race (stock 11 of 21, AllOpt 2 of 19): the same race in
+checks present); (2) arm 2 of 20, stock 3 of 20. memcached's pair: kept (DE alone 4 of 30 runs, stock 4 of 20). All rule hits are settled as kept. Chromium's PartitionAlloc race (stock 11 of 21, AllOpt 2 of 19): the same race in
 every build; AllOpt's library keeps both checks (the read through the inline test's miss path, the write
 unconditional), so no check is removed; the logs do not separate timing from shadow eviction. current.
 
