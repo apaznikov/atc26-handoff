@@ -372,7 +372,24 @@ difference. From the final leg's records total CPU is equal in both arms (145.0 
 the lock is not measured.** The figure is reproducible but sensitive to scheduling; a robustness series over
 pinnings without perf is running.
 
-**Decision 14 Oct: the paper's SQLite metric is statements attempted per run (sum over threads), not statements OK; every SQLite figure is recomputed in attempts (requested from the timing lane).**
+**Decision 14 Oct: the paper's SQLite metric is statements attempted per run (sum over threads), not statements OK; every SQLite figure is recomputed in attempts (14 Oct, from the kept per-thread lines; no leg lacks them).**
+
+SQLite in statements attempted (final for the paper; OK figures in brackets):
+
+| figure | attempts | OK |
+|---|---|---|
+| AllOpt over upstream, record cell sqm4 (removal line) | 1.298 [1.248, 1.358] | 1.230 |
+| AllOpt over the root's stock, sqm4 | 1.327 [1.277, 1.381] | 1.238 |
+| upstream over the root's stock, sqm4 | 1.022 [0.984, 1.052] | |
+| slowdown: native over upstream, sqm4 | 5.632 [5.467, 5.926] | 5.18 |
+| A/A, sqm4 | 0.991 [0.960, 1.018] | |
+| sql4: LO / AllOpt over stock | 1.362 [1.322, 1.398] / 1.338 [1.304, 1.367] | 1.27 / 1.26 |
+| CPU series AllOpt (LO): 16 CPUs / 8 CPUs | 1.390 (1.426) / 1.511 (1.534) | |
+| Sound arm (sqz2) | 1.310 [1.243, 1.371] | 1.23 |
+| DE removal / DE+P (sqd2) | 0.953 / 0.982 | |
+| singles (sqs2): LO / EA / DE / DE+P / FE-INL / DynSTC | 1.347 / 0.962 / 1.025 / 1.014 / 1.032 / 0.996 | |
+
+Source: experiments.md, section "SQLite in STATEMENTS ATTEMPTED". The contended writers attempt more and complete fewer, so every LO-MARK figure reads about 7 points higher in attempts.
 
 **What the SQLite figure counts** (13 Oct, from the per-thread "ok/attempted" lines of the two undisturbed
 sessions, 3 runs per arm each): "statements OK" rises 38,001 → 47,731 (1.26×), carried by four threads that run
