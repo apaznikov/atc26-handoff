@@ -261,6 +261,17 @@ without lowering Q; loop peeling and SQLite's function copies duplicate code tog
 adds 11-17 % to Q). The single analyses that remove checks are small here: EA 0.6-5.9 %, STC up to 3.2 %, SWMR up
 to 2.7 %. The pass's own statistics follow.
 
+**How the submitted static reduction was counted** (read-only reconstruction of 14 Oct from the paper repository's
+history and the archive): runtime call sites in the binary, counted by disassembly, of AllOpt with peeling on the
+March compiler (9f5d402) against stock; the 12 Mar commit wrote the share of sites remaining, the 17 Mar commit
+turned it into the share removed (60.8 / 34.7 / 64.9 / 55.6 / 14.5 %). The raw counts and the categories summed are
+not recorded; the source of Chromium's 28.0 % was not found. Rebuilt in September, that compiler removes 57-76 % of
+memory-access call sites, and most of that came from two DE tests later found unsound (the path check and the
+same-location test: 53.8 % removed by DE on the corpus then, 1.9 % after the fixes; AllOpt on the corpus 66.5 % →
+3.5 %). By today's binaries the same quantity reads +3.3 % (memcached), +0.9 % (FFmpeg), −21.6 % (SQLite), −6.2 %
+(MySQL), +90.8 % (Redis, inline tests replacing calls). So the submitted figure cannot be reproduced by a sound
+compiler; what the analyses remove before peeling copies code is the pass-statistics share below (0.6-12.4 %).
+
 **Checks by form, from the pass's statistics** (13 Oct; each arm's flag line compiled once with statistics saved
 per object, summed over the program; counts are after duplication by peeling and function copies, which the pass
 cannot tell apart, so they are not per source access):
