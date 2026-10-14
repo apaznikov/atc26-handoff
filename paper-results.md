@@ -213,6 +213,13 @@ about 10 %); in the counting loops of 12-13 Oct, the two builds in turn, AllOpt 
 STC 1.001, DynSTC 1.169. Singles rd44 offsets 00/16 on 14 Oct, 32/48 on 15 Oct (each offset its own leg and stock).
 In the paper (PR #54, 15 Oct): Fig. 8 Redis panel and "1.47x".
 
+**FFmpeg final bars (apollo, 4 offsets × N = 4, 16/16 valid per arm; over the root's stock; CSV
+/extra/alexey/wt-exp-bars/ffmpeg_final.csv).** STC+DynSTC (fzm4, 15 Oct 06:12-07:45, own stock and A/A) 1.274
+[1.269, 1.279]; SWMR 0.997; LO 0.999; EA 1.001; DE 1.023 [1.014, 1.054]; DE+P 1.015 [1.001, 1.043]; FE-INL 1.004;
+AllOpt (record cell ffm4, adopted static line) 1.272 [1.267, 1.280] (hit-test line 1.322); A/A 1.005 and 0.999.
+Unmerged: STC 0.996, DynSTC 1.276. Mixed-time cell: ff44 offset 16 (14 Oct 19:13-~19:3x + 15 Oct 00:29-01:24).
+In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
+
 **Preliminary bars of 14 Oct night (apollo, 2 offsets × N = 1-2, merged STC = STC + DynSTC form per app).**
 Decision 14 Oct ~23:00: the per-application panels are drawn over the root's own stock (caption says so); headline
 text over Original TSan. Ratios over the ROOT'S STOCK (over upstream in brackets where given):
