@@ -220,6 +220,10 @@ configuration 12.0×, AllOpt 10.6× slower than native. CPU time of the browser'
 suite 2.8-8.2). Memory, stock over native: sampled peak of the browser's cgroup 4.3× (3.4-6.4); largest process
 3.6× (1.27-1.30 against 0.36 GiB). The earlier reading with stock from another session was 13.4×. final.
 
+Chromium memory, Speedometer, AllOpt over stock pooled over the three Intel legs (8 repetitions, each over its own
+stock): browser-tree peak (anonymous + shared, sampled) 1.03 (0.93-1.09), within the metric's A/A spread (0.91-1.08),
+so not resolved from stock; largest process (the renderer) peak RSS 1.55 (1.54-1.59), A/A 0.99-1.00, resolved. final.
+
 Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.06×, AllOpt 1.54× on Intel
 (Speedometer); 1.09× and 1.77× on AMD (mapped code; allocated memory unchanged). current.
 
