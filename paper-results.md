@@ -206,6 +206,13 @@ about 10 %); in the counting loops of 12-13 Oct, the two builds in turn, AllOpt 
 
 **Decision 15 Oct ~00:10: one base in the whole paper, "Original TSan" = the root's own stock (as in the submitted paper); no upstream/stock distinction in the text.** Headline over the root's stock: max 1.91× (memcached), peak 2.27× (memcached, 2 threads); slowdowns over native: memcached 8.5, Redis 6.2, FFmpeg 2.8, SQLite 5.8 (attempts), MySQL 10.0, Chromium 9.6; FFmpeg per transcode H.264 1.29, MJPEG 6.3.
 
+**Redis final bars (apollo, 4 offsets × N = 4, 16/16 valid per arm; over the root's stock; CSV
+/extra/alexey/wt-exp-bars/redis_final.csv).** STC+DynSTC (rzm4, 15 Oct 05:09-06:07, own stock and A/A) 1.159
+[1.149, 1.173]; SWMR 1.000; EA 1.007; DE 1.095 [1.086, 1.104]; DE+P 1.091 [1.079, 1.102]; FE-INL 1.061
+[1.043, 1.076]; AllOpt (record cell rdm4) 1.471 [1.447, 1.488]; A/A 0.999 in both legs; LO = stock. Unmerged:
+STC 1.001, DynSTC 1.169. Singles rd44 offsets 00/16 on 14 Oct, 32/48 on 15 Oct (each offset its own leg and stock).
+In the paper (PR #54, 15 Oct): Fig. 8 Redis panel and "1.47x".
+
 **Preliminary bars of 14 Oct night (apollo, 2 offsets × N = 1-2, merged STC = STC + DynSTC form per app).**
 Decision 14 Oct ~23:00: the per-application panels are drawn over the root's own stock (caption says so); headline
 text over Original TSan. Ratios over the ROOT'S STOCK (over upstream in brackets where given):
