@@ -568,7 +568,9 @@ unconditional), so no check is removed; the logs do not separate timing from sha
 
 The four analyses without DE and without run-time-checked parts (14 Oct, seeded builds, 10 runs per arm): Redis,
 ten seeds in 10 of 10 runs and the timing-dependent one in 8 of 10, as its seeded stock (8 of 10); FFmpeg, all 9
-seeds in 10 of 10, as its seeded stock. No seeded race lost. memcached and SQLite: running. current.
+seeds in 10 of 10, as its seeded stock. No seeded race lost. SQLite (10 against 10, no void line): stock's 4 line
+pairs, 2 function pairs and 3 writer sites all kept (5 / 3 / 3 / 3 of 10 against 4 / 4 / 4 / 2). memcached: the 4
+writer sites in 10 of 10 runs in both, none lost (the function-pair table follows). current.
 
 Other applications: 10 stock against 10 optimized runs each, no site lost (memcached 4 sites, MySQL 232-236;
 Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries).
