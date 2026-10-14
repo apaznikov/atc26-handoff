@@ -368,6 +368,19 @@ adopted medians of Redis and SQLite are from earlier windows, so those two ratio
 | SQLite | 22.20 s | 25.25 s | 37.53 s | +14 % | +69 % | current (across windows) |
 | MySQL | 863.4 s | 925.0 s | 1,075.9 s | +7 % | +25 % (+16 % over stock) | current (means of 2 builds per arm, 13 Oct; Release, the verified form of DE) |
 
+**Final window, DE in removal form** (14 Oct 08:00-08:29, host quiet apart from the builds, adopted removal lines;
+native, stock and adopted alternating, 3 builds per arm, medians, 8 jobs; spread per arm within 3.3 %). These rows
+replace the two tables around them:
+
+| app | native | stock TSan | adopted | stock over native | adopted over native | adopted over stock | status |
+|---|---|---|---|---|---|---|---|
+| Redis | 4.82 s | 5.09 s | 15.08 s (whole-program step 4.61 s + build 10.48 s) | +6 % | +213 % | +197 % | final |
+| SQLite | 22.31 s | 24.93 s | 38.64 s | +12 % | +73 % | +55 % | final |
+| FFmpeg (N1 placed statically) | 64.10 s | 74.62 s | 84.86 s | +16 % | +32 % | +14 % (compiler CPU time: +26 %) | final |
+| memcached (configure run once) | | | | | | about +20 % (earlier, with configure run twice: +76 %) | pending (rerun of the window's nine builds; the first read was slowed in all arms) |
+| MySQL | | | | | | | pending (third round running; means of two: +25 % over native, +16 % over stock, verified form) |
+| Chromium | see the row below | | | −1 % | +10 % | +11 % | current |
+
 **With DE in removal form, one window** (14 Oct, the adopted removal lines; native, stock and adopted alternating,
 3 builds per arm, medians, 8 jobs; the host was not quiet, load 2.7 to 16, so the status is current):
 
