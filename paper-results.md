@@ -120,6 +120,8 @@ DE's gain is on mjpeg (1.10). The compiled code adds 1.09 on top of the option i
 is EVCONF-CHECKED (the run-time form of EA), which only AllOpt contains. "= stock": the build is
 byte-identical to stock and was not timed.
 
+FFmpeg slowdown over native with UPSTREAM stock as the base, record cell ffm4 (4 offsets × N = 4): h264 1.28 [1.25, 1.29], mjpeg 6.00 [5.87, 6.21], h265 1.41 [1.40, 1.42], copy 5.00 [4.93, 5.08], composite 2.71 [2.69, 2.74]. final (quoted in the slowdown paragraph).
+
 FFmpeg, per transcode in the final leg (N1 at every check / N1 placed statically, over stock; stock's slowdown
 over native): copy 2.71 / 2.44; 5.1× (native takes 0.11 s on a 0.01 s clock, coarse); mjpeg 1.08 / 1.04; 6.3×;
 h265 1.00 / 1.00; 1.42×; h264 0.94 / 0.93; 1.29×. The static line is 0.963 [0.955, 0.971] of the other and costs
