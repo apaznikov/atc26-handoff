@@ -223,7 +223,7 @@ A/A 1.009. WebP (N=3): 1.006 / 1.031 / 1.048 / 1.068 / 1.078, A/A 1.051 (noise a
 transform-changes: 1.007 / 0.957 / 1.023 / 1.132 / 1.401, A/A 1.012. SVG SvgCubics: 0.999 / 0.995 / 0.976 / 1.134 /
 1.341, A/A 1.013.
 DMIR (a-p13, one run each unless noted): Redis 97.6 % (1,607,120 → 38,921 granules); memcached 30.0 % (2,753,714 →
-1,926,327, fixed 50 M ops); SQLite at FIXED WORK (threadtest3 patched in the DMIR copy: create_drop_index_1 3000, stress2 200 loops per thread; 3 runs each): stock 380,162, z9R 379,972 (0.0 %), s9H 396,941 (−4.4 %); this replaces the earlier 11-20 % (unequal work); FFmpeg, MySQL after ~02:05.
+1,926,327, fixed 50 M ops); SQLite at FIXED WORK (threadtest3 patched in the DMIR copy: create_drop_index_1 3000, stress2 200 loops per thread; 3 runs each): stock 380,162, z9R 379,972 (0.0 %), s9H 396,941 (−4.4 %); this replaces the earlier 11-20 % (unequal work); MySQL time-bounded (3 scripts × 60 s; AllOpt did 15-19 % fewer events, so not fixed work): insert 1.5 %, update 0.0 %, delete 2.5 %, sum 1.3 %; fixed-events rerun pending. FFmpeg: rebuilding on a-p13.
 Preservation (a-p13, 10 vs 10): memcached merged STC: no site lost (11/11 identical). MySQL merged STC: 188 identical,
 6 undetermined, 1 lost by rule (PFS_statement_stat::aggregate_memory_size, stock 3/10, arm 0/10) — extension after
 ~02:05.
