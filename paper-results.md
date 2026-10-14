@@ -671,6 +671,12 @@ ops/s, AllOpt 194.3k; server CPU per run 1166 s and 510 s. Read under a declared
 stock 1851 / 1601 / 1237 s, AllOpt 921 / 775 / 573 s. The gain rises as the server threads fall and the merged EA
 configuration carries it at every point; the full line adds 2-5 %.
 
+Why the gain grows as server threads fall (records of the sweep, medians): server CPU per request, stock → AllOpt,
+8 threads 35.9 → 17.6 µs (2.04×), 6: 29.1 → 14.2 (2.05×), 4: 24.0 → 11.0 (2.19×), 2: 23.2 → 10.0 (2.31×); the
+throughput ratio follows the CPU-per-request ratio. The ownership-check census is the same at every thread count
+(about 1,010 keys, 1,510 marks, 338 k verifies, 0 drops per run), so the run-time check's own work does not explain
+the trend. final.
+
 SQLite (13 Oct, on walthread1, the submitted paper's sweep workload, since stress2 has a fixed thread set; 20 s
 per run, 4 runs per arm, 32 of 32 valid): AllOpt over stock 1.00 [0.99, 1.00] at 16 threads, 1.01 [1.00, 1.03] at
 8, 1.00 [0.97, 1.03] at 4, 1.01 [0.98, 1.03] at 2. The run-time census reads 0 marks and 0 held hits in every run:
