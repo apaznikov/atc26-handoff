@@ -600,6 +600,17 @@ Second sweep with the adopted line in removal form (14 Oct; points at 8, 6 and 4
 ops/s, AllOpt 194.3k; server CPU per run 1166 s and 510 s. Read under a declared co-load on the housekeeping CPUs
 (0.07-0.26 per cell, 7 of 13 cells below 0.10, none above 0.40). Peak over all points: 2.27×. final.
 
+| server threads | AllOpt (removal) over stock | EA with the run-time ownership check merged in, over stock | AllOpt over that EA | status |
+|---|---|---|---|---|
+| 8 | 1.89× (offsets 1.875 / 1.904) | 1.85× (1.836 / 1.863) | 1.02 | current (2 offsets × N = 1; second repetition running) |
+| 6 | 1.96× (1.971 / 1.955) | 1.86× (1.898 / 1.831) | 1.05 | current |
+| 4 | 2.10× (2.089 / 2.110) | 2.05× (2.021 / 2.078) | 1.02 | current |
+| 2 | 2.27× [2.25, 2.29] | queued (plain EA without the merge: 1.00) | | final for AllOpt |
+
+14 Oct 07:05-08:27, 18 of 18 valid, 0 void, declared co-load 0.02-0.20. Server CPU per run at 8 / 6 / 4 threads:
+stock 1851 / 1601 / 1237 s, AllOpt 921 / 775 / 573 s. The gain rises as the server threads fall and the merged EA
+configuration carries it at every point; the full line adds 2-5 %.
+
 SQLite (13 Oct, on walthread1, the submitted paper's sweep workload, since stress2 has a fixed thread set; 20 s
 per run, 4 runs per arm, 32 of 32 valid): AllOpt over stock 1.00 [0.99, 1.00] at 16 threads, 1.01 [1.00, 1.03] at
 8, 1.00 [0.97, 1.03] at 4, 1.01 [0.98, 1.03] at 2. The run-time census reads 0 marks and 0 held hits in every run:
