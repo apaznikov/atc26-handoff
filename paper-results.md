@@ -20,6 +20,8 @@ submission's (they were chosen for a larger share of TSan overhead); the text mu
 | memcached | pipelined 32-key gets, 190-byte keys | AMD | `tsan-ecc-b54ce0196884` | |
 | Chromium 127.0.6533.119 | blink_perf (two story samples), Speedometer 3.0 (the tree's `speedometer3` benchmark; it has no 3.1) | Intel | `tsan-cr-8345a0396fa5` | component build, DCHECKs on |
 
+Compiler: every root reports `clang version 19.0.0git` (checked 14 Oct on `tsan-cr-8345a0396fa5`). Native arm of each record cell: one build (the unpadded tree), run once per offset slot and pass, 4 × 4 = 16 runs (memcached m4n__, Redis r5n__, FFmpeg f2n__, SQLite s9n__, MySQL y8n__); Chromium native: one build, six Speedometer runs, one run per hold-out story.
+
 **Host condition of the AMD legs of 12-13 Oct (found 13 Oct).** Until 13:09 on 13 Oct, interactive sessions of
 the measuring account that are not part of the benchmark were allowed on the CPUs of the host's second measuring
 half (16-31, 48-63): mostly idle, at times a burst of a compile or a search for one to two minutes. Every leg on
