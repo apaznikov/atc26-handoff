@@ -636,7 +636,7 @@ ops/s, AllOpt 194.3k; server CPU per run 1166 s and 510 s. Read under a declared
 | 8 | 1.89× (offsets 1.875 / 1.904) | 1.85× (1.836 / 1.863) | 1.02 | current (2 offsets × N = 1; second repetition running) |
 | 6 | 1.96× (1.971 / 1.955) | 1.86× (1.898 / 1.831) | 1.05 | current |
 | 4 | 2.10× (2.089 / 2.110) | 2.05× (2.021 / 2.078) | 1.02 | current |
-| 2 | 2.27× [2.25, 2.29] | queued (plain EA without the merge: 1.00) | | final for AllOpt |
+| 2 | 2.27× [2.25, 2.29] | 2.23× [2.22, 2.24] (a second leg over its own stock, 8 of 8 valid, housekeeping CPUs quiet; plain EA without the merge: 1.00) | 1.02 (across the two legs) | final |
 
 14 Oct 07:05-08:27, 18 of 18 valid, 0 void, declared co-load 0.02-0.20. Server CPU per run at 8 / 6 / 4 threads:
 stock 1851 / 1601 / 1237 s, AllOpt 921 / 775 / 573 s. The gain rises as the server threads fall and the merged EA
