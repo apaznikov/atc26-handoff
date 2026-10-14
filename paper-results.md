@@ -52,6 +52,10 @@ configurations in one leg, A/A 1.001 [1.000, 1.002]), transactions over stock: S
 [0.999, 1.001], LO 1.00 [1.002, 1.005], EA 1.01 [1.007, 1.011], DE (removal) 1.01 [1.003, 1.008], DE+Peeling
 (removal) 1.00 [1.000, 1.004], DynSTC 1.00 [0.999, 1.001], FE-INL 1.07 [1.062, 1.067], **AllOpt (removal) 1.07
 [1.073, 1.076]** (1.074). final.
+Three-decimal points: STC 1.002, SWMR 1.000, LO 1.003, EA 1.009, DE 1.005, DE+Peeling 1.002, DynSTC 1.000, FE-INL
+1.065, AllOpt 1.074. Write set, three-decimal points: STC 1.002, SWMR 0.998, LO 1.002, EA 1.009 [1.003, 1.013], DE (removal)
+1.005 [0.998, 1.011], DE+Peeling (removal) 1.003 [0.994, 1.013], DynSTC 0.998 [0.992, 1.002], FE-INL 1.087 [1.084, 1.090],
+AllOpt 1.0997 [1.0959, 1.1042].
 
 **The four analyses together** (STC + SWMR + LO + EA, each as in its single-configuration column, no DE, no
 peeling, no DynSTC, no FE-INL), over stock, 2 offsets × N = 2:
