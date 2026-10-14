@@ -435,7 +435,8 @@ replace the two tables around them:
 | SQLite | 22.31 s | 24.93 s | 38.64 s | +12 % | +73 % | +55 % | final |
 | FFmpeg (N1 placed statically) | 64.10 s | 74.62 s | 84.86 s | +16 % | +32 % | +14 % | final |
 | memcached (configure run once) | 6.84 s | 9.40 s | 11.38 s (whole-program step with the one configure 9.12 s + build 2.23 s) | +37 % | +66 % | +21 % (19-21 % over four sets of nine builds; with configure run twice it read +76 %) | final (quote the ratio: configure ran in a slower mode in this window in every arm, so the seconds are this window's) |
-| MySQL (Release, verified form, 6 jobs) | 853.8 s | 920.3 s | 1067.8 s | +8 % | +25 % | +16 % | final (rounds 1-2 of 13 Oct and round 3 of 14 Oct; per arm 820-873, 858-930, 1018-1084 s) |
+| MySQL (Release, removal form (adopted), 6 jobs, 14 Oct 15:05-18:19) | 840.0 s | 875.0 s | 1024.6 s | +4 % | +22 % | +17 % (added 149.6 s; CPU sum +18 %) | final (median of rounds 1, 3, 4; round 2 retired by provenance) |
+| MySQL (Release, verified form, 6 jobs) | 853.8 s | 920.3 s | 1067.8 s | +8 % | +25 % | +16 % | superseded by the removal form (rounds 1-2 of 13 Oct and round 3 of 14 Oct; per arm 820-873, 858-930, 1018-1084 s) |
 | Chromium | see the row below | | | −1 % | +10 % | +11 % | current |
 
 One run of the paper workload, wall seconds (record cells): memcached (fixed requests) upstream 226, root's stock 237, AllOpt 126;
