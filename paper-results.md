@@ -653,6 +653,14 @@ speedup is a geometric mean over transcodes, and the wall time of the four trans
 
 Runs that report the site, of runs made; reporting on; stock and the configuration under the same load.
 
+Memcached, the adopted line (kcv__) vs stock (ksa__), 15 Oct 20:24-21:44, apollo half A, N = 10 each, paper-scale
+workload, both rc 0: **no site lost at L1, L2 or L3.** Stock 8.4 ± 0.5 reports per run, union 9 races (L1/L2), 4
+(L3); adopted 12.8 ± 0.9, union 11 (L1/L2), 4 (L3). All 9 stock races kept (7 in 10/10 of both; lru_pull_tail
+3/10 → 1/10 and lru_maintainer_juggle 1/10 → 1/10, both rare); 2 only in the adopted line (conn_new /
+clock_handler 0/10 → 10/10, item_crawler_thread / do_item_unlink 0/10 → 4/10). Files
+~/p5-apollo/pres-1015/memcached/ on apollo. The paper's sentence ("every race that Original TSan reported in at
+least four runs was also reported by TSan+AllOpt") holds; final.
+
 SQLite, LO-MARK v1 (the adopted configuration), 12 Oct, 15 tests, 20 runs per arm, three independent stock arms;
 no site lost, no voided run:
 
