@@ -324,6 +324,12 @@ FFmpeg Fig. 16c, one session per thread count (fv02/fv04/fv08/fv16, apollo B, 16
 1.268 | 1.274; 8 thr 1.273 | 1.279; 16 thr 1.262 [1.241, 1.280] | 1.259. Copy 2.52-2.55 at every point, encoders
 0.99-1.05. Replaces the fy+fz pooling. In #63. final.
 
+SQLite Fig. 16b CPU series, same leg per point (s9f02/04/08/16, apollo A, 16 Oct 03:12-06:51, 4 offsets × N=2, 8/8 valid
+per arm), over the root's stock, attempts s9H | LO: 2 CPUs 1.0928 [1.0645, 1.1213] | 1.1214 [1.0817, 1.1649]; 4 CPUs
+1.3292 | 1.3418; 8 CPUs 1.4723 [1.3962, 1.5490] | 1.4372 [1.4125, 1.4710]; 16 CPUs 1.3506 [1.3109, 1.3933] | 1.3420
+[1.3020, 1.3770]. OK: 1.0706 | 1.0742; 1.2657 | 1.2746; 1.3470 | 1.3254; 1.2621 | 1.2558. Overlap at every point; peak
+at 8. Replaces sc/s9c (14 Oct). In #63. final.
+
 ## 3. Slowdown over native, memory
 
 Slowdown = figure of merit of native over the build's. Memory: peak resident memory of the timed process; the
