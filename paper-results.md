@@ -602,6 +602,14 @@ select_random_ranges 2.8 %; select_random_points 4.2 %. Calls at function entry 
 42-109 thousand to 91-228: they are inlined, which is where MySQL's gain comes from. current.
 Chromium code size over stock: FE-INL configuration 1.18×, AllOpt 3.0× (2.99×), over the main binary and all libraries. final.
 
+Chromium DIR / DMIR (CRDIR, focs, 16 Oct 03:15-05:42; root 8345; 47 hold-out stories × 2 runs × 3 arms, fixed work,
+gshim3 counting over all 486 libraries; html5-full-render excluded: it does not finish in 900 s on stock or CR1):
+DIR, stock vs CR1+N1: runtime access entries −65.0 % (runs 65.06 / 64.98 %; renderers −63.7 %; per story 54-79 %,
+url-parser 25.7 %). DMIR, stock vs CR1 (AllOpt without N1, as for Redis and FFmpeg): granules −0.6 % (CR1 slightly
+more; runs +0.05 / −1.31 %), i.e. about 0; entries −0.87 %. CR1+N1 granules +5.3 % (the shim cannot see N1 inline
+hits; not a DMIR figure). Controls PASS. Report /extra/alexey/chromium/scratch/crdir/report-all.txt. In #63 (Fig. 11b
+65.0, 11c 0.0). final.
+
 ## 5. Compile time
 
 Over the stock TSan build; fresh trees, medians of 3, wall seconds.
