@@ -257,6 +257,11 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
   [0.991, 1.008]; LO 1.003 [0.998, 1.010]; EA 1.012 [1.007, 1.017]; DE 1.009 [1.000, 1.017]; DE+P 1.007 [0.999,
   1.013]; FE-INL 1.095 [1.086, 1.103]; AllOpt 1.101 [1.092, 1.110] (per script: delete 1.148, insert 1.090, update
   1.065); A/A 1.003 / 1.004. Text "1.07x and 1.10x" (Select FE-INL 1.065, rounded half up).
+  **Final (my44, 4 offsets × N = 4, 16/16 valid per arm, 15 Oct):** STC+DynSTC 1.003 [0.993, 1.025]; SWMR 1.004
+  [0.998, 1.029]; LO 1.002 [0.997, 1.027]; EA 1.007 [1.000, 1.034]; DE 1.004 [0.996, 1.021]; DE+P 1.001 [0.993,
+  1.018]; FE-INL 1.089 [1.082, 1.109]; AllOpt bar = myr4 1.0997 [1.0959, 1.1042] (my44's own AllOpt arm 1.100
+  [1.092, 1.118]; per script delete 1.147, insert 1.090, update 1.065); A/A 1.003 / 1.001. CSV
+  /extra/alexey/wt-exp-bars/mysql_write_final.csv. In the paper (PR #63): Fig. 9b, labels 1.00-1.01, FE-INL 1.09, AllOpt 1.10.
 - SQLite DIR/DMIR in Fig. 11: shown as 0 until re-measured at fixed work (decision 15 Oct ~11:20): at a fixed
   number of iterations, SQLite's contending threads did more work under s9H (1.4 % more statements succeeded),
   so the measured −3.6 % calls / −4.4 % locations follow the workload; s9H never makes more runtime calls per
