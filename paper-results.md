@@ -815,7 +815,7 @@ undetermined (each stock 1 of 10, arm 0 of 10: `monitor_set_max_value` write/wri
 `buf_block_alloc` write/write on `buf_pool_index`; `lock_rec_grant_by_heap_no` / `row_mysql_handle_errors`;
 `ha_innobase::estimate_rows_upper_bound` / `dict_stats_empty_index`; `dict_table_n_rows_dec` /
 `dict_stats_update_persistent`; `check_table_binlog_row_based` write/read), 0 lost by the rule, 7 only in zym
-(a-p13 `apparms/pool20.py`). Pooling with my16 (row above) needs my16's keys, computed on focs in an untimed window.
+(a-p13 `apparms/pool20.py`). **Pooled my16 + my16x + my20 (N=30/30, 15 Oct 16:12):** of 198 stock pairs, 194 identical, 2 undetermined, 2 lost by the 5 % rule, 4 only in zym; per 10-run session neither pair exceeds 2 of 10, so the paper's "reported in at least four runs [of ten]" sentence stands. **Masking check my22 (a-p13, zys vs zym with suppress_equal_addresses=0, 10 interleaved rounds, 20/20 rc 0):** pair A (`dict_table_persist_to_dd_table_buffer_low` / `ha_innobase::open`, dict_table_t +0x158) stock 1/10, zym 2/10 under the same key: not lost (pooled N=40: 5 vs 2). Pair B (`ha_innobase::estimate_rows_upper_bound` / `dict_stats_empty_index`, dict_index_t +0x250) 0/10 in both arms; the race on that field is reported in 10/10 runs of both arms by other reader pairs, and the reader's instrumentation is identical in both builds (objdump): a rare second reader, pooled 3/40 vs 0/40, formally lost by the rule only. Verdict: no race lost. Path: focs /extra/alexey/wt-dev2-r/from-p13/apparms/my22/.
 current.
 
 The four analyses without DE and without run-time-checked parts (14 Oct, seeded builds, 10 runs per arm): Redis,
