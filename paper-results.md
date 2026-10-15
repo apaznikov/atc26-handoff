@@ -225,7 +225,7 @@ crkfy (top-up, 15 Oct 09:33-10:59: stock | Sound | CR1, one run each, own stock,
 **FINAL (round 3 of stock and zym 15 Oct 08:50-09:23, after a gap; medians of 3, fresh tree per build, -j6, root 8345, zym in removal form):** native 773.3 s [767.1, 790.5]; stock 885.3 s [866.9, 900.9]; zym 1016.2 s [1012.3, 1024.9]; zym over stock +131.0 s (+14.8 %), over native +31.4 %. CPU (round 3 only): zym 5,241 s against stock 4,470 s, +17.2 %. Supersedes the Release rows of 14 Oct (+17.1 %). In the paper (PR #60): Fig. 12 MySQL 131.0, text "2.2 minutes".
 **SQLite s9H build time, FINAL (15 Oct, 8 jobs, root 913c, FLAGCHECK 3/3):** native 22.2 s [22.0, 22.3]; stock 28.1 s [27.6, 28.7]; s9H 34.9 s [34.7, 35.6]; +6.8 s (+24.2 %) over stock. In the paper (PR #60): Fig. 12 SQLite 6.8.
 
-**Decision 15 Oct ~00:10: one base in the whole paper, "Original TSan" = the root's own stock (as in the submitted paper); no upstream/stock distinction in the text.** Headline over the root's stock: max 1.91× (memcached), peak 2.27× (memcached, 2 threads); slowdowns over native: memcached 8.5, Redis 6.2, FFmpeg 2.8, SQLite 5.8 (attempts), MySQL 10.0, Chromium 9.6; FFmpeg per transcode H.264 1.29, MJPEG 6.3.
+**Decision 15 Oct ~00:10: one base in the whole paper, "Original TSan" = the root's own stock (as in the submitted paper); no upstream/stock distinction in the text.** Headline over the root's stock: max 1.91× (memcached), peak 2.27× (memcached, 2 threads); slowdowns over native: memcached 8.5, Redis 6.2, FFmpeg 2.8, SQLite 5.8 (attempts; superseded by s9r4: 5.4), MySQL 10.0, Chromium 9.6; FFmpeg per transcode H.264 1.29, MJPEG 6.3.
 
 **Redis final bars (apollo, 4 offsets × N = 4, 16/16 valid per arm; over the root's stock; CSV
 /extra/alexey/wt-exp-bars/redis_final.csv).** STC+DynSTC (rzm4, 15 Oct 05:09-06:07, own stock and A/A) 1.159
@@ -624,7 +624,7 @@ Range over the five applications, adopted over native: +25 % (MySQL) to +219 % (
 
 **Build time recovered by testing (14 Oct, for the text of section 4 and the conclusion).** Testing time under Original
 TSan after which the added build time is recovered, at the measured speedup S over Original TSan: added build time /
-(1 − 1/S). Memcached: measured directly, one workload run is 100 s shorter (226 → 126 s) against +2.0 s of build.
+(1 − 1/S). Memcached: measured directly, one workload run is 100 s shorter (226 → 126 s, upstream; over the root's stock 237 → 126 s = 111 s, the paper's figure since 15 Oct) against +2.0 s of build.
 Redis 12.3 s / (1 − 1/1.43) ≈ 41 s; SQLite 13.7 s / (1 − 1/1.30) ≈ 59 s (z9R line; s9H's row comes tonight);
 MySQL 149.6 s / (1 − 1/1.10) ≈ 27 min (Release build row; RelWithDebInfo row tonight).
 Update 15 Oct 09:40 (final build rows, finals of the speedups): Redis 12.3 s / (1 − 1/1.471) ≈ 38 s; SQLite s9H
