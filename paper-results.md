@@ -243,7 +243,7 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 
 **Memcached final bars (mc44, 4 offsets × N = 4, 16/16 valid per arm; CSV /extra/alexey/wt-exp-bars/memcached_final.csv; offset 00 mixed-time).** STC+DynSTC 0.999 [0.995, 1.002]; SWMR 1.013 [1.010, 1.016]; LO 0.999 [0.995, 1.003]; EA 1.844 [1.836, 1.853]; DE 1.004 [1.002, 1.007]; DE+P 1.005 [1.002, 1.007]; FE-INL 1.001 [0.999, 1.004]; A/A 1.000; AllOpt (mcm4) 1.907 [1.900, 1.917]. In the paper (PR #63): Fig. 8a, "EA alone gives 1.84x".
 
-**Redis/FFmpeg DMIR correction (15 Oct ~13:40):** the 97.6 % / 85.3 % undercount the AllOpt arm's checked locations: a link-time shim does not see accesses settled by N1's inline hit, and the N1 miss entries were read with the address in the wrong register (rdi = thr, rsi = addr). Re-measurement on the AllOpt build without N1 (same accesses checked) queued first on a-p13. Memcached and SQLite are unaffected. **Redis corrected (15 Oct ~14:30): 27.9 %** (AllOpt without N1, phase guard on via TSAN_OPTIONS_EXTRA, shim filtered for runtime-skipped accesses; stock 1.581/1.567/1.604 M vs 1.130/1.157/1.138 M granules, per run −28.6/−26.2/−29.0 %; guard engaged, 0 violations). Earlier Redis runs had no guard (redis.sh replaced TSAN_OPTIONS). In the paper (PR #63): Fig. 11c, text 27.9 %. FFmpeg pending.
+**Redis/FFmpeg DMIR correction (15 Oct ~13:40):** the 97.6 % / 85.3 % undercount the AllOpt arm's checked locations: a link-time shim does not see accesses settled by N1's inline hit, and the N1 miss entries were read with the address in the wrong register (rdi = thr, rsi = addr). Re-measurement on the AllOpt build without N1 (same accesses checked) queued first on a-p13. Memcached and SQLite are unaffected. **Redis corrected (15 Oct ~14:30): 27.9 %** (AllOpt without N1, phase guard on via TSAN_OPTIONS_EXTRA, shim filtered for runtime-skipped accesses; stock 1.581/1.567/1.604 M vs 1.130/1.157/1.138 M granules, per run −28.6/−26.2/−29.0 %; guard engaged, 0 violations). Earlier Redis runs had no guard (redis.sh replaced TSAN_OPTIONS). In the paper (PR #63): Fig. 11c, text 27.9 %. **FFmpeg corrected: 86.9 %** (static line without N1, dynstc_rt=1, filtered shim, 3 runs: 1.603 M → 0.209-0.210 M granules, 86.90-86.94 %; copy 100 % skipped by DynSTC, encoders 8.7-9.0 %). In the paper (PR #63): Fig. 11c, text 86.9 %.
 
 **Partial finals in the paper (PR #54, 15 Oct ~11:00), over the root's stock, 95 % two-level bootstrap.**
 - memcached mc44, offsets 00/16/32 × N = 4 (offset 00 mixed-time): STC+DynSTC 0.998 [0.994, 1.002]; SWMR 1.013
@@ -688,7 +688,8 @@ plain check in the arm, an inline test with no single-mode branch in the adopted
 hide this race; a run without a report is the detector's own miss of the pair, as in stock. The violation is raised
 by a signal handler entering on a quiet thread while the main thread skips, not by the racing access; whether that
 handler check can miss an entry is covered by the suite's deterministic tests, not by this seed. One stray guard violation per arm in 110
-runs. On one seed the arm switches the guard off at a background job (it has no loop peeling, so the start-up
+runs (D1 in 1 of 10 in the arm, S3 in 1 of 10 in the adopted line; S5 raises one in 10 of 10 and S8 in 8 of 10 in
+both; the earlier verified arms r5Y and rdy have S3 in 4 of 10; `wt-dev2-r/seedarms/guardviol-15oct.txt`). On one seed the arm switches the guard off at a background job (it has no loop peeling, so the start-up
 latch sits in the only copy of the loop); the race is reported. current.
 
 memcached, single configurations (13 Oct, non-timed host, 10 runs of stock and of each of STC, SWMR, LO, EA, DE,
