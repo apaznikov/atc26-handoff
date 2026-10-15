@@ -161,6 +161,19 @@ Status: final for the hold-out sample (N = 3) and for the FE-INL configuration o
 AllOpt on the first sample (N = 1). Story counts per suite are those of the hold-out sample; four suites have 2 to
 7 stories, so their medians are indicative only.
 
+Chromium per-benchmark panels (Fig. 9c,d; App. F WebP, SVG), Intel, over the root's stock, 95 % bootstrap over
+repetitions. Single arms: LO = STC = SWMR = one build (STC, SWMR, LO; run with DynSTC), EA = the four-analyses
+build. AllOpt bars: record panels (Paint, WebP, SVG: crkfs, N=8; Parser: 4 repetitions, each over its own stock).
+
+| story | EA | LO/STC/SWMR | DE | DE+peeling | FE-INL | AllOpt (record) | single arms from |
+|---|---|---|---|---|---|---|---|
+| Parser html5-full-render | 0.996 [0.990, 1.003] | 0.990 [0.976, 1.006] | 0.997 [0.982, 1.012] | 0.993 [0.991, 0.996] | 1.100 [1.093, 1.108] | 1.208 [1.195, 1.222] | crkp1 (16 Oct, N=2; its own CR1+N1 1.187) |
+| Paint transform-changes | 1.003 [1.000, 1.006] | 1.001 [0.998, 1.004] | 1.004 [1.000, 1.009] | 0.997 [0.994, 1.000] | 1.104 [1.099, 1.108] | 1.381 [1.378, 1.384] | crks1 (15 Oct, N=4) |
+| WebP decode-lossy-webp | 1.025 [1.016, 1.030] | 1.014 [0.998, 1.029] | 1.025 [1.003, 1.047] | 1.024 [1.006, 1.042] | 1.036 [1.024, 1.049] | 1.048 [1.022, 1.074] | crks1 (N=4) |
+| SVG SvgCubics | 1.011 [0.993, 1.025] | 0.984 [0.946, 1.027] | 0.992 [0.970, 1.017] | 0.976 [0.953, 1.002] | 1.089 [1.074, 1.098] | 1.366 [1.335, 1.396] | crks1 (N=3; its own CR1+N1 1.282) |
+
+Status: current (pass 1); pass 2 (crks2 ~03:15, crkp2 ~06:15) pools in. Speedometer single arms: 16 Oct ~09:30-13:30 (N=1).
+
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
 | | first sample, FE-INL configuration | first sample, AllOpt | hold-out, FE-INL configuration | hold-out, AllOpt |
