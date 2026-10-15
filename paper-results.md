@@ -938,7 +938,7 @@ each point 2 offsets × N = 4, 8 of 8 valid per arm, over the root's own stock; 
 | server threads | AllOpt over stock | EA (ownership check merged in) over stock | stock, ops/s | status |
 |---|---|---|---|---|
 | 8 | 1.902× [1.888, 1.913] | 1.844× [1.834, 1.854] | 216.8k | final (equals the 4×4 cells: mcm4 AllOpt 1.907, mc44 EA 1.844) |
-| 6 | 1.988× [1.948, 2.036] | 1.957× [1.898, 1.999] | 193.2k | final |
+| 6 | 1.993× [1.958, 2.033] | 1.937× [1.898, 1.979] | 193.2k | final (mck6 pooled with a second pass mck6b, 22:06-23:27, 16/16 per arm; mck6b alone AllOpt 1.998, EA 1.916) |
 | 4 | 2.123× [2.115, 2.136] | 2.052× [2.042, 2.067] | 163.9k | final |
 | 2 | 2.277× [2.268, 2.284] | 2.225× [2.217, 2.233] | 85.7k | final |
 
