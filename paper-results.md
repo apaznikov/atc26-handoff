@@ -920,6 +920,11 @@ each point 2 offsets × N = 4, 8 of 8 valid per arm, over the root's own stock; 
 | 4 | 2.123× [2.115, 2.136] | 2.052× [2.042, 2.067] | 163.9k | final |
 | 2 | 2.277× [2.268, 2.284] | 2.225× [2.217, 2.233] | 85.7k | final |
 
+Server CPU per request in the final sweep (memcached user+sys per run over 50 M requests, median of 8 valid runs
+per arm), stock → AllOpt (EA alongside): 2 threads 23.36 → 10.15 µs = 2.30× (EA 10.40, 2.25×); 4: 24.41 → 11.14 =
+2.19× (EA 11.51, 2.12×); 6: 31.88 → 15.43 = 2.07× (EA 15.85, 2.01×); 8: 36.72 → 18.20 = 2.02× (EA 18.76, 1.96×).
+The paper quotes these (2.30× at 2, 2.02× at 8). final.
+
 Why the gain grows as server threads fall (records of the sweep, medians): server CPU per request, stock → AllOpt,
 8 threads 35.9 → 17.6 µs (2.04×), 6: 29.1 → 14.2 (2.05×), 4: 24.0 → 11.0 (2.19×), 2: 23.2 → 10.0 (2.31×); the
 throughput ratio follows the CPU-per-request ratio. The ownership-check census is the same at every thread count
