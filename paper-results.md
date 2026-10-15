@@ -106,7 +106,7 @@ with both options; N1 at every check with `dynstc_rt=1` only 1.32× [1.30, 1.34]
 leg: 0.990 [0.972, 1.009]. Stated as they are, not replaced: the DynSTC column of
 SQLite, memcached and MySQL is the run-time form (`dynstc_rt=1`), which their adopted lines do not use; the EA and
 SWMR columns of SQLite, FFmpeg and MySQL carry MEMINTR and SWMR-ROOTS, which their adopted lines do not use; FE-INL
-is part of AllOpt only for Redis, MySQL and Chromium; SQLite's adopted line is built with DE and peeling. The
+is part of AllOpt only for Redis, MySQL and Chromium; SQLite's adopted line is built with DE and peeling (z9R; since 15 Oct the paper's SQLite line is s9H: no DE, no peeling, see the s9r4 headline). The
 MySQL figure of 1.13× quoted earlier was over upstream stock, the 1.10× here is over the root's own stock.
 
 Single configurations: 2 offsets × N = 2 (core arms 4 × 4), so their intervals are wide; the A/A of SQLite's
@@ -490,7 +490,7 @@ difference. From the final leg's records total CPU is equal in both arms (145.0 
 the lock is not measured.** The figure is reproducible but sensitive to scheduling; a robustness series over
 pinnings without perf is running.
 
-**SQLite line of record (checked 14 Oct from build_info):** the adopted arm of sqm4, sql4 and the CPU series is z9R (root 913cae99c263): DE in removal form + loop peeling + EA + LO with LO-MARK + STC + SWMR. The decision of 12 Oct ("no DE, no peeling") is not what was measured. The compile-time rows of the final window (14 Oct, 08:08-09:22) and Redis's 8-job row are already the removal form (SQLite m6skj8r1 = z9R's flag line); only MySQL's row was the verified form (redone tonight in RelWithDebInfo). The +12.7 s row of 13 Oct is the older verified form z9L.
+**SQLite line of record (checked 14 Oct from build_info; superseded 15 Oct: the paper's line is s9H, no DE and no peeling, record cell s9r4):** the adopted arm of sqm4, sql4 and the CPU series is z9R (root 913cae99c263): DE in removal form + loop peeling + EA + LO with LO-MARK + STC + SWMR. The decision of 12 Oct ("no DE, no peeling") is not what was measured. The compile-time rows of the final window (14 Oct, 08:08-09:22) and Redis's 8-job row are already the removal form (SQLite m6skj8r1 = z9R's flag line); only MySQL's row was the verified form (redone tonight in RelWithDebInfo). The +12.7 s row of 13 Oct is the older verified form z9L.
 
 **Decision 14 Oct: the paper's SQLite metric is statements attempted per run (sum over threads), not statements OK; every SQLite figure is recomputed in attempts (14 Oct, from the kept per-thread lines; no leg lacks them).**
 
@@ -923,3 +923,18 @@ Pooled with the second repetition (14 Oct 11:51-13:20; 25 of its 36 runs at 16, 
 provenance: a compile ran on the measuring CPUs 12:00-13:04), adopted | DynSTC: 16 threads 1.27 [1.25, 1.28] |
 1.27 [1.25, 1.30]; 8 (first repetition only) 1.27 [1.25, 1.28] | 1.28 [1.27, 1.30]; 4: 1.27 [1.27, 1.28] | 1.28
 [1.26, 1.28]; 2: 1.27 [1.27, 1.28] | 1.28 [1.27, 1.29]. Flat in threads in every transcode. final.
+
+Per transcode, pooled first + second repetition (fy 14 Oct 04:02-05:34, fz 11:51-13:20; apollo half B; each repetition over its
+own stock; read 15 Oct 12:0x with the provenance retirements of fz), static (adopted) line | DynSTC arm over the root's stock,
+95 % two-level bootstrap. Valid runs per thread count (stock / static / DynSTC): 16: 8 / 7 / 4; 8: 4 / 4 / 4 (second repetition
+fully retired); 4: 5 / 5 / 6; 2: 8 / 8 / 8.
+
+| threads | composite | copy_passthrough | h264_libx264 | h265_libx265 | mjpeg |
+|---|---|---|---|---|---|
+| 16 | 1.266 [1.252, 1.282] \| 1.268 [1.249, 1.295] | 2.506 \| 2.534 | 1.004 \| 1.003 | 0.996 \| 1.003 | 1.026 \| 1.015 |
+| 8 | 1.267 [1.251, 1.278] \| 1.278 [1.266, 1.295] | 2.534 \| 2.534 | 1.005 \| 1.013 | 1.010 \| 1.011 | 1.000 \| 1.028 |
+| 4 | 1.273 [1.266, 1.281] \| 1.275 [1.264, 1.283] | 2.542 \| 2.561 | 0.997 \| 0.994 | 1.008 \| 1.004 | 1.027 \| 1.035 |
+| 2 | 1.272 [1.265, 1.279] \| 1.280 [1.272, 1.289] | 2.532 \| 2.560 | 0.995 \| 0.998 | 1.002 \| 1.004 | 1.038 \| 1.046 |
+
+The uneven run counts (16, 8 and 4 threads) are replaced by a single-session sweep, 2 offsets × N = 4 per thread count
+(tags fv16-fv02, apollo half B, queued after the MySQL finals, readout ~04:10 on 16 Oct). preliminary until then.
