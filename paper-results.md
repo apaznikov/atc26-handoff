@@ -265,7 +265,7 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 - SQLite DIR/DMIR in Fig. 11: shown as 0 until re-measured at fixed work (decision 15 Oct ~11:20): at a fixed
   number of iterations, SQLite's contending threads did more work under s9H (1.4 % more statements succeeded),
   so the measured −3.6 % calls / −4.4 % locations follow the workload; s9H never makes more runtime calls per
-  executed access than stock. MySQL DMIR −0.06 % (one run) shown as 0.0. **Re-measured 15 Oct 16:15 (dirfn, a-p13, 3 runs per arm, TT3-FIXED):** DIR per function weighted by stock entries: stress2 5.31 %, create_drop_index_1 6.87 % (plain totals 2.16 / 5.61 %; function entries arm/stock 1.038 / 1.012); twin control (stock with sqlite3.c unchecked) 99.18 / 96.95 %. DMIR from the same runs about 0 (stress2 −3.4 %, cdi +2.1 %, within spread). In the paper (PR #63): Fig. 11b SQLite 5.3, Fig. 11c SQLite 0.0.
+  executed access than stock. MySQL DMIR −0.06 % (one run) shown as 0.0. **Re-measured 15 Oct 16:15 (dirfn, a-p13, 3 runs per arm, TT3-FIXED):** DIR per function weighted by stock entries: stress2 5.31 %, create_drop_index_1 6.87 % (plain totals 2.16 / 5.61 %; function entries arm/stock 1.038 / 1.012); twin control (stock with sqlite3.c unchecked) 99.18 / 96.95 %. DMIR from the same runs about 0 (stress2 −3.4 %, cdi +2.1 %, within spread). In the paper (PR #63): Fig. 11b SQLite 5.3, Fig. 11c SQLite 0.0. **MySQL DIR/DMIR at fixed events (15 Oct 20:55-21:27, focs, 3 runs per arm, stock zys vs AllOpt zym, mysqld summed over insert 100k + update_non_index 30k + delete 30k events):** DIR 3.51 / 3.67 / 3.56 %, mean 3.58 % (insert 3.53, update 3.47, delete 3.94); DMIR −0.08 / +0.13 / +0.78 %, mean +0.28 % (about 0). Source /extra/alexey/wt-dev2-r/dmir-my/myfx-agg.out. In the paper (PR #63): Fig. 11b MySQL 3.5 → 3.6, Fig. 11c MySQL 0.0 → 0.3.
 
 **Preliminary bars of 14 Oct night (apollo, 2 offsets × N = 1-2, merged STC = STC + DynSTC form per app).**
 Decision 14 Oct ~23:00: the per-application panels are drawn over the root's own stock (caption says so); headline
@@ -374,6 +374,11 @@ The −0.8 % of the row "the four analyses + FE-INL + MEMINTR" is the four analy
 at 8345a0396fa5, not run): FE-INL rewrites only the function entry and exits (`__tsan_func_*`, class func), MEMINTR
 only turns `__tsan_memcpy`/`__tsan_memmove` into their `_nosrc` forms (class range), and mcount.py keeps both
 classes out of Q_call.
+Measured 15 Oct (same classes, objdump over chrome + 486 libraries): the four analyses alone (`chrome-tsan-sound`)
+Q_call 13,478,398, −0.81 %; FE-INL alone (single-configuration build `chrome-sc-feinl`) 13,594,170, +0.04 % over
+stock. So the binaries carry +5,464 plain call sites under FE-INL even though the pass's access instrumentation is
+unchanged by it (cause not checked; machine-level duplication around the inline exits is a guess). Counts:
+`/extra/alexey/chromium/scratch/crsc/qcall.py`.
 
 Single configurations with DE in removal form, Q over stock (verified form in brackets) and text over stock:
 
