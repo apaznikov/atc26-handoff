@@ -262,10 +262,13 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 - memcached mc44, offsets 00/16/32 × N = 4 (offset 00 mixed-time): STC+DynSTC 0.998 [0.994, 1.002]; SWMR 1.013
   [1.010, 1.016]; LO 0.998 [0.993, 1.003]; EA 1.847 [1.839, 1.856]; DE 1.004 [1.001, 1.007]; DE+P 1.004 [1.001,
   1.007]; FE-INL 1.000 [0.998, 1.004]; A/A 1.000; AllOpt (record cell mcm4, 4×4) 1.907 [1.900, 1.917].
-- SQLite sq44, offsets 00/16 × N = 4, attempts (OK): STC+DynSTC 0.999 [0.957, 1.054]; LO 1.364 [1.318, 1.430]
-  (1.266); EA 1.004 [0.970, 1.063]; DE 0.992 [0.941, 1.032]; DE+P 1.008 [0.945, 1.067]; FE-INL 0.998 [0.970,
-  1.040]; A/A 1.024 [0.963, 1.072]; AllOpt = s9r4 1.312. Text: "LO alone reaches a similar speedup" (LO and
-  AllOpt from different legs; in sqt2, one leg, s9H 1.338 and LO 1.332). Same-leg s9H arm added to offsets 32/48.
+- SQLite sq44 FINAL, 4 offsets × N = 4 (16/16 valid per arm; offset 00 mixed-time), attempts (OK): STC+DynSTC 0.981
+  [0.944, 1.028] (0.988); LO 1.330 [1.290, 1.387] (1.247 [1.219, 1.284]); EA 0.980 [0.948, 1.026] (0.985); DE 0.992
+  [0.953, 1.024]; DE+P 0.994 [0.963, 1.039]; FE-INL 0.995 [0.977, 1.031]; A/A 1.001 [0.961, 1.046]; AllOpt = s9r4
+  1.312 [1.278, 1.366] (1.242). In Fig. 8d (#63, 16 Oct). Same-leg pair (offsets 32/48 × N = 4): over stock LO 1.296
+  [1.258, 1.370], s9H 1.257 [1.190, 1.341], A/A 0.979; s9H over LO 0.970 [0.928, 0.991] attempts, 0.975 [0.945,
+  0.995] OK (per offset 0.980 / 0.961). Earlier one-leg sqt2: s9H 1.338, LO 1.332. Text: "LO alone reaches a
+  similar speedup" holds; "never measurably slower than the best single configuration" under review (16 Oct).
 - MySQL write my44, offset 00 × N = 4 (each part over its own stock): STC+DynSTC 1.001 [0.997, 1.007]; SWMR 1.002
   [0.991, 1.008]; LO 1.003 [0.998, 1.010]; EA 1.012 [1.007, 1.017]; DE 1.009 [1.000, 1.017]; DE+P 1.007 [0.999,
   1.013]; FE-INL 1.095 [1.086, 1.103]; AllOpt 1.101 [1.092, 1.110] (per script: delete 1.148, insert 1.090, update
