@@ -200,16 +200,16 @@ build dies on the same check (1 of 5 runs; the FE-INL configuration 1 of 4). Whe
 is not established: 3 of about 46 (about 6.5 %, rough 95 % range 1.4-18 %) against 0 of about 30 (upper bound
 about 10 %); in the counting loops of 12-13 Oct, the two builds in turn, AllOpt 1 of 19 and stock 0 of 19.
 
-**Speedometer 3 panel arms, pooled over crkv3/crkv4/crkv5/crkfv; crkfx pending** (Intel, focs half 1; written 15 Oct 09:1x).
+**Speedometer 3 panel arms, pooled over crkv3/crkv4/crkv5/crkfv/crkfy; crkfx pending** (Intel, focs half 1; written 15 Oct 09:1x, updated 11:0x with the top-up crkfy).
 Each leg's ratio is over that leg's own stock; pooled = geometric mean of the per-leg ratios weighted by each leg's valid runs.
 Score ratio first, per-test geometric mean (20 tests, Score row excluded) after the slash:
 
 | arm | pooled Score / per-test | runs | per leg, Score / per-test (runs) | Score range over legs |
 |---|---|---|---|---|
-| Sound | 0.993 / 0.976 | 2 | crkv5 1.050 / 1.028 (1); crkfv 0.940 / 0.926 (1) | 0.940–1.050 |
+| Sound | 0.978 / 0.963 | 3 | crkv5 1.050 / 1.028 (1); crkfv 0.940 / 0.926 (1); crkfy 0.948 / 0.938 (1) | 0.940–1.050 |
 | +DE | 1.057 / 1.046 | 3 | crkv5 1.152 / 1.153 (1); crkfv 1.013 / 0.996 (2) | 1.013–1.152 |
 | +DE+Peeling (the analyses-only build) | 0.991 / 0.976 | 3 | crkv5 1.059 / 1.052 (1); crkfv 0.959 / 0.941 (2) | 0.959–1.059 |
-| CR1 | 1.066 / 1.057 | 4 | crkv3 1.061 / 1.051 (3); crkfv 1.082 / 1.076 (1) | 1.061–1.082 |
+| CR1 | 1.068 / 1.056 | 5 | crkv3 1.061 / 1.051 (3); crkfv 1.082 / 1.076 (1); crkfy 1.074 / 1.054 (1) | 1.061–1.082 |
 | CR1+N1 | 1.143 / 1.117 | 8 | crkv3 1.148 / 1.123 (3); crkv4 1.190 / 1.168 (3); crkfv 1.069 / 1.036 (2) | 1.069–1.190 |
 | A/A (reference) | 1.005 / 1.010 | 3 | crkv4 only | – |
 
@@ -217,7 +217,7 @@ crkfv (15 Oct 03:23-08:44, six arms × 2, no A/A arm): CR1 repetition 2 failed (
 provenance (another lane's jobs 03:28-03:33, rule fixed before reading). Within crkfv one arm moves up to 9.5 % between its two
 repetitions on a quiet host (CR1+N1 1.007 / 1.134), so a single Speedometer run is a ±5-10 % measurement: Sound, +DE and the
 analyses-only build are not distinguishable from 1.00; CR1 and CR1+N1 are above 1.00 in every leg, with uncertain size.
-crkfx (third repetition, all seven arms with A/A) and a top-up (stock | Sound | CR1) follow on 15 Oct. preliminary.
+crkfy (top-up, 15 Oct 09:33-10:59: stock | Sound | CR1, one run each, own stock, 3/3 valid) is included. crkfx (third repetition, all seven arms with A/A) follows on 15 Oct. preliminary.
 
 **SQLite headline, FINAL (s9r4, apollo A, 15 Oct 01:40-03:51, 4 offsets × N = 4, 64/64 valid, declared co-load 0.40):** s9H over the root's stock, attempts 1.312 [1.278, 1.366] (OK 1.242 [1.212, 1.280]); A/A attempts 0.986 [0.949, 1.035]; native over stock attempts 5.393 [5.264, 5.610] (OK 4.991) → slowdown 5.4×, AllOpt slowdown 5.393/1.312 = 4.1×.
 
@@ -240,6 +240,23 @@ In the paper (PR #54, 15 Oct): Fig. 8 Redis panel and "1.47x".
 AllOpt (record cell ffm4, adopted static line) 1.272 [1.267, 1.280] (hit-test line 1.322); A/A 1.005 and 0.999.
 Unmerged: STC 0.996, DynSTC 1.276. Mixed-time cell: ff44 offset 16 (14 Oct 19:13-~19:3x + 15 Oct 00:29-01:24).
 In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
+
+**Partial finals in the paper (PR #54, 15 Oct ~11:00), over the root's stock, 95 % two-level bootstrap.**
+- memcached mc44, offsets 00/16/32 × N = 4 (offset 00 mixed-time): STC+DynSTC 0.998 [0.994, 1.002]; SWMR 1.013
+  [1.010, 1.016]; LO 0.998 [0.993, 1.003]; EA 1.847 [1.839, 1.856]; DE 1.004 [1.001, 1.007]; DE+P 1.004 [1.001,
+  1.007]; FE-INL 1.000 [0.998, 1.004]; A/A 1.000; AllOpt (record cell mcm4, 4×4) 1.907 [1.900, 1.917].
+- SQLite sq44, offsets 00/16 × N = 4, attempts (OK): STC+DynSTC 0.999 [0.957, 1.054]; LO 1.364 [1.318, 1.430]
+  (1.266); EA 1.004 [0.970, 1.063]; DE 0.992 [0.941, 1.032]; DE+P 1.008 [0.945, 1.067]; FE-INL 0.998 [0.970,
+  1.040]; A/A 1.024 [0.963, 1.072]; AllOpt = s9r4 1.312. Text: "LO alone reaches a similar speedup" (LO and
+  AllOpt from different legs; in sqt2, one leg, s9H 1.338 and LO 1.332). Same-leg s9H arm added to offsets 32/48.
+- MySQL write my44, offset 00 × N = 4 (each part over its own stock): STC+DynSTC 1.001 [0.997, 1.007]; SWMR 1.002
+  [0.991, 1.008]; LO 1.003 [0.998, 1.010]; EA 1.012 [1.007, 1.017]; DE 1.009 [1.000, 1.017]; DE+P 1.007 [0.999,
+  1.013]; FE-INL 1.095 [1.086, 1.103]; AllOpt 1.101 [1.092, 1.110] (per script: delete 1.148, insert 1.090, update
+  1.065); A/A 1.003 / 1.004. Text "1.07x and 1.10x" (Select FE-INL 1.065, rounded half up).
+- SQLite DIR/DMIR in Fig. 11: shown as 0 until re-measured at fixed work (decision 15 Oct ~11:20): at a fixed
+  number of iterations, SQLite's contending threads did more work under s9H (1.4 % more statements succeeded),
+  so the measured −3.6 % calls / −4.4 % locations follow the workload; s9H never makes more runtime calls per
+  executed access than stock. MySQL DMIR −0.06 % (one run) shown as 0.0.
 
 **Preliminary bars of 14 Oct night (apollo, 2 offsets × N = 1-2, merged STC = STC + DynSTC form per app).**
 Decision 14 Oct ~23:00: the per-application panels are drawn over the root's own stock (caption says so); headline
@@ -443,6 +460,15 @@ instrumented code (three windows per transcode, one per SQLite test):
   15,452 → 14,302 per 1000 function entries (−7.4 %). **The 9.9 % row above is retired for the paper line:** by
   the same PT files, z9R made the same runtime entries per sqlite3_step as stock (3,700 vs 3,682, +0.5 %) and 11.5 %
   more function entries per step, so its −9.9 % came from the normalization. Which value Fig. 11b shows: open.
+  Breakdown of the rise (stress2 alone at fixed work, 1 run per arm, a-p13 `dmir/SQDEC_END`): (a) plain access
+  entries alone 1,127,687,794 → 1,167,817,806 (+3.56 %); the LO-MARK and owner calls add 463,803 (0.04 % of L_rt),
+  so the rise is all plain entries; (b) DMIR counts the union of the access entries' granules and the addresses
+  passed to LO-MARK and owner calls; for s9H the union adds no granule (368,561 either way); stress2 M 346,213 →
+  368,561 (+6.5 %), create_drop_index_1 alone 55,387 → 49,240 (−11.1 %); (c) s9H does more work in the same
+  iterations: successful stress2 iterations 8,554 → 8,675 (+1.4 %), access entries per successful iteration +2.2 %,
+  so about 40 % of the +3.6 % is extra successful work and the rest is per iteration (cause not measured). M over
+  3 runs of both tests: stock 378,583-381,004 (±0.3 %), s9H 384,515-412,660 (±3.6 %); the −4.4 % DMIR is inside
+  s9H's own run-to-run spread.
 - SQLite s9H SIR (pass statistics, s9H's own flag line): EA removes 678 of stock's 58,778 checks (1.2 %; STC, SWMR,
   LO 0); AllOpt plain call 64,323, guarded 1,617 (lock-ownership marks). In the paper (PR #45): Fig. 11a 1.2.
 - Cross-check of the PT rows by whole-run counts (fixed requests, 3 runs): memcached −76.8 % (PT −76.9 / −77.3 %);
@@ -739,7 +765,23 @@ manager: stock 3 of 10, arm 0 of 10, and the arm is stock's own binary; (3) memc
 reader is reported in 7 of 10 (stock 3 of 10), the writer site in 10 of 10. With about 400 pair-arm comparisons at
 the 5 % rule, hits on unchanged checks are expected; each is settled by reading the binary. Extension of 14 Oct,
 10 more runs per arm: both MySQL pairs are kept: (1) arm 2 of 20, stock 9 of 20 (kept at a lower rate, both
-checks present); (2) arm 2 of 20, stock 3 of 20. memcached's pair: kept (DE alone 4 of 30 runs, stock 4 of 20). All rule hits are settled as kept. Chromium's PartitionAlloc race (stock 11 of 21, AllOpt 2 of 19): the same race in
+checks present); (2) arm 2 of 20, stock 3 of 20. memcached's pair: kept (DE alone 4 of 30 runs, stock 4 of 20). All rule hits are settled as kept.
+
+MySQL merged STC (y8t, the STC bar with dynstc_rt=1), 14-15 Oct, non-timed host, pooled over five sessions
+(my17x/my17y 10 + 10, my18 and my19 interleaved round by round with stock): 50 arm runs against 40 stock runs, all
+exit 0. Of stock's 200 function pairs, 198 identical, 0 equivalent, 2 undetermined (each 1 of 40 in stock:
+`os_aio_refresh_stats` / `os_file_pread` on `os_n_file_reads`, `log_checkpointer` / `log_request_checkpoint_low`),
+0 lost by the rule, 5 only in the arm. The binaries differ from stock's by 8 `__tsan_read1` checks in `is_prefix`
+(STC); every other call target (381 counted: all `__tsan_*` entries including atomics, function entry/exit and
+annotations, the pthread and semaphore interceptors) has the same number of call sites, so the synchronization
+instrumentation is identical. The rare pairs vary by session: `dict_stats_analyze_index` / `innobase_copy_frm_flags_from_table_share`
+(stock 3 of 10 and arm 0 of 20 in the first sessions; arm 5 of 30, stock 2 of 30 interleaved) and
+`lock_rec_grant_by_heap_no` / `row_search_mvcc` (stock 6 of 40, arm 1 of 50; y8t without the option 0 of 30); both
+read the same field as a pair reported in every run (address deduplication: TSan prints one report per address),
+and `suppress_equal_addresses=0` (10 runs per arm) did not change either rate. DynSTC itself has no test at these
+sites: the runtime skips only in main before its first thread creation and after an acquiring join that leaves one
+thread; the count drops only at such a join; a detached thread's exit only disables the skip for the rest of the
+run (runtime source at 913cae99c263, `tsan_rtl_thread.cpp`). final. Chromium's PartitionAlloc race (stock 11 of 21, AllOpt 2 of 19): the same race in
 every build; AllOpt's library keeps both checks (the read through the inline test's miss path, the write
 unconditional), so no check is removed; the logs do not separate timing from shadow eviction. current.
 
