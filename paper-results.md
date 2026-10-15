@@ -661,6 +661,10 @@ clock_handler 0/10 → 10/10, item_crawler_thread / do_item_unlink 0/10 → 4/10
 ~/p5-apollo/pres-1015/memcached/ on apollo. The paper's sentence ("every race that Original TSan reported in at
 least four runs was also reported by TSan+AllOpt") holds; final.
 
+FFmpeg, the adopted static line (fkr__) vs stock (fc000), 15 Oct 21:44-21:59, N = 10 each × 4 transcodes: not
+informative, since stock reports no race on the unseeded paper workload (0 reports in all runs, as does the adopted
+line). Not cited; the paper's preservation sentence names only Memcached, SQLite and MySQL.
+
 SQLite, LO-MARK v1 (the adopted configuration), 12 Oct, 15 tests, 20 runs per arm, three independent stock arms;
 no site lost, no voided run:
 
