@@ -260,7 +260,7 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 - SQLite DIR/DMIR in Fig. 11: shown as 0 until re-measured at fixed work (decision 15 Oct ~11:20): at a fixed
   number of iterations, SQLite's contending threads did more work under s9H (1.4 % more statements succeeded),
   so the measured −3.6 % calls / −4.4 % locations follow the workload; s9H never makes more runtime calls per
-  executed access than stock. MySQL DMIR −0.06 % (one run) shown as 0.0.
+  executed access than stock. MySQL DMIR −0.06 % (one run) shown as 0.0. **Re-measured 15 Oct 16:15 (dirfn, a-p13, 3 runs per arm, TT3-FIXED):** DIR per function weighted by stock entries: stress2 5.31 %, create_drop_index_1 6.87 % (plain totals 2.16 / 5.61 %; function entries arm/stock 1.038 / 1.012); twin control (stock with sqlite3.c unchecked) 99.18 / 96.95 %. DMIR from the same runs about 0 (stress2 −3.4 %, cdi +2.1 %, within spread). In the paper (PR #63): Fig. 11b SQLite 5.3, Fig. 11c SQLite 0.0.
 
 **Preliminary bars of 14 Oct night (apollo, 2 offsets × N = 1-2, merged STC = STC + DynSTC form per app).**
 Decision 14 Oct ~23:00: the per-application panels are drawn over the root's own stock (caption says so); headline
@@ -365,6 +365,10 @@ static +13.4 → +6.7 %, 1.40 → 1.26×; FFmpeg every check +13.5 → +6.9 %, 3
 carry more checks than stock in every application: peeling and SQLite's function copies duplicate checks.
 Chromium: counted over the main binary and all 486 libraries of the existing builds, loaded or not; an inline
 test is counted by its slow-path call site.
+The −0.8 % of the row "the four analyses + FE-INL + MEMINTR" is the four analyses' alone (read 15 Oct in the pass
+at 8345a0396fa5, not run): FE-INL rewrites only the function entry and exits (`__tsan_func_*`, class func), MEMINTR
+only turns `__tsan_memcpy`/`__tsan_memmove` into their `_nosrc` forms (class range), and mcount.py keeps both
+classes out of Q_call.
 
 Single configurations with DE in removal form, Q over stock (verified form in brackets) and text over stock:
 
@@ -688,8 +692,10 @@ plain check in the arm, an inline test with no single-mode branch in the adopted
 hide this race; a run without a report is the detector's own miss of the pair, as in stock. The violation is raised
 by a signal handler entering on a quiet thread while the main thread skips, not by the racing access; whether that
 handler check can miss an entry is covered by the suite's deterministic tests, not by this seed. One stray guard violation per arm in 110
-runs (D1 in 1 of 10 in the arm, S3 in 1 of 10 in the adopted line; S5 raises one in 10 of 10 and S8 in 8 of 10 in
-both; the earlier verified arms r5Y and rdy have S3 in 4 of 10; `wt-dev2-r/seedarms/guardviol-15oct.txt`). On one seed the arm switches the guard off at a background job (it has no loop peeling, so the start-up
+runs (D1 in 1 of 10 in the arm r5Z, S2 in 1 of 10 in the adopted line rdz, the race reported in all of them; S5
+raises one in 10 of 10 in both, S8 in 8 of 10 in the arm and 6 of 10 in the adopted line; the removal line with the
+seeded spec, rdq, has S3 in 1 of 10 and S8 in 8 of 10; the earlier arms r5Y and rdy have S3 in 4 of 10;
+`wt-dev2-r/seedarms/guardviol-15oct.txt`, per-seed split `seedsplit.out` beside it). On one seed the arm switches the guard off at a background job (it has no loop peeling, so the start-up
 latch sits in the only copy of the loop); the race is reported. current.
 
 memcached, single configurations (13 Oct, non-timed host, 10 runs of stock and of each of STC, SWMR, LO, EA, DE,
