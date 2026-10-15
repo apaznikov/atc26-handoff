@@ -241,6 +241,10 @@ AllOpt (record cell ffm4, adopted static line) 1.272 [1.267, 1.280] (hit-test li
 Unmerged: STC 0.996, DynSTC 1.276. Mixed-time cell: ff44 offset 16 (14 Oct 19:13-~19:3x + 15 Oct 00:29-01:24).
 In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 
+**Memcached final bars (mc44, 4 offsets × N = 4, 16/16 valid per arm; CSV /extra/alexey/wt-exp-bars/memcached_final.csv; offset 00 mixed-time).** STC+DynSTC 0.999 [0.995, 1.002]; SWMR 1.013 [1.010, 1.016]; LO 0.999 [0.995, 1.003]; EA 1.844 [1.836, 1.853]; DE 1.004 [1.002, 1.007]; DE+P 1.005 [1.002, 1.007]; FE-INL 1.001 [0.999, 1.004]; A/A 1.000; AllOpt (mcm4) 1.907 [1.900, 1.917]. In the paper (PR #63): Fig. 8a, "EA alone gives 1.84x".
+
+**Redis/FFmpeg DMIR correction (15 Oct ~13:40):** the 97.6 % / 85.3 % undercount the AllOpt arm's checked locations: a link-time shim does not see accesses settled by N1's inline hit, and the N1 miss entries were read with the address in the wrong register (rdi = thr, rsi = addr). Re-measurement on the AllOpt build without N1 (same accesses checked) queued first on a-p13. Memcached and SQLite are unaffected.
+
 **Partial finals in the paper (PR #54, 15 Oct ~11:00), over the root's stock, 95 % two-level bootstrap.**
 - memcached mc44, offsets 00/16/32 × N = 4 (offset 00 mixed-time): STC+DynSTC 0.998 [0.994, 1.002]; SWMR 1.013
   [1.010, 1.016]; LO 0.998 [0.993, 1.003]; EA 1.847 [1.839, 1.856]; DE 1.004 [1.001, 1.007]; DE+P 1.004 [1.001,
