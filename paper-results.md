@@ -243,7 +243,7 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 
 **Memcached final bars (mc44, 4 offsets × N = 4, 16/16 valid per arm; CSV /extra/alexey/wt-exp-bars/memcached_final.csv; offset 00 mixed-time).** STC+DynSTC 0.999 [0.995, 1.002]; SWMR 1.013 [1.010, 1.016]; LO 0.999 [0.995, 1.003]; EA 1.844 [1.836, 1.853]; DE 1.004 [1.002, 1.007]; DE+P 1.005 [1.002, 1.007]; FE-INL 1.001 [0.999, 1.004]; A/A 1.000; AllOpt (mcm4) 1.907 [1.900, 1.917]. In the paper (PR #63): Fig. 8a, "EA alone gives 1.84x".
 
-**Redis/FFmpeg DMIR correction (15 Oct ~13:40):** the 97.6 % / 85.3 % undercount the AllOpt arm's checked locations: a link-time shim does not see accesses settled by N1's inline hit, and the N1 miss entries were read with the address in the wrong register (rdi = thr, rsi = addr). Re-measurement on the AllOpt build without N1 (same accesses checked) queued first on a-p13. Memcached and SQLite are unaffected.
+**Redis/FFmpeg DMIR correction (15 Oct ~13:40):** the 97.6 % / 85.3 % undercount the AllOpt arm's checked locations: a link-time shim does not see accesses settled by N1's inline hit, and the N1 miss entries were read with the address in the wrong register (rdi = thr, rsi = addr). Re-measurement on the AllOpt build without N1 (same accesses checked) queued first on a-p13. Memcached and SQLite are unaffected. **Redis corrected (15 Oct ~14:30): 27.9 %** (AllOpt without N1, phase guard on via TSAN_OPTIONS_EXTRA, shim filtered for runtime-skipped accesses; stock 1.581/1.567/1.604 M vs 1.130/1.157/1.138 M granules, per run −28.6/−26.2/−29.0 %; guard engaged, 0 violations). Earlier Redis runs had no guard (redis.sh replaced TSAN_OPTIONS). In the paper (PR #63): Fig. 11c, text 27.9 %. FFmpeg pending.
 
 **Partial finals in the paper (PR #54, 15 Oct ~11:00), over the root's stock, 95 % two-level bootstrap.**
 - memcached mc44, offsets 00/16/32 × N = 4 (offset 00 mixed-time): STC+DynSTC 0.998 [0.994, 1.002]; SWMR 1.013
@@ -788,6 +788,28 @@ thread; the count drops only at such a join; a detached thread's exit only disab
 run (runtime source at 913cae99c263, `tsan_rtl_thread.cpp`). final. Chromium's PartitionAlloc race (stock 11 of 21, AllOpt 2 of 19): the same race in
 every build; AllOpt's library keeps both checks (the read through the inline test's miss path, the write
 unconditional), so no check is removed; the logs do not separate timing from shadow eviction. current.
+
+The paper's SQLite line s9H against stock z9S (sq21, 15 Oct, non-timed host, 10 against 10, 15 tests, all exit 0):
+of stock's 3 function pairs, 2 identical (`walTryBeginRead` / `walIndexRecover`, stock 3 of 10, s9H 4 of 10;
+`walTryBeginRead` / `walRestartHdr`, 6 of 10 and 4 of 10, the same line pairs at the same offsets of the shared
+memory), 1 undetermined (`openDatabase` read / `sqlite3_enable_shared_cache` write of `sqlite3Config`, stock 2 of
+10, s9H 0 of 10, (0.8)^10 = 0.107), 0 lost, 0 only in s9H. The undetermined pair is not a removed check: both
+binaries call `__tsan_write4` in `sqlite3_enable_shared_cache` and `__tsan_read4` at the read in `openDatabase`
+(disassembly), and s9H has no run-time skip, so both accesses reach the runtime. final.
+Note on fpx.py's output: for races on mapped memory the line-level key keeps the byte offset
+(`mapped:test.db-shm+0x60`) while the site key does not, so its self-check flags them (sq21: `selfcheck-bad=9`, all
+such keys) and it counts such sites as equivalent although stock and arm share line and offset (sq21 printed 0
+identical / 2 equivalent). Lost and undetermined are computed on the site key and are unaffected; read earlier
+SQLite "equivalent" counts over the WAL sites with this in mind. Listing: a-p13 `apparms/selfchk-sq21.out`.
+
+MySQL adopted line zym (removal form) against stock zys, extension (my20, 15 Oct, non-timed host, 10 rounds, one run
+per arm per round started together, all exit 0): of stock's 185 function pairs, 179 identical, 0 equivalent, 6
+undetermined (each stock 1 of 10, arm 0 of 10: `monitor_set_max_value` write/write on `innodb_counter_value`;
+`buf_block_alloc` write/write on `buf_pool_index`; `lock_rec_grant_by_heap_no` / `row_mysql_handle_errors`;
+`ha_innobase::estimate_rows_upper_bound` / `dict_stats_empty_index`; `dict_table_n_rows_dec` /
+`dict_stats_update_persistent`; `check_table_binlog_row_based` write/read), 0 lost by the rule, 7 only in zym
+(a-p13 `apparms/pool20.py`). Pooling with my16 (row above) needs my16's keys, computed on focs in an untimed window.
+current.
 
 The four analyses without DE and without run-time-checked parts (14 Oct, seeded builds, 10 runs per arm): Redis,
 ten seeds in 10 of 10 runs and the timing-dependent one in 8 of 10, as its seeded stock (8 of 10); FFmpeg, all 9
