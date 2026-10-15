@@ -200,9 +200,30 @@ build dies on the same check (1 of 5 runs; the FE-INL configuration 1 of 4). Whe
 is not established: 3 of about 46 (about 6.5 %, rough 95 % range 1.4-18 %) against 0 of about 30 (upper bound
 about 10 %); in the counting loops of 12-13 Oct, the two builds in turn, AllOpt 1 of 19 and stock 0 of 19.
 
+**Speedometer 3 panel arms, pooled over crkv3/crkv4/crkv5/crkfv; crkfx pending** (Intel, focs half 1; written 15 Oct 09:1x).
+Each leg's ratio is over that leg's own stock; pooled = geometric mean of the per-leg ratios weighted by each leg's valid runs.
+Score ratio first, per-test geometric mean (20 tests, Score row excluded) after the slash:
+
+| arm | pooled Score / per-test | runs | per leg, Score / per-test (runs) | Score range over legs |
+|---|---|---|---|---|
+| Sound | 0.993 / 0.976 | 2 | crkv5 1.050 / 1.028 (1); crkfv 0.940 / 0.926 (1) | 0.940–1.050 |
+| +DE | 1.057 / 1.046 | 3 | crkv5 1.152 / 1.153 (1); crkfv 1.013 / 0.996 (2) | 1.013–1.152 |
+| +DE+Peeling (the analyses-only build) | 0.991 / 0.976 | 3 | crkv5 1.059 / 1.052 (1); crkfv 0.959 / 0.941 (2) | 0.959–1.059 |
+| CR1 | 1.066 / 1.057 | 4 | crkv3 1.061 / 1.051 (3); crkfv 1.082 / 1.076 (1) | 1.061–1.082 |
+| CR1+N1 | 1.143 / 1.117 | 8 | crkv3 1.148 / 1.123 (3); crkv4 1.190 / 1.168 (3); crkfv 1.069 / 1.036 (2) | 1.069–1.190 |
+| A/A (reference) | 1.005 / 1.010 | 3 | crkv4 only | – |
+
+crkfv (15 Oct 03:23-08:44, six arms × 2, no A/A arm): CR1 repetition 2 failed (the V8 check above); Sound repetition 1 retired on
+provenance (another lane's jobs 03:28-03:33, rule fixed before reading). Within crkfv one arm moves up to 9.5 % between its two
+repetitions on a quiet host (CR1+N1 1.007 / 1.134), so a single Speedometer run is a ±5-10 % measurement: Sound, +DE and the
+analyses-only build are not distinguishable from 1.00; CR1 and CR1+N1 are above 1.00 in every leg, with uncertain size.
+crkfx (third repetition, all seven arms with A/A) and a top-up (stock | Sound | CR1) follow on 15 Oct. preliminary.
+
 **SQLite headline, FINAL (s9r4, apollo A, 15 Oct 01:40-03:51, 4 offsets × N = 4, 64/64 valid, declared co-load 0.40):** s9H over the root's stock, attempts 1.312 [1.278, 1.366] (OK 1.242 [1.212, 1.280]); A/A attempts 0.986 [0.949, 1.035]; native over stock attempts 5.393 [5.264, 5.610] (OK 4.991) → slowdown 5.4×, AllOpt slowdown 5.393/1.312 = 4.1×.
 
 **MySQL compile time, RelWithDebInfo (as the measured binaries), partial (15 Oct 01:12-03:07, stopped by order, resumes later):** rounds 1-2: native 767.1 / 773.3, stock 900.9 / 866.9, adopted 1012.3 / 1016.2 s; added over stock 111.4 / 149.3 s (round 3 pending). Flags: TSan arms -O2 with MySQL's sanitizer default -O1 -fno-inline appended (check which -O wins), native -O2 -g1.
+**FINAL (round 3 of stock and zym 15 Oct 08:50-09:23, after a gap; medians of 3, fresh tree per build, -j6, root 8345, zym in removal form):** native 773.3 s [767.1, 790.5]; stock 885.3 s [866.9, 900.9]; zym 1016.2 s [1012.3, 1024.9]; zym over stock +131.0 s (+14.8 %), over native +31.4 %. CPU (round 3 only): zym 5,241 s against stock 4,470 s, +17.2 %. Supersedes the Release rows of 14 Oct (+17.1 %). In the paper (PR #60): Fig. 12 MySQL 131.0, text "2.2 minutes".
+**SQLite s9H build time, FINAL (15 Oct, 8 jobs, root 913c, FLAGCHECK 3/3):** native 22.2 s [22.0, 22.3]; stock 28.1 s [27.6, 28.7]; s9H 34.9 s [34.7, 35.6]; +6.8 s (+24.2 %) over stock. In the paper (PR #60): Fig. 12 SQLite 6.8.
 
 **Decision 15 Oct ~00:10: one base in the whole paper, "Original TSan" = the root's own stock (as in the submitted paper); no upstream/stock distinction in the text.** Headline over the root's stock: max 1.91× (memcached), peak 2.27× (memcached, 2 threads); slowdowns over native: memcached 8.5, Redis 6.2, FFmpeg 2.8, SQLite 5.8 (attempts), MySQL 10.0, Chromium 9.6; FFmpeg per transcode H.264 1.29, MJPEG 6.3.
 
@@ -560,7 +581,9 @@ Range over the five applications, adopted over native: +25 % (MySQL) to +219 % (
 TSan after which the added build time is recovered, at the measured speedup S over Original TSan: added build time /
 (1 − 1/S). Memcached: measured directly, one workload run is 100 s shorter (226 → 126 s) against +2.0 s of build.
 Redis 12.3 s / (1 − 1/1.43) ≈ 41 s; SQLite 13.7 s / (1 − 1/1.30) ≈ 59 s (z9R line; s9H's row comes tonight);
-MySQL 149.6 s / (1 − 1/1.10) ≈ 27 min (Release build row; RelWithDebInfo row tonight). FFmpeg is not quoted: its
+MySQL 149.6 s / (1 − 1/1.10) ≈ 27 min (Release build row; RelWithDebInfo row tonight).
+Update 15 Oct 09:40 (final build rows, finals of the speedups): Redis 12.3 s / (1 − 1/1.471) ≈ 38 s; SQLite s9H
+6.8 s / (1 − 1/1.312) ≈ 29 s; MySQL RelWithDebInfo 131.0 s / (1 − 1/1.10) ≈ 24 min (MySQL's AllOpt final pending). FFmpeg is not quoted: its
 speedup is a geometric mean over transcodes, and the wall time of the four transcodes does not shrink (86.3 → 86.6 s).
 
 ## 6. Race preservation
@@ -709,6 +732,14 @@ writer sites in 10 of 10 runs in both, and all 11 of stock's function pairs iden
 
 Other applications: 10 stock against 10 optimized runs each, no site lost (memcached 4 sites, MySQL 232-236;
 Redis and FFmpeg by seeded races). Per-site rates: pending (final legs' binaries).
+
+Chromium crashes (15 Oct, read only): 3 CR1/CR1+N1 runs on focs stopped at V8's `old_index >= start_of_evacuation_area` (Speedometer
+3 of 47 against stock 0 of 53, Fisher one-sided 0.10; all benchmarks 2 of 372 against 0 of 461, 0.20; the analysis-only arms' 0 of 12
+and 0 of 180 are uninformative). Symbolized: the CppHeapPointerTable sweep of a full mark-compact on the main thread; the trigger is
+cut off by the 16-frame print. Consistent with V8's known bug 522061704 (FastIterateArray holds raw pointers across Blink's IDL
+sequence callback, which can allocate and start a mark-compact; ToDOMArrayBuffer then writes a new handle through the stale
+address); our V8 12.7.224.18 has that shape. MEMINTR and FE-INL keep every application store and copy unchanged (read at 8345: the
+same memcpy/memmove with the same size; FE-INL stores only into TSan's trace and shadow stack). Cause not proven.
 
 ## 7. Regression suite
 
