@@ -429,6 +429,25 @@ instrumented code (three windows per transcode, one per SQLite test):
 | SQLite | stress2 (the record workload) | 9.9 % (15,486 → 13,952) | final (14 Oct, DE in removal form; verified form 11.8 %) |
 | SQLite | the other thirteen tests of threadtest3 | −5.6 % to 6.2 %; within 4 % of stock in ten of them | final (14 Oct, removal form) |
 
+**Update 15 Oct (paper lines; whole-run counts at fixed work by the link-time shim, the DMIR method).**
+- FFmpeg static line (fkrD, dynstc_rt=1) against stock (fc0D), summed over the four transcodes, 3 runs:
+  157.89 M → 53.77 M runtime access entries, −65.94 / −65.97 / −65.94 % (mean 65.95 %); copy_passthrough
+  104.04 M → 2.04 M (−98.0 %), mjpeg −6.3 %, h264 −1.9 %, h265 −1.8 %; without the copy −3.9 %. Stock shares: copy
+  65.9 %, mjpeg 16.2, h264 9.0, h265 9.0 %. **The 12.0 % composite above is retired:** it extrapolated each
+  transcode's PT-window rate over its run time; the copy's windows fell before most of the copying, whose Matroska
+  muxer makes its entries in proportion to the media copied, so its weight came out 1.1 % instead of 66 %.
+  In the paper (PR #45): Fig. 11b FFmpeg 66.0.
+- SQLite s9H (the paper line) against stock z9S: whole run at fixed work, stress2 1000 iterations/thread: 1.128 G
+  → 1.168 G (+3.6 %, a rise; +2.2 % per successful iteration); create_drop_index_1 +0.6 %; both tests, 3 runs:
+  3.372 → 3.429 G (+1.7 %, run-to-run ±5 %). PT window method (one 0.25 s window 2 s into stress2, 3 per arm):
+  15,452 → 14,302 per 1000 function entries (−7.4 %). **The 9.9 % row above is retired for the paper line:** by
+  the same PT files, z9R made the same runtime entries per sqlite3_step as stock (3,700 vs 3,682, +0.5 %) and 11.5 %
+  more function entries per step, so its −9.9 % came from the normalization. Which value Fig. 11b shows: open.
+- SQLite s9H SIR (pass statistics, s9H's own flag line): EA removes 678 of stock's 58,778 checks (1.2 %; STC, SWMR,
+  LO 0); AllOpt plain call 64,323, guarded 1,617 (lock-ownership marks). In the paper (PR #45): Fig. 11a 1.2.
+- Cross-check of the PT rows by whole-run counts (fixed requests, 3 runs): memcached −76.8 % (PT −76.9 / −77.3 %);
+  Redis −91.3 / −91.1 / −91.3 % (PT −93.6 %, weighted by the record's request mix).
+
 FFmpeg agrees with its timing: the gain is in the stream copy. **SQLite does not:** a drop of 12 % in runtime
 entries on stress2 does not by itself account for 1.23-1.28×. Checked 13 Oct: the figure itself reproduces outside
 the harness (same command, fresh directory, three alternating runs: 38.0k against 47.7k statements, 1.26×). A
