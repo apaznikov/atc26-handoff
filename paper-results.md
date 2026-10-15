@@ -172,7 +172,12 @@ build. AllOpt bars: record panels (Paint, WebP, SVG: crkfs, N=8; Parser: 4 repet
 | WebP decode-lossy-webp | 1.025 [1.016, 1.030] | 1.014 [0.998, 1.029] | 1.025 [1.003, 1.047] | 1.024 [1.006, 1.042] | 1.036 [1.024, 1.049] | 1.048 [1.022, 1.074] | crks1 (N=4) |
 | SVG SvgCubics | 1.011 [0.993, 1.025] | 0.984 [0.946, 1.027] | 0.992 [0.970, 1.017] | 0.976 [0.953, 1.002] | 1.089 [1.074, 1.098] | 1.366 [1.335, 1.396] | crks1 (N=3; its own CR1+N1 1.282) |
 
-Status: current (pass 1); pass 2 (crks2 ~03:15, crkp2 ~06:15) pools in. Speedometer single arms: 16 Oct ~09:30-13:30 (N=1).
+Pass 2 (crks2, 16 Oct 01:45-03:12, beside another user's load; Paint single-run outliers) pooled with pass 1, as planned
+(decided 16 Oct ~03:35), in #63: Paint (N=8) EA 0.997 [0.915, 1.080], LO/STC/SWMR 1.002 [0.934, 1.076], DE 1.004,
+DE+P 1.004, FE-INL 1.128 [1.098, 1.186]; WebP (N=8) EA 1.035 (label 1.03, from 1.0349), LO/STC/SWMR 1.018, DE 1.028,
+DE+P 1.025 (label 1.02), FE-INL 1.042; SVG (N=5) EA 0.995 (label 0.99), LO/STC/SWMR 0.982, DE 0.992, DE+P 0.994,
+FE-INL 1.066 [1.028, 1.092]. Pooled CR1+N1 (not plotted): Paint 1.406, WebP 1.074, SVG 1.345 — the record values stay.
+Parser pass 2 (crksp2) ~06:15-09:10, then Speedometer single arms (N=1) ~09:10-13:10.
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
@@ -313,6 +318,11 @@ DMIR (a-p13, one run each unless noted): Redis 97.6 % (1,607,120 → 38,921 gran
 Preservation (a-p13, 10 vs 10): memcached merged STC: no site lost (11/11 identical). MySQL merged STC: 188 identical,
 6 undetermined, 1 lost by rule (PFS_statement_stat::aggregate_memory_size, stock 3/10, arm 0/10) — extension after
 ~02:05.
+
+FFmpeg Fig. 16c, one session per thread count (fv02/fv04/fv08/fv16, apollo B, 16 Oct 00:32-03:18, 2 offsets × N=4,
+8/8 valid per arm), composite over the root's stock, static line | DynSTC: 2 thr 1.270 [1.255, 1.290] | 1.270; 4 thr
+1.268 | 1.274; 8 thr 1.273 | 1.279; 16 thr 1.262 [1.241, 1.280] | 1.259. Copy 2.52-2.55 at every point, encoders
+0.99-1.05. Replaces the fy+fz pooling. In #63. final.
 
 ## 3. Slowdown over native, memory
 
