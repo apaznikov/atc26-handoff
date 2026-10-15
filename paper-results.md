@@ -909,6 +909,17 @@ Peak over upstream LLVM TSan (mct2, 14 Oct 14:49-16:34, 2 server threads, 2 offs
 housekeeping CPUs quiet): AllOpt over upstream stock 2.20× [2.18, 2.21]; over the root's stock 2.27× [2.26, 2.29]
 (reproduces the sweep's 2.27); upstream over the root's stock 1.033 [1.030, 1.036]. final.
 
+Final sweep for Fig. 16a (mck2/mck4/mck6/mck8, apollo half A, 15 Oct 13:29-20:23, root tsan-ecc-b54ce0196884,
+each point 2 offsets × N = 4, 8 of 8 valid per arm, over the root's own stock; CSV
+/extra/alexey/wt-exp-bars/memcached_sweep_final.csv). This sweep replaces the rows above in the paper.
+
+| server threads | AllOpt over stock | EA (ownership check merged in) over stock | stock, ops/s | status |
+|---|---|---|---|---|
+| 8 | 1.902× [1.888, 1.913] | 1.844× [1.834, 1.854] | 216.8k | final (equals the 4×4 cells: mcm4 AllOpt 1.907, mc44 EA 1.844) |
+| 6 | 1.988× [1.948, 2.036] | 1.957× [1.898, 1.999] | 193.2k | final |
+| 4 | 2.123× [2.115, 2.136] | 2.052× [2.042, 2.067] | 163.9k | final |
+| 2 | 2.277× [2.268, 2.284] | 2.225× [2.217, 2.233] | 85.7k | final |
+
 Why the gain grows as server threads fall (records of the sweep, medians): server CPU per request, stock → AllOpt,
 8 threads 35.9 → 17.6 µs (2.04×), 6: 29.1 → 14.2 (2.05×), 4: 24.0 → 11.0 (2.19×), 2: 23.2 → 10.0 (2.31×); the
 throughput ratio follows the CPU-per-request ratio. The ownership-check census is the same at every thread count
