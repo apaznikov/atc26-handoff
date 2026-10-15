@@ -273,7 +273,10 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
   1.312 [1.278, 1.366] (1.242). In Fig. 8d (#63, 16 Oct). Same-leg pair (offsets 32/48 × N = 4): over stock LO 1.296
   [1.258, 1.370], s9H 1.257 [1.190, 1.341], A/A 0.979; s9H over LO 0.970 [0.928, 0.991] attempts, 0.975 [0.945,
   0.995] OK (per offset 0.980 / 0.961). Earlier one-leg sqt2: s9H 1.338, LO 1.332. Text: "LO alone reaches a
-  similar speedup" holds; "never measurably slower than the best single configuration" under review (16 Oct).
+  similar speedup" holds. s9H DIRECTLY over LO, same-leg pairing (attempts): 2 CPUs 0.9745 [0.9309, 1.0133]; 4 CPUs
+  0.9906 [0.9646, 1.0138]; 8 CPUs 1.0244 [0.9759, 1.0742]; 16 CPUs 1.0064 [0.9698, 1.0546]; headline configuration
+  pooled (sq44 32/48 + s9f16, 16 runs per arm) 0.9942 [0.9627, 1.0323] (OK 0.9950). "Never measurably slower than the
+  best single configuration" is supported; the deletion proposal was withdrawn (16 Oct ~07:00).
 - MySQL write my44, offset 00 × N = 4 (each part over its own stock): STC+DynSTC 1.001 [0.997, 1.007]; SWMR 1.002
   [0.991, 1.008]; LO 1.003 [0.998, 1.010]; EA 1.012 [1.007, 1.017]; DE 1.009 [1.000, 1.017]; DE+P 1.007 [0.999,
   1.013]; FE-INL 1.095 [1.086, 1.103]; AllOpt 1.101 [1.092, 1.110] (per script: delete 1.148, insert 1.090, update
