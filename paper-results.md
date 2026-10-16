@@ -394,6 +394,13 @@ so not resolved from stock; largest process (the renderer) peak RSS 1.55 (1.54-1
 Chromium, largest process's peak resident memory over stock: FE-INL configuration 1.06×, AllOpt 1.54× on Intel
 (Speedometer); 1.09× and 1.77× on AMD (mapped code; allocated memory unchanged). current.
 
+FFmpeg memory per transcode (record cell ffm4, 4 offsets × 4 runs, 16/16 valid per arm, memory.max_peak_kb per transcode from
+summary.json, median MiB native | stock | AllOpt): copy_passthrough 22 | 73.4 | 65.6, AllOpt/stock 0.8946 [0.8902, 0.8966],
+A/A 1.0021 [0.9998, 1.0044], 16-run ranges 64.8-65.8 vs 73.0-73.6 (resolved, −10.5 %); mjpeg 128 | 416 | 418; h264 331 | 578 |
+579; h265_libx265 521 | 1440 | 1441, AllOpt/stock 1.0004 [0.9987, 1.0023], A/A 0.9992. Fig. 11d's MR is GNU time's %M over the
+script = the largest child = h265 in every run. DMIR (86.9 %) is summed over the four transcodes; ~98.5 % of the removed
+locations are in the copy (DynSTC skips all of its checks), the encoders lose 8.7-9.0 %. In the DMIR text PR (16 Oct). final.
+
 ## 4. Instrumentation reduction and code size
 
 Counted in the final legs' binaries (offset-00 trees, 13 Oct; call sites of the runtime's entries from outside the
