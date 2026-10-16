@@ -184,7 +184,7 @@ CR1+N1 1.188 (not plotted; the record value 1.208 stays). Final. Speedometer sin
 
 Speedometer 3.0 single arms (Fig. 17a), crksv (16 Oct 08:52-13:01, N=1 per arm, 8/8 valid, outside busy <= 0.034), Score over
 the leg's own stock (per-test geomean): STC+DynSTC 1.023 (1.016), EA 0.925 (0.920), DE 1.008 (1.006), DE+P 0.899 (0.873),
-FE-INL 1.090 (1.066), CR1+N1 1.177 (1.163), A/A 1.057 (1.034). No intervals; one run varies by about +-6 % (A/A), so EA and
+FE-INL 1.090 (1.066), CR1+N1 1.177 (1.163), A/A 1.057 (1.034); exact EA 0.92473 (label 0.92). No intervals; one run varies by about +-6 % (A/A), so EA and
 DE+P are within noise. Applied in #63 (AllOpt bar stays the pooled 1.143, 8 runs, as the record values stay in the other
 panels). Same executables (sha256 in build_info): EA = the earlier "Sound" arm (crkv5/crkfv/crkfy, 0.978, 3 runs); CR1+N1 =
 crkv3/crkv4/crkfv; DE, DE+P and FE-INL are new single builds (not the earlier cumulative +DE, +DE+Peeling, CR1). Pass 2
