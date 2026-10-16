@@ -765,6 +765,12 @@ stock differs as much (one site 3 of 20 in one stock arm and 0 of 20 in the othe
 not shown kept. Seeded control: an unlocked
 write to a page buffer is reported by stock in 5 of 5 runs and voids the run in 5 of 5 under LO-MARK; never silent.
 
+SQLite, s9H (the paper's AllOpt line: LO-MARK + EA + LO + STC + SWMR + swmr-thread-roots + memintrin-one-side, no DE,
+no peeling; NOT a subset of the LO-MARK v1 / z9R line above, so it stands on its own runs): session snd14, 14 Oct, s9H vs
+stock, 10 vs 10: walIndexRecover 67451 3 | 4, walRestartHdr 68035 5 | 4, 68036 5 | 4; 67460 and 7164 in neither arm
+(undetermined); no site lost (verdict file only: /extra/alexey/a-p13-salvage-2026-10-16/mirror-extra-alexey/wt-dev2-r/apparms/sqsound/arms.txt).
+Fresh 20 vs 20 (all 15 tests, /dev/shm, apollo half A, untimed) running 16-17 Oct, ends ~03:45: ~/p5-apollo/pres-1016/sqlite-s9h/. current.
+
 Chromium, runs reporting the race, all sessions:
 
 | race | stock | FE-INL configuration | AllOpt |
