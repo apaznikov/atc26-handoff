@@ -775,7 +775,13 @@ SQLite, s9H (the paper's AllOpt line: LO-MARK + EA + LO + STC + SWMR + swmr-thre
 no peeling; NOT a subset of the LO-MARK v1 / z9R line above, so it stands on its own runs): session snd14, 14 Oct, s9H vs
 stock, 10 vs 10: walIndexRecover 67451 3 | 4, walRestartHdr 68035 5 | 4, 68036 5 | 4; 67460 and 7164 in neither arm
 (undetermined); no site lost (verdict file only: /extra/alexey/a-p13-salvage-2026-10-16/mirror-extra-alexey/wt-dev2-r/apparms/sqsound/arms.txt).
-Fresh 20 vs 20 (all 15 tests, /dev/shm, apollo half A, untimed) running 16-17 Oct, ends ~03:45: ~/p5-apollo/pres-1016/sqlite-s9h/. current.
+Fresh 20 vs 20 (all 15 tests, /dev/shm, apollo half A 8-15,40-47, untimed, run-major order, 16 Oct 23:03 - 17 Oct
+03:45, rc 0; threadtest3 sha256 stock f476c65cd8133710, s9H 277ad2a5d14d3a8a): **no site lost at L1, L2 or L3**,
+none only in s9H. Stock 2.8 ± 1.1 reports per run, s9H 2.5 ± 1.1; union L1 5 | 5, L2 2 | 2, L3 3 | 3. Runs reporting
+the site (stock | s9H): L3 `walRestartHdr` 68035 19 | 16, 68036 18 | 18, `walIndexRecover` 67451 5 | 1; L2
+`walTryBeginRead` / `walRestartHdr` 20 | 18, `walTryBeginRead` / `walIndexRecover` 5 | 1. The paper's sentence
+("every race that Original TSan reported in at least four runs was also reported by TSan+AllOpt") holds for SQLite.
+Files ~/p5-apollo/pres-1016/sqlite-s9h/{verdict.txt,aggregate.txt} on apollo. final.
 
 Chromium, runs reporting the race, all sessions:
 
