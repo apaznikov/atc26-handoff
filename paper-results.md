@@ -278,6 +278,12 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 - memcached mc44, offsets 00/16/32 × N = 4 (offset 00 mixed-time): STC+DynSTC 0.998 [0.994, 1.002]; SWMR 1.013
   [1.010, 1.016]; LO 0.998 [0.993, 1.003]; EA 1.847 [1.839, 1.856]; DE 1.004 [1.001, 1.007]; DE+P 1.004 [1.001,
   1.007]; FE-INL 1.000 [0.998, 1.004]; A/A 1.000; AllOpt (record cell mcm4, 4×4) 1.907 [1.900, 1.917].
+- **MySQL Select singles POOLED (current, #73, 16 Oct ~23:10)**: ms44 + msb4, 8 offset slots × N = 4 = 32 runs per arm,
+  32/0/0/0 valid/failed/void/retired, each slot over its own stock, root tsan-cr-8345a0396fa5, 95 % two-level bootstrap:
+  STC+DynSTC 1.00119 [0.98580, 1.01292]; SWMR 1.00184 [0.98728, 1.00918]; LO 1.00392 [0.97533, 1.01295]; EA 1.00722
+  [0.99504, 1.01719]; DE 1.00510 [0.99220, 1.01438]; DE+P 1.00302 [0.99555, 1.01154]; FE-INL 1.06380 [1.05413, 1.07332];
+  AllOpt 1.07656 [1.06516, 1.08473]; A/A 0.99908 [0.98854, 1.00701]. Text: AllOpt Select 1.07x -> 1.08x; FE-INL 1.06x.
+  CSV /extra/alexey/wt-exp-bars/mysql_select_singles_pooled8.csv.
 - **SQLite singles POOLED (current, #73, 16 Oct ~20:40)**: sq44 + sqb4, 8 offset slots × N = 4 = 32 runs per arm (32/32
   valid), each slot over its own stock, 95 % two-level bootstrap; attempts (OK): STC+DynSTC 0.9950 [0.9688, 1.0250] (0.9935);
   LO 1.3220 [1.2955, 1.3607] (1.2387 [1.2189, 1.2673]); EA 0.9929 [0.9665, 1.0291] (0.9949); DE 0.9920 [0.9652, 1.0167]
