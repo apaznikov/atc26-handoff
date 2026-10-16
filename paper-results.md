@@ -188,7 +188,16 @@ FE-INL 1.090 (1.066), CR1+N1 1.177 (1.163), A/A 1.057 (1.034); exact EA 0.92473 
 DE+P are within noise. Applied in #63 (AllOpt bar stays the pooled 1.143, 8 runs, as the record values stay in the other
 panels). Same executables (sha256 in build_info): EA = the earlier "Sound" arm (crkv5/crkfv/crkfy, 0.978, 3 runs); CR1+N1 =
 crkv3/crkv4/crkfv; DE, DE+P and FE-INL are new single builds (not the earlier cumulative +DE, +DE+Peeling, CR1). Pass 2
-(crksv2) 16 Oct 13:03-~17:15; pass 3 (crksv3) follows if clean, ~21:20. current.
+(crksv2) 16 Oct 13:03-~17:15; pass 3 (crksv3) follows if clean, ~21:20. SUPERSEDED by the five-pass pooling below.
+
+**Speedometer single arms, FINAL (Fig. S5a; crksv..crksv5, 16 Oct 08:52 - 17 Oct 07:14, N = 5 per arm, each run over its
+own pass's stock, 95 % bootstrap over runs; EA and DE runs that hit the V8 cppheap debug check in pass 3 re-run in passes
+4-5, rc != 0 runs not counted):** EA 0.90459 [0.86934, 0.93448]; STC+DynSTC (= the LO, STC, SWMR bar) 0.98474 [0.96442,
+1.00615]; DE 0.98752 [0.93352, 1.03180]; DE+P 0.93959 [0.91702, 0.95915]; FE-INL 1.05627 [1.00318, 1.09737]; A/A (N = 3)
+1.00076 [0.95470, 1.05716]. AllOpt bar = record CR1+N1 (crkv3+crkv4+crkfv, 8 runs) 1.14292 [1.09108, 1.19423], as in the
+abstract. By executable (every leg that ran the same binary): EA N = 8 0.93141 [0.89426, 0.97215]; CR1+N1 N = 13 1.16109
+[1.12262, 1.19717]; A/A N = 9 1.00567 [0.98799, 1.02423]. EA and DE+P resolve below stock; STC and DE contain 1.00; FE-INL
+just above. CSV /extra/alexey/wt-exp-bars/chromium_speedometer_s5a.csv. In the paper: #73 (5aec130). final.
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
