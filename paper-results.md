@@ -278,10 +278,17 @@ In the paper (PR #54, 15 Oct): Fig. 8 FFmpeg panel and "1.27x" (AllOpt and STC).
 - memcached mc44, offsets 00/16/32 × N = 4 (offset 00 mixed-time): STC+DynSTC 0.998 [0.994, 1.002]; SWMR 1.013
   [1.010, 1.016]; LO 0.998 [0.993, 1.003]; EA 1.847 [1.839, 1.856]; DE 1.004 [1.001, 1.007]; DE+P 1.004 [1.001,
   1.007]; FE-INL 1.000 [0.998, 1.004]; A/A 1.000; AllOpt (record cell mcm4, 4×4) 1.907 [1.900, 1.917].
+- **SQLite singles POOLED (current, #73, 16 Oct ~20:40)**: sq44 + sqb4, 8 offset slots × N = 4 = 32 runs per arm (32/32
+  valid), each slot over its own stock, 95 % two-level bootstrap; attempts (OK): STC+DynSTC 0.9950 [0.9688, 1.0250] (0.9935);
+  LO 1.3220 [1.2955, 1.3607] (1.2387 [1.2189, 1.2673]); EA 0.9929 [0.9665, 1.0291] (0.9949); DE 0.9920 [0.9652, 1.0167]
+  (0.9937); DE+P 1.0047 [0.9833, 1.0355] (1.0033); FE-INL 0.9841 [0.9506, 1.0227] (0.9863); A/A 0.9989 [0.9761, 1.0258]
+  (0.9980), plotted on the SWMR bar (binary identical to stock). Every non-LO interval contains 1.00. AllOpt stays s9r4
+  1.312. AllOpt over LO in the same leg (sqb4, 4×4) 1.0237 [0.9830, 1.0595]: equal within noise ("LO alone reaches a
+  similar speedup" holds). CSV /extra/alexey/wt-exp-bars/sqlite_singles_pooled8.csv (also sqlite_singles_pooled.csv).
 - SQLite sq44 FINAL, 4 offsets × N = 4 (16/16 valid per arm; offset 00 mixed-time), attempts (OK): STC+DynSTC 0.981
   [0.944, 1.028] (0.988); LO 1.330 [1.290, 1.387] (1.247 [1.219, 1.284]); EA 0.980 [0.948, 1.026] (0.985); DE 0.992
   [0.953, 1.024]; DE+P 0.994 [0.963, 1.039]; FE-INL 0.995 [0.977, 1.031]; A/A 1.001 [0.961, 1.046]; AllOpt = s9r4
-  1.312 [1.278, 1.366] (1.242). In Fig. 8d (#63, 16 Oct). Same-leg pair (offsets 32/48 × N = 4): over stock LO 1.296
+  1.312 [1.278, 1.366] (1.242). In Fig. 8d (#63, 16 Oct); SUPERSEDED in #73 by the pooled values below. Same-leg pair (offsets 32/48 × N = 4): over stock LO 1.296
   [1.258, 1.370], s9H 1.257 [1.190, 1.341], A/A 0.979; s9H over LO 0.970 [0.928, 0.991] attempts, 0.975 [0.945,
   0.995] OK (per offset 0.980 / 0.961). Earlier one-leg sqt2: s9H 1.338, LO 1.332. Text: "LO alone reaches a
   similar speedup" holds. s9H DIRECTLY over LO, same-leg pairing (attempts): 2 CPUs 0.9745 [0.9309, 1.0133]; 4 CPUs
