@@ -401,6 +401,15 @@ A/A 1.0021 [0.9998, 1.0044], 16-run ranges 64.8-65.8 vs 73.0-73.6 (resolved, −
 script = the largest child = h265 in every run. DMIR (86.9 %) is summed over the four transcodes; ~98.5 % of the removed
 locations are in the copy (DynSTC skips all of its checks), the encoders lose 8.7-9.0 %. In the DMIR text PR (16 Oct). final.
 
+Fig. 11b,c with run ranges (decided 16 Oct ~16:50, PR #78): DIR for every application from whole runs at fixed work —
+Memcached 76.81 / 76.81 % (a third run's dump not kept), Redis 91.3 / 91.1 / 91.3 % (mean 91.2; the PT-window 93.6 % is
+replaced; text 94 % → 91 % in the abstract, the Redis paragraph and §8), FFmpeg 65.94 / 65.97 / 65.94, SQLite per-function
+weighted 2.84 / 5.59 / 7.33 (pooled 5.31), MySQL 3.51 / 3.67 / 3.56, Chromium 65.06 / 64.98. DMIR per run: Memcached
+30.05 / 30.03 / 30.04, Redis 28.6 / 26.2 / 29.0, FFmpeg 86.94 / 86.90 / 86.92, SQLite −3.86 / −4.89 / +0.66 (mean −2.7,
+plotted as measured), MySQL −0.08 / +0.13 / +0.78, Chromium +0.05 / −1.31 (mean −0.6). Sources: a-p13 salvage
+wt-dev2-r/dmir/REP_END, wt-dev2-r/from-p13/dirfn/agg-perrun.out. Fig. 7 and 11d 95 % intervals:
+/extra/alexey/wt-exp-bars/intervals_fig7_fig11d.csv. final.
+
 ## 4. Instrumentation reduction and code size
 
 Counted in the final legs' binaries (offset-00 trees, 13 Oct; call sites of the runtime's entries from outside the
