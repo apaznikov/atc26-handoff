@@ -177,7 +177,10 @@ Pass 2 (crks2, 16 Oct 01:45-03:12, beside another user's load; Paint single-run 
 DE+P 1.004, FE-INL 1.128 [1.098, 1.186]; WebP (N=8) EA 1.035 (label 1.03, from 1.0349), LO/STC/SWMR 1.018, DE 1.028,
 DE+P 1.025 (label 1.02), FE-INL 1.042; SVG (N=5) EA 0.995 (label 0.99), LO/STC/SWMR 0.982, DE 0.992, DE+P 0.994,
 FE-INL 1.066 [1.028, 1.092]. Pooled CR1+N1 (not plotted): Paint 1.406, WebP 1.074, SVG 1.345 — the record values stay.
-Parser pass 2 (crksp2) ~06:15-09:10, then Speedometer single arms (N=1) ~09:10-13:10.
+Parser pass 2 (crksp2, 16 Oct 05:43-08:50; 32/32 runs valid, outside busy <= 0.037) pooled with pass 1 in #63 (N=4;
+pass 2 alone within 0.006 of pass 1 for every arm): EA 0.997 [0.992, 1.002], LO/STC/SWMR 0.993 [0.981, 1.005], DE 0.995
+[0.985, 1.006], DE+P 0.990 [0.986, 0.994], FE-INL 1.095 [1.087, 1.104] (label 1.09, from 1.0946), A/A 0.995; pooled
+CR1+N1 1.188 (not plotted; the record value 1.208 stays). Final. Speedometer single arms (crksv, N=1) 16 Oct ~08:50-13:00.
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
