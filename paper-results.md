@@ -781,7 +781,10 @@ none only in s9H. Stock 2.8 ± 1.1 reports per run, s9H 2.5 ± 1.1; union L1 5 |
 the site (stock | s9H): L3 `walRestartHdr` 68035 19 | 16, 68036 18 | 18, `walIndexRecover` 67451 5 | 1; L2
 `walTryBeginRead` / `walRestartHdr` 20 | 18, `walTryBeginRead` / `walIndexRecover` 5 | 1. The paper's sentence
 ("every race that Original TSan reported in at least four runs was also reported by TSan+AllOpt") holds for SQLite.
-Files ~/p5-apollo/pres-1016/sqlite-s9h/{verdict.txt,aggregate.txt} on apollo. final.
+40/40 runs "0 errors out of 15 tests", 0 void. 67451 at 1/20 against 5/20 is not a resolved difference (Fisher
+two-sided p = 0.18; stock itself 6-9 of 20 on 12 Oct, 3 of 10 on 14 Oct). 67460 and 7164: 0 | 0 (undetermined). With
+snd14 the s9H totals are 68035 20/30, 68036 22/30, 67451 5/30.
+Files ~/p5-apollo/pres-1016/sqlite-s9h/{verdict.txt,aggregate.txt,run/} on apollo. final.
 
 Chromium, runs reporting the race, all sessions:
 
