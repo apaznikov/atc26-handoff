@@ -241,9 +241,16 @@ crash, like crkso-a's stock crash): EA N = 5 0.935 [0.910, 0.966]; A/A N = 6 0.9
 sessions disagree on EA (1.032 vs 0.935), each interval excluding the other's point, and their A/A moved too (0.999 vs
 0.977). Session-to-session drift on this host is therefore larger than one leg's bootstrap shows, and a one-session
 interval (crksv*, crkso) understates the uncertainty. Pooled crkso-a + crkso-a2: EA N = 11 0.987 [0.946, 1.041], A/A
-N = 11 0.987 [0.972, 1.003], so on AMD EA is not separable from stock. Pending: crkso-a3 (apollo, third session, END
-~09:00 18 Oct) and crkso2 (focs, 4 more rounds, END ~08:30 18 Oct). Data: focs /extra/alexey/chromium/legs/crkso/,
-apollo ~/p5-apollo/chromium/legs/crkso-a/ and crkso-a2/ (score_only.txt, speedo_raw.txt).
+N = 11 0.987 [0.972, 1.003], so on AMD EA is not separable from stock. Intel second session (crkso2, focs, 4 more
+rounds, fresh Latin square, 15/16 rc 0, outside busy <= 0.10, done 07:55 18 Oct; the failed run is a DE+P renderer crash
+in round 1): EA N = 4 0.937 [0.916, 0.953] (0.943, 0.908, 0.938, 0.958); DE+P N = 3 0.958 [0.938, 0.982]; A/A N = 4
+0.990 [0.980, 1.009]. Pooled crkso + crkso2: EA N = 8 0.942 [0.915, 0.965], all eight rounds below 1.00 (0.869-0.984);
+DE+P N = 7 0.955 [0.913, 0.989]; A/A N = 7 0.970 [0.902, 1.021] (one round 0.790, the other six 0.980-1.054);
+per-test geomeans agree (EA 0.941, DE+P 0.951). Reading: unlike AMD, the Intel EA cost reproduces across sessions
+(about 6 %, DE+P about 4-5 %), so the host-specific code-layout reading stands. Fig. S5a's 0.90 (EA) and 0.94 (DE+P),
+from a fixed rotation in one session, overstate it; the order-free figures are 0.94 and 0.955. Pending: crkso-a3
+(apollo, third session, END ~09:25 18 Oct). Data: focs /extra/alexey/chromium/legs/crkso/ and crkso2/, apollo
+~/p5-apollo/chromium/legs/crkso-a/ and crkso-a2/ (score_only.txt, speedo_raw.txt).
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
