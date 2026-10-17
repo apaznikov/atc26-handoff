@@ -227,6 +227,18 @@ selected suites, a fixed rotation order in crksv*, or both). A Score-only full-S
 separate these (about 28 min per run). Data: focs /extra/alexey/chromium/legs/crksd/perf_diag.csv, apollo
 ~/p5-apollo/chromium/legs/crksd-a/perf_diag.csv.
 
+Full-Speedometer follow-up, records only (17 Oct). Score only, no perf, Latin-square arm orders, each arm over its round's
+stock, geomean with 95 % bootstrap over rounds. Intel (crkso, focs half 1, 15/16 rc 0, outside busy <= 0.10, ~32 min
+per run; the failed run is A/A round 1, lost to the full root filesystem at 15:04-16:18): EA N = 4 0.947 [0.893, 0.981]
+(rounds 0.869, 0.984, 0.969, 0.970); DE+P N = 4 0.953 [0.883, 1.007]; A/A N = 3 0.945 [0.790, 1.054] (one round 0.790).
+AMD (crkso-a, apollo half B, 17/18 rc 0, ~19 min per run; the failed run is a stock A/A renderer crash): EA N = 6 1.032
+[0.976, 1.111] (rounds 1.064, 1.037, 1.217, 0.969, 0.973, 0.956; about 0.999 without the 1.217 round); A/A N = 5 0.999
+[0.982, 1.018]. Reading: on the whole suite the same EA binary reads about 5 % below stock on Intel, in every round, and
+at stock level on AMD. The cost is host-specific, which agrees with the code-layout reading and the counters above. It is
+larger than the counters' ~2 %, so part of it is Score noise; the Intel A/A spread at N = 3-4 does not size it more
+closely. crkso-a2 (apollo, 6 more rounds) pending, END ~03:10 18 Oct. Data: focs /extra/alexey/chromium/legs/crkso/,
+apollo ~/p5-apollo/chromium/legs/crkso-a/ (score_only.txt, speedo_raw.txt).
+
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
 | | first sample, FE-INL configuration | first sample, AllOpt | hold-out, FE-INL configuration | hold-out, AllOpt |
