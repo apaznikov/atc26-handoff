@@ -190,6 +190,11 @@ Parser pass 2 (crksp2, 16 Oct 05:43-08:50; 32/32 runs valid, outside busy <= 0.0
 the two passes agree within about 0.01 for every arm): EA 0.997 [0.992, 1.002], LO/STC/SWMR 0.993 [0.981, 1.005], DE 0.995
 [0.985, 1.006], DE+P 0.990 [0.986, 0.994], FE-INL 1.095 [1.087, 1.104] (label 1.09, from 1.0946), A/A 0.995; pooled
 CR1+N1 1.188 (not plotted; the record value 1.208 stays). Final. Speedometer single arms (crksv, N=1) 16 Oct ~08:50-13:00.
+Parser pass 3, records only (crksp3, 17 Oct 08:43-11:32, 16/16 runs rc 0, outside busy <= 0.10, none retired), pooled
+crkp1 + crksp2 + crksp3, N=6, each repetition over its own stock (chromium_singles_pooled_parser3.csv): STC+DynSTC 0.989
+[0.980, 0.998], EA 0.994 [0.990, 0.999], DE 0.994 [0.987, 1.002], DE+P 0.984 [0.974, 0.991], FE-INL 1.088 [1.079, 1.097],
+CR1+N1 1.190 [1.184, 1.197], A/A 0.988 [0.980, 0.996]. The A/A itself excludes 1.00, and every single bar overlaps it: no
+single configuration resolves below stock on Parser. Fig. 9c stays at N=4 (decided 17 Oct).
 
 Speedometer 3.0 single arms (Fig. 17a), crksv (16 Oct 08:52-13:01, N=1 per arm, 8/8 valid, outside busy <= 0.034), Score over
 the leg's own stock (per-test geomean): STC+DynSTC 1.023 (1.016), EA 0.925 (0.920), DE 1.008 (1.006), DE+P 0.899 (0.873),
