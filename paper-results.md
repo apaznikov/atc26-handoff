@@ -236,8 +236,14 @@ AMD (crkso-a, apollo half B, 17/18 rc 0, ~19 min per run; the failed run is a st
 [0.982, 1.018]. Reading: on the whole suite the same EA binary reads about 5 % below stock on Intel, in every round, and
 at stock level on AMD. The cost is host-specific, which agrees with the code-layout reading and the counters above. It is
 larger than the counters' ~2 %, so part of it is Score noise; the Intel A/A spread at N = 3-4 does not size it more
-closely. crkso-a2 (apollo, 6 more rounds) pending, END ~03:10 18 Oct. Data: focs /extra/alexey/chromium/legs/crkso/,
-apollo ~/p5-apollo/chromium/legs/crkso-a/ (score_only.txt, speedo_raw.txt).
+closely. AMD second session (crkso-a2, 6 more rounds, fresh Latin square, 17/18 rc 0; the failed run is an EA renderer
+crash, like crkso-a's stock crash): EA N = 5 0.935 [0.910, 0.966]; A/A N = 6 0.977 [0.959, 1.000]. The two AMD
+sessions disagree on EA (1.032 vs 0.935), each interval excluding the other's point, and their A/A moved too (0.999 vs
+0.977). Session-to-session drift on this host is therefore larger than one leg's bootstrap shows, and a one-session
+interval (crksv*, crkso) understates the uncertainty. Pooled crkso-a + crkso-a2: EA N = 11 0.987 [0.946, 1.041], A/A
+N = 11 0.987 [0.972, 1.003], so on AMD EA is not separable from stock. Pending: crkso-a3 (apollo, third session, END
+~09:00 18 Oct) and crkso2 (focs, 4 more rounds, END ~08:30 18 Oct). Data: focs /extra/alexey/chromium/legs/crkso/,
+apollo ~/p5-apollo/chromium/legs/crkso-a/ and crkso-a2/ (score_only.txt, speedo_raw.txt).
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
