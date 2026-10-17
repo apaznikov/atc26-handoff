@@ -218,7 +218,7 @@ binary, perf stat :u over the whole run, each arm over the same round's stock. I
 20/20 rc 0, outside busy <= 0.10; the six suites where EA read lowest in crksv*, random arm orders, N = 4 Score, 3
 counter rounds): EA Score 0.983 [0.935, 1.037] (A/A 1.019 [0.978, 1.096]); instructions 0.999, cycles 1.018, branch
 misses 1.039, L1i misses 1.026, iTLB misses 0.757, front-end L1i misses 1.018 (A/A counters within +-1 %). DE+P: Score
-1.012, instructions 1.004, cycles 1.016, front-end L1i misses 1.101. AMD (crksd-a, apollo, 12/12 rc 0, full run): EA
+1.012, instructions 1.004, cycles 1.016, front-end L1i misses 1.101. AMD (crksd-a, apollo, 12/12 rc 0, the same six suites): EA
 Score 1.003 [0.980, 1.014] (A/A 1.010 [0.858, 1.153]); instructions 1.001, cycles 1.014, L1i misses 1.080 (A/A +-0.7 %),
 iTLB misses 0.849. Reading: EA does no extra work on either host (same instruction count; not a GC or JIT effect) and
 pays about 1.5-2 % in cycles with a front-end (code placement) signature. That cost does not account for the 0.90 of
