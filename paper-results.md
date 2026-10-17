@@ -177,6 +177,15 @@ Pass 2 (crks2, 16 Oct 01:45-03:12, beside another user's load; Paint single-run 
 DE+P 1.004, FE-INL 1.128 [1.098, 1.186]; WebP (N=8) EA 1.035 (label 1.03, from 1.0349), LO/STC/SWMR 1.018, DE 1.028,
 DE+P 1.025 (label 1.02), FE-INL 1.042; SVG (N=5) EA 0.995 (label 0.99), LO/STC/SWMR 0.982, DE 0.992, DE+P 0.994,
 FE-INL 1.066 [1.028, 1.092]. Pooled CR1+N1 (not plotted): Paint 1.406, WebP 1.074, SVG 1.345 — the record values stay.
+**FINAL (17 Oct): pass 3** (crksw3, 17 Oct ~07:15-08:39, 96/96 runs rc 0, outside busy <= 0.10, none retired) pooled with
+passes 1-2, each repetition over its own stock (chromium_singles_pooled_short3.csv), in #73 1685b7d: Paint (N=12) EA
+0.999 [0.943, 1.053], LO/STC/SWMR 1.000 [0.954, 1.049], DE 1.004, DE+P 1.002, FE-INL 1.119 [1.099, 1.158] (label 1.13 ->
+1.12), A/A 1.010 [0.987, 1.048]; WebP (N=12) EA 1.026 [1.004, 1.051], LO/STC/SWMR 1.012 [1.000, 1.027], DE 1.024, DE+P
+1.018 [1.006, 1.031], FE-INL 1.033 [1.018, 1.050], A/A 1.004 [0.988, 1.018]; SVG (N=9) EA 0.998, LO/STC/SWMR 0.984
+[0.962, 1.004], DE 0.974 [0.952, 0.994] (below A/A's lower end 0.983), DE+P 0.991, FE-INL 1.084 [1.058, 1.103], A/A
+0.996. AllOpt bars stay the record crkfs values (1.381, 1.048, 1.366); pooled CR1+N1 (not plotted): Paint 1.399, WebP
+1.075, SVG 1.340. Suite geomeans over the 5 WebP+Paint stories: STC 1.004, EA 1.004, DE 1.003, DE+P 1.008, FE-INL 1.069,
+CR1+N1 1.163, A/A 0.996. No text cites these single values.
 Parser pass 2 (crksp2, 16 Oct 05:43-08:50; 32/32 runs valid, outside busy <= 0.037) pooled with pass 1 in #63 (N=4;
 the two passes agree within about 0.01 for every arm): EA 0.997 [0.992, 1.002], LO/STC/SWMR 0.993 [0.981, 1.005], DE 0.995
 [0.985, 1.006], DE+P 0.990 [0.986, 0.994], FE-INL 1.095 [1.087, 1.104] (label 1.09, from 1.0946), A/A 0.995; pooled
