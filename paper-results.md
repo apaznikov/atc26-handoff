@@ -213,6 +213,20 @@ abstract. By executable (every leg that ran the same binary): EA N = 8 0.93141 [
 [1.12262, 1.19717]; A/A N = 9 1.00567 [0.98799, 1.02423]. EA and DE+P resolve below stock; STC and DE contain 1.00; FE-INL
 just above. CSV /extra/alexey/wt-exp-bars/chromium_speedometer_s5a.csv. In the paper: #73 (5aec130). final.
 
+Speedometer EA diagnostic, records only (17 Oct; the paper sentence "probably reflects code layout" stays). Same EA
+binary, perf stat :u over the whole run, each arm over the same round's stock. Intel (crksd, focs half 1, 12:17-15:12,
+20/20 rc 0, outside busy <= 0.10; the six suites where EA read lowest in crksv*, random arm orders, N = 4 Score, 3
+counter rounds): EA Score 0.983 [0.935, 1.037] (A/A 1.019 [0.978, 1.096]); instructions 0.999, cycles 1.018, branch
+misses 1.039, L1i misses 1.026, iTLB misses 0.757, front-end L1i misses 1.018 (A/A counters within +-1 %). DE+P: Score
+1.012, instructions 1.004, cycles 1.016, front-end L1i misses 1.101. AMD (crksd-a, apollo, 12/12 rc 0, full run): EA
+Score 1.003 [0.980, 1.014] (A/A 1.010 [0.858, 1.153]); instructions 1.001, cycles 1.014, L1i misses 1.080 (A/A +-0.7 %),
+iTLB misses 0.849. Reading: EA does no extra work on either host (same instruction count; not a GC or JIT effect) and
+pays about 1.5-2 % in cycles with a front-end (code placement) signature. That cost does not account for the 0.90 of
+Fig. S5a: the same six suites read 0.77-0.83 per suite in crksv* and 0.91-1.07 here (regression to the mean on the
+selected suites, a fixed rotation order in crksv*, or both). A Score-only full-Speedometer leg with random orders would
+separate these (about 28 min per run). Data: focs /extra/alexey/chromium/legs/crksd/perf_diag.csv, apollo
+~/p5-apollo/chromium/legs/crksd-a/perf_diag.csv.
+
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
 | | first sample, FE-INL configuration | first sample, AllOpt | hold-out, FE-INL configuration | hold-out, AllOpt |
