@@ -252,8 +252,9 @@ from a fixed rotation in one session, overstate it; the order-free figures are 0
 (crkso-a3, 6 rounds, fresh Latin square, 17/18 rc 0, done 09:18 18 Oct; the failed run is a stock A/A renderer crash):
 EA N = 6 1.001 [0.968, 1.037]; A/A N = 5 1.003 [0.959, 1.045]. Pooled over the three AMD sessions: EA N = 17 0.992
 [0.962, 1.030], A/A N = 16 0.992 [0.976, 1.010] (per-test 0.989 vs 0.987). So on AMD EA equals stock, and on Intel it
-is about 6 % slower. Renderer crashes over the four score-only sessions: 5 of 66 runs (stock 3, EA 1, DE+P 1), all
-DevtoolsTargetCrashException with no V8 or TSan fatal, so not build-specific. Data: focs
+is about 6 % slower. Renderer crashes over the five score-only sessions: 4 runs (stock 2, both apollo A/A; EA 1; DE+P 1;
+crkso's failed A/A run was the full-disk window, not a crash), all DevtoolsTargetCrashException with no V8 or TSan
+fatal, so not build-specific. Data: focs
 /extra/alexey/chromium/legs/crkso/ and crkso2/, apollo ~/p5-apollo/chromium/legs/crkso-a/, crkso-a2/ and crkso-a3/
 (score_only.txt, speedo_raw.txt).
 
