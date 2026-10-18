@@ -269,8 +269,13 @@ dynstc_rt=1): FE-INL N = 4 1.075 [1.069, 1.082] (1.067, 1.074, 1.076, 1.084); DE
 N = 4 1.028 [1.004, 1.053]; A/A N = 4 1.050 [1.020, 1.083] (1.102, 1.059, 1.025, 1.015). This leg's A/A excludes 1.00
 (the stock runs were slow against the second stock run in every round), so every arm sits on a raised reference: DE and
 STC are at or below the A/A level, and FE-INL is above A/A's point but inside its interval (at most ~2.5 % over A/A, not
-resolved). With crkso-a4, no Chromium build moves Speedometer beyond the A/A spread on AMD. Data: focs
-/extra/alexey/chromium/legs/crkso/, crkso2/ and crkso3/, apollo ~/p5-apollo/chromium/legs/crkso-a/ to crkso-a5/
+resolved). With crkso-a4, no Chromium build moves Speedometer beyond the A/A spread on AMD. Intel single bars
+order-free (crkso4, focs half 1, 4 Latin rounds, 16/16 rc 0, outside busy <= 0.10, done 23:31 18 Oct): STC+DynSTC N = 4
+0.991 [0.974, 1.009] (per-test 0.983); DE N = 4 0.990 [0.986, 0.993] (per-test 0.987); A/A N = 4 0.995 [0.968, 1.016].
+Both lie inside A/A's interval, so on Intel neither is separable from stock (S5a: 0.985 and 0.988). The order-free set
+for S5a is in /extra/alexey/wt-exp-bars/chromium_speedometer_s5a_orderfree.csv: AllOpt 1.163, FE-INL 1.043, STC 0.991,
+DE 0.990, EA 0.942, DE+P 0.955 (S5a: 1.143, 1.056, 0.985, 0.988, 0.905, 0.940). Data: focs
+/extra/alexey/chromium/legs/crkso/, crkso2/, crkso3/ and crkso4/, apollo ~/p5-apollo/chromium/legs/crkso-a/ to crkso-a5/
 (score_only.txt, speedo_raw.txt).
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
