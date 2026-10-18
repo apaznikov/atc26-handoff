@@ -248,9 +248,14 @@ in round 1): EA N = 4 0.937 [0.916, 0.953] (0.943, 0.908, 0.938, 0.958); DE+P N 
 DE+P N = 7 0.955 [0.913, 0.989]; A/A N = 7 0.970 [0.902, 1.021] (one round 0.790, the other six 0.980-1.054);
 per-test geomeans agree (EA 0.941, DE+P 0.951). Reading: unlike AMD, the Intel EA cost reproduces across sessions
 (about 6 %, DE+P about 4-5 %), so the host-specific code-layout reading stands. Fig. S5a's 0.90 (EA) and 0.94 (DE+P),
-from a fixed rotation in one session, overstate it; the order-free figures are 0.94 and 0.955. Pending: crkso-a3
-(apollo, third session, END ~09:25 18 Oct). Data: focs /extra/alexey/chromium/legs/crkso/ and crkso2/, apollo
-~/p5-apollo/chromium/legs/crkso-a/ and crkso-a2/ (score_only.txt, speedo_raw.txt).
+from a fixed rotation in one session, overstate it; the order-free figures are 0.94 and 0.955. AMD third session
+(crkso-a3, 6 rounds, fresh Latin square, 17/18 rc 0, done 09:18 18 Oct; the failed run is a stock A/A renderer crash):
+EA N = 6 1.001 [0.968, 1.037]; A/A N = 5 1.003 [0.959, 1.045]. Pooled over the three AMD sessions: EA N = 17 0.992
+[0.962, 1.030], A/A N = 16 0.992 [0.976, 1.010] (per-test 0.989 vs 0.987). So on AMD EA equals stock, and on Intel it
+is about 6 % slower. Renderer crashes over the four score-only sessions: 5 of 66 runs (stock 3, EA 1, DE+P 1), all
+DevtoolsTargetCrashException with no V8 or TSan fatal, so not build-specific. Data: focs
+/extra/alexey/chromium/legs/crkso/ and crkso2/, apollo ~/p5-apollo/chromium/legs/crkso-a/, crkso-a2/ and crkso-a3/
+(score_only.txt, speedo_raw.txt).
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
