@@ -258,8 +258,12 @@ fatal, so not build-specific. AllOpt order-free on AMD (crkso-a4, apollo half B,
 13:55 18 Oct; AllOpt cr1n1 byte-identical to focs's, restored from the HDD archive): AllOpt N = 4 1.019 [0.981, 1.058]
 (0.989, 1.071, 1.046, 0.974), A/A N = 4 0.999 [0.969, 1.035]. This agrees with the earlier AMD record (AllOpt 1.006,
 N = 3, table below): on AMD the Chromium AllOpt build is at stock level on Speedometer, against 1.14 on Intel. The paper
-gives the Intel figure and names the Intel host for Chromium (decided 11 Oct). The Intel order-free value is crkso3, END
-~16:45 18 Oct. Data: focs
+gives the Intel figure and names the Intel host for Chromium (decided 11 Oct). Intel order-free check (crkso3, focs
+half 1, 4 Latin rounds, 16/16 rc 0, outside busy <= 0.10, done 15:01 18 Oct, same binaries as Fig. S5a): AllOpt N = 4
+1.163 [1.117, 1.200] (1.196, 1.205, 1.163, 1.092; per-test 1.154); FE-INL N = 4 1.043 [0.985, 1.099]; A/A N = 4 0.966
+[0.936, 0.998]. So the abstract's 1.14 (S5a 1.143 [1.091, 1.194]) holds on Intel without the fixed order; every round is
+above 1.09, and this leg's A/A sits below 1, so against A/A the gain is if anything larger. FE-INL (S5a 1.056) reads
+1.04 with an interval containing 1.00. Data: focs
 /extra/alexey/chromium/legs/crkso/ and crkso2/, apollo ~/p5-apollo/chromium/legs/crkso-a/, crkso-a2/ and crkso-a3/
 (score_only.txt, speedo_raw.txt).
 
