@@ -274,8 +274,15 @@ order-free (crkso4, focs half 1, 4 Latin rounds, 16/16 rc 0, outside busy <= 0.1
 0.991 [0.974, 1.009] (per-test 0.983); DE N = 4 0.990 [0.986, 0.993] (per-test 0.987); A/A N = 4 0.995 [0.968, 1.016].
 Both lie inside A/A's interval, so on Intel neither is separable from stock (S5a: 0.985 and 0.988). The order-free set
 for S5a is in /extra/alexey/wt-exp-bars/chromium_speedometer_s5a_orderfree.csv: AllOpt 1.163, FE-INL 1.043, STC 0.991,
-DE 0.990, EA 0.942, DE+P 0.955 (S5a: 1.143, 1.056, 0.985, 0.988, 0.905, 0.940). Data: focs
-/extra/alexey/chromium/legs/crkso/, crkso2/, crkso3/ and crkso4/, apollo ~/p5-apollo/chromium/legs/crkso-a/ to crkso-a5/
+DE 0.990, EA 0.942, DE+P 0.955 (S5a: 1.143, 1.056, 0.985, 0.988, 0.905, 0.940). Intel second AllOpt session (crkso5,
+focs half 1, 4 rounds of a fresh Latin square, 16/16 rc 0, outside busy <= 0.10, done 06:44 19 Oct, same binaries):
+AllOpt N = 4 1.144 [1.118, 1.166] (1.172, 1.107, 1.149, 1.151; per-test 1.132); FE-INL N = 4 1.075 [1.016, 1.138];
+A/A N = 4 1.027 [0.983, 1.073]. Pooled crkso3 + crkso5: AllOpt N = 8 1.154 [1.128, 1.179] (rounds 1.092-1.205,
+per-test 1.143); FE-INL N = 8 1.059 [1.016, 1.104] (per-test 1.051); A/A N = 8 0.996 [0.963, 1.033] (the two sessions'
+A/A, 0.966 and 1.027, straddle 1.00). So the abstract's 1.14 holds over two order-free sessions: the pooled interval
+contains S5a's 1.143. FE-INL's interval excludes 1.00 and its point lies above A/A's interval, although the two
+intervals overlap (S5a 1.056). The CSV above carries the pooled rows. Data: focs
+/extra/alexey/chromium/legs/crkso/, crkso2/, crkso3/, crkso4/ and crkso5/, apollo ~/p5-apollo/chromium/legs/crkso-a/ to crkso-a5/
 (score_only.txt, speedo_raw.txt).
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
