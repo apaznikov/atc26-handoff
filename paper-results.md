@@ -263,8 +263,14 @@ half 1, 4 Latin rounds, 16/16 rc 0, outside busy <= 0.10, done 15:01 18 Oct, sam
 1.163 [1.117, 1.200] (1.196, 1.205, 1.163, 1.092; per-test 1.154); FE-INL N = 4 1.043 [0.985, 1.099]; A/A N = 4 0.966
 [0.936, 0.998]. So the abstract's 1.14 (S5a 1.143 [1.091, 1.194]) holds on Intel without the fixed order; every round is
 above 1.09, and this leg's A/A sits below 1, so against A/A the gain is if anything larger. FE-INL (S5a 1.056) reads
-1.04 with an interval containing 1.00. Data: focs
-/extra/alexey/chromium/legs/crkso/ and crkso2/, apollo ~/p5-apollo/chromium/legs/crkso-a/, crkso-a2/ and crkso-a3/
+1.04 with an interval containing 1.00. AMD single bars order-free (crkso-a5, apollo half B, 4 rounds of a 5x4 Latin
+square, 20/20 rc 0, outside busy <= 0.10, done 22:34 18 Oct; sc-* copies checked against build_info; STC with
+dynstc_rt=1): FE-INL N = 4 1.075 [1.069, 1.082] (1.067, 1.074, 1.076, 1.084); DE N = 4 1.042 [1.014, 1.061]; STC+DynSTC
+N = 4 1.028 [1.004, 1.053]; A/A N = 4 1.050 [1.020, 1.083] (1.102, 1.059, 1.025, 1.015). This leg's A/A excludes 1.00
+(the stock runs were slow against the second stock run in every round), so every arm sits on a raised reference: DE and
+STC are at or below the A/A level, and FE-INL is above A/A's point but inside its interval (at most ~2.5 % over A/A, not
+resolved). With crkso-a4, no Chromium build moves Speedometer beyond the A/A spread on AMD. Data: focs
+/extra/alexey/chromium/legs/crkso/, crkso2/ and crkso3/, apollo ~/p5-apollo/chromium/legs/crkso-a/ to crkso-a5/
 (score_only.txt, speedo_raw.txt).
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
