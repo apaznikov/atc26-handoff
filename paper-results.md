@@ -254,7 +254,12 @@ EA N = 6 1.001 [0.968, 1.037]; A/A N = 5 1.003 [0.959, 1.045]. Pooled over the t
 [0.962, 1.030], A/A N = 16 0.992 [0.976, 1.010] (per-test 0.989 vs 0.987). So on AMD EA equals stock, and on Intel it
 is about 6 % slower. Renderer crashes over the five score-only sessions: 4 runs (stock 2, both apollo A/A; EA 1; DE+P 1;
 crkso's failed A/A run was the full-disk window, not a crash), all DevtoolsTargetCrashException with no V8 or TSan
-fatal, so not build-specific. Data: focs
+fatal, so not build-specific. AllOpt order-free on AMD (crkso-a4, apollo half B, 4 Latin rounds, 12/12 rc 0, done
+13:55 18 Oct; AllOpt cr1n1 byte-identical to focs's, restored from the HDD archive): AllOpt N = 4 1.019 [0.981, 1.058]
+(0.989, 1.071, 1.046, 0.974), A/A N = 4 0.999 [0.969, 1.035]. This agrees with the earlier AMD record (AllOpt 1.006,
+N = 3, table below): on AMD the Chromium AllOpt build is at stock level on Speedometer, against 1.14 on Intel. The paper
+gives the Intel figure and names the Intel host for Chromium (decided 11 Oct). The Intel order-free value is crkso3, END
+~16:45 18 Oct. Data: focs
 /extra/alexey/chromium/legs/crkso/ and crkso2/, apollo ~/p5-apollo/chromium/legs/crkso-a/, crkso-a2/ and crkso-a3/
 (score_only.txt, speedo_raw.txt).
 
