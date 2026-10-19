@@ -281,9 +281,22 @@ A/A N = 4 1.027 [0.983, 1.073]. Pooled crkso3 + crkso5: AllOpt N = 8 1.154 [1.12
 per-test 1.143); FE-INL N = 8 1.059 [1.016, 1.104] (per-test 1.051); A/A N = 8 0.996 [0.963, 1.033] (the two sessions'
 A/A, 0.966 and 1.027, straddle 1.00). So the abstract's 1.14 holds over two order-free sessions: the pooled interval
 contains S5a's 1.143. FE-INL's interval excludes 1.00 and its point lies above A/A's interval, although the two
-intervals overlap (S5a 1.056). The CSV above carries the pooled rows. Data: focs
-/extra/alexey/chromium/legs/crkso/, crkso2/, crkso3/, crkso4/ and crkso5/, apollo ~/p5-apollo/chromium/legs/crkso-a/ to crkso-a5/
-(score_only.txt, speedo_raw.txt).
+intervals overlap (S5a 1.056). The CSV above carries the pooled rows. Intel second single-bar session (crkso6, focs half
+1, 4 rounds of a fresh Latin square, 16/16 rc 0, outside busy <= 0.10, done 14:18 19 Oct): STC+DynSTC N = 4 1.003
+[0.947, 1.062]; DE N = 4 0.981 [0.949, 1.015]; A/A N = 4 0.974 [0.934, 1.016]. Pooled crkso4 + crkso6: STC+DynSTC N = 8
+0.997 [0.969, 1.027] (per-test 0.989); DE N = 8 0.986 [0.968, 1.004] (per-test 0.983); A/A N = 8 0.985 [0.959, 1.009].
+Both lie inside A/A's interval, so on Intel neither is separable from stock over two sessions. Every Intel bar of S5a now
+has two order-free sessions: AllOpt 1.154, FE-INL 1.059, STC 0.997, DE 0.986, EA 0.942, DE+P 0.955 (S5a: 1.143, 1.056,
+0.985, 0.988, 0.905, 0.940). AMD second session for the same arms (crkso-a6, apollo half B, all six arms in one leg, 4
+rounds of a 6x4 Latin array, 22/24 rc 0, outside busy <= 0.10, done 14:10 19 Oct; the failed runs are A/A round 1 and
+AllOpt round 2, both renderer crashes with no V8 or TSan fatal): AllOpt N = 3 0.967 [0.942, 1.007]; FE-INL N = 4 1.058
+[1.010, 1.105]; STC+DynSTC N = 4 0.978 [0.955, 1.000]; DE N = 4 0.996 [0.975, 1.033]; A/A N = 3 1.015 [0.976, 1.042].
+Pooled with crkso-a4 and crkso-a5, per arm: AllOpt N = 7 0.997 [0.966, 1.030]; FE-INL N = 8 1.067 [1.040, 1.089]; STC+DynSTC
+N = 8 1.003 [0.980, 1.027]; DE N = 8 1.019 [0.994, 1.045]; A/A N = 11 1.021 [0.999, 1.045]. So on AMD the AllOpt build stays
+at stock level over two sessions (against 1.15 on Intel); FE-INL's point lies above A/A's interval but the intervals
+overlap; STC and DE lie inside A/A's interval. Renderer crashes over the order-free Chromium legs: stock 3 (all apollo),
+EA 1, DE+P 1, AllOpt 1 (apollo). Data: focs /extra/alexey/chromium/legs/crkso/, crkso2/, crkso3/, crkso4/, crkso5/ and
+crkso6/, apollo ~/p5-apollo/chromium/legs/crkso-a/ to crkso-a6/ (score_only.txt, speedo_raw.txt).
 
 The same tabulation on the AMD host (existing runs, N = 3; the paper takes the Intel figures, decided 11 Oct):
 
