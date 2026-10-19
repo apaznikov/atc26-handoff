@@ -1021,8 +1021,10 @@ annotations, the pthread and semaphore interceptors) has the same number of call
 instrumentation is identical. The rare pairs vary by session: `dict_stats_analyze_index` / `innobase_copy_frm_flags_from_table_share`
 (stock 3 of 10 and arm 0 of 20 in the first sessions; arm 5 of 30, stock 2 of 30 interleaved) and
 `lock_rec_grant_by_heap_no` / `row_search_mvcc` (stock 6 of 40, arm 1 of 50; y8t without the option 0 of 30); both
-read the same field as a pair reported in every run (address deduplication: TSan prints one report per address),
-and `suppress_equal_addresses=0` (10 runs per arm) did not change either rate. DynSTC itself has no test at these
+read the same field as a pair reported in every run (after a report the runtime marks the granule read-only in
+shadow, so later reads of it are not checked; there is no per-address deduplication of reports in this runtime),
+and the 10 runs per arm with `suppress_equal_addresses=0` (an option this runtime does not have, so they ran with
+the defaults; corrected 19 Oct) did not change either rate. DynSTC itself has no test at these
 sites: the runtime skips only in main before its first thread creation and after an acquiring join that leaves one
 thread; the count drops only at such a join; a detached thread's exit only disables the skip for the rest of the
 run (runtime source at 913cae99c263, `tsan_rtl_thread.cpp`). final. Chromium's PartitionAlloc race (stock 11 of 21, AllOpt 2 of 19): the same race in
