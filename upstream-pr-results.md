@@ -75,7 +75,7 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | 24 Oct |
 | 7 | Benchmark kernels: EA and DE + EA (identical code is marked 🟰 without timing; the rest timed) | 24 Oct, morning |
 
-Everything done: **24 Oct 2026, evening** (exact time after the leg estimates for row 6), provided each code-layout step runs without waiting for manual approval.
+Everything done: **24 Oct 2026, ~18:00**, provided each code-layout step runs without waiting for manual approval.
 
 ## Takeaways
 
