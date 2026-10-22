@@ -9,7 +9,7 @@
 | **DE, reads only** | DE that keeps every write checked (fix for the write-after-report gap) | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) with F1 |
 | **DE + EA** | DE + capture limit + local slots | all three |
 
-🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code  ·  ⏳ planned or running  ·  — not measured
+🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code (EA: to stock; DE + EA: to DE), not timed  ·  ⏳ planned or running  ·  — not measured
 
 ## Machine
 
@@ -23,33 +23,33 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | Program | Threads | EA | DE | DE, reads only | DE + EA |
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
-| SQLite | 8 | ⚪ 1.08¹ | — | — | — |
-| FFmpeg | 8 | 🟢 **1.004** | — | — | — |
-| memcached | 8 | ⚪ 0.99 | — | — | — |
-| Redis | 8 | ⚪ 0.996 | — | — | — |
-| MySQL | 8 | ⚪ 0.999 | — | — | — |
+| SQLite | 8 | ⚪ 1.08¹ | ⏳ | ⏳ | ⏳ |
+| FFmpeg | 8 | 🟢 **1.004** | ⏳ | ⏳ | ⏳ |
+| memcached | 8 | ⚪ 0.99 | ⏳ | ⏳ | ⏳ |
+| Redis | 8 | ⚪ 0.996 | ⏳ | ⏳ | ⏳ |
+| MySQL | 8 | ⚪ 0.999 | ⏳ | ⏳ | ⏳ |
 | **Applications, -O2** | | | | | |
-| SQLite | 8 | 🟰 1.000 | — | — | — |
-| FFmpeg | 8 | ⚪ 0.993 | — | — | — |
-| memcached | 8 | 🟰 1.000 | — | — | — |
-| Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | ⏳ |
-| MySQL | 8 | ⚪ 0.997 | — | — | — |
+| SQLite | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
+| FFmpeg | 8 | ⚪ 0.993 | ⏳ | ⏳ | ⏳ |
+| memcached | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
+| Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | 🟰 0.997 |
+| MySQL | 8 | ⚪ 0.997 | ⏳ | ⏳ | ⏳ |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
-| Rodinia hotspot | 8 | — | 🟢 **3.05** | 🟢 **3.21** | — |
-| | 1 | — | 🟢 **1.10** | 🟢 **1.10** | — |
-| NPB LU, class A | 8 | — | 🟢 **2.27** | 🟢 **2.24** | — |
-| NPB LU, class W | 8 | — | 🟢 **2.02** | 🟢 **2.04** | — |
-| NPB BT, class A | 8 | — | 🟢 **1.76** | 🟢 **1.47** | — |
-| SPLASH-2x ocean_ncp | 8 | — | 🟢 **1.06** | 🟢 **1.07** | ⏳ |
-| SPLASH-2x water_nsquared | 8 | — | 🟡 1.09 | 🟡 1.07 | ⏳ |
-| | 1 | — | 🟢 **1.26** | 🟢 **1.26** | — |
-| SPLASH-2x water_spatial | 8 | — | 🟡 1.10 | 🟡 1.08 | ⏳ |
-| | 1 | — | 🟢 **1.26** | 🟢 **1.26** | — |
-| Rodinia srad | 8 | — | ⚪ 1.02 | ⚪ 1.00 | ⏳ |
-| | 1 | — | 🟢 **1.07** | 🟢 **1.04** | — |
-| PARSEC streamcluster | 8 | — | ⚪ 0.98 | ⚪ 0.98 | ⏳ |
-| PARSEC fluidanimate | 8 | — | ⚪ 0.99 | ⚪ 1.00 | ⏳ |
-| Rodinia lavaMD | 8 | — | 🟡 ~1.1 | 🟡 ~1.1 | ⏳ |
+| Rodinia hotspot | 8 | 🟰 1.000 | 🟢 **3.05** | 🟢 **3.21** | 🟰 3.05 |
+| | 1 | 🟰 1.000 | 🟢 **1.10** | 🟢 **1.10** | 🟰 1.10 |
+| NPB LU, class A | 8 | ⏳ | 🟢 **2.27** | 🟢 **2.24** | ⏳ |
+| NPB LU, class W | 8 | ⏳ | 🟢 **2.02** | 🟢 **2.04** | ⏳ |
+| NPB BT, class A | 8 | ⏳ | 🟢 **1.76** | 🟢 **1.47** | ⏳ |
+| SPLASH-2x ocean_ncp | 8 | 🟰 1.000 | 🟢 **1.06** | 🟢 **1.07** | 🟰 1.06 |
+| SPLASH-2x water_nsquared | 8 | 🟰 1.000 | 🟡 1.09 | 🟡 1.07 | 🟰 1.09 |
+| | 1 | 🟰 1.000 | 🟢 **1.26** | 🟢 **1.26** | 🟰 1.26 |
+| SPLASH-2x water_spatial | 8 | 🟰 1.000 | 🟡 1.10 | 🟡 1.08 | 🟰 1.10 |
+| | 1 | 🟰 1.000 | 🟢 **1.26** | 🟢 **1.26** | 🟰 1.26 |
+| Rodinia srad | 8 | 🟰 1.000 | ⚪ 1.02 | ⚪ 1.00 | 🟰 1.02 |
+| | 1 | 🟰 1.000 | 🟢 **1.07** | 🟢 **1.04** | 🟰 1.07 |
+| PARSEC streamcluster | 8 | 🟰 1.000 | ⚪ 0.98 | ⚪ 0.98 | 🟰 0.98 |
+| PARSEC fluidanimate | 8 | 🟰 1.000 | ⚪ 0.99 | ⚪ 1.00 | 🟰 0.99 |
+| Rodinia lavaMD | 8 | 🟰 1.000 | 🟡 ~1.1 | 🟡 ~1.1 | 🟰 ~1.1 |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
@@ -69,12 +69,12 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 1 | MySQL -O2: EA | ✅ done |
 | 2 | memcached -O0: EA, four code layouts | ✅ done |
 | 3 | Redis -O2: DE, DE reads only | ✅ done |
-| 4 | Compiler with all three PRs; check that each arm's code equals the single-PR compilers' | 23 Oct, morning |
-| 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (builds, then 10 timed legs) | 23 Oct - 24 Oct, morning |
-| 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | 24 Oct |
-| 7 | Benchmark kernels: EA and DE + EA (identical code is marked 🟰 without timing; the rest timed) | 24 Oct, morning |
+| 4 | Compiler with all three PRs; builds and relinks of every program; identical-code check | ✅ done (22 Oct) |
+| 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | running, until 23 Oct ~21:00 |
+| 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | 24 Oct, until ~04:00 |
+| 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | 24 Oct, until ~06:00 |
 
-Everything done: **24 Oct 2026, ~18:00**, provided each code-layout step runs without waiting for manual approval.
+Everything done: **24 Oct 2026, ~06:00**, provided each code-layout step runs without waiting for manual approval.
 
 ## Takeaways
 
