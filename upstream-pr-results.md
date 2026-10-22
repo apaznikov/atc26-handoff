@@ -24,7 +24,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
 | SQLite | 8 | ⚪ 1.08¹ | 🟡 1.08² | 🟡 1.05² | 🟡 1.13² |
-| FFmpeg | 8 | 🟢 **1.004** | ⏳ | ⏳ | ⏳ |
+| FFmpeg | 8 | 🟢 **1.004** | ⚪ 1.002 | ⚪ 1.003 | ⚪ 1.002 |
 | memcached | 8 | ⚪ 0.99 | ⏳ | ⏳ | ⏳ |
 | Redis | 8 | ⚪ 0.996 | ⏳ | ⏳ | ⏳ |
 | MySQL | 8 | ⚪ 0.999 | ⏳ | ⏳ | ⏳ |
