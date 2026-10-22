@@ -32,7 +32,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | SQLite | 8 | 🟰 1.000 | — | — | — |
 | FFmpeg | 8 | ⚪ 0.993 | — | — | — |
 | memcached | 8 | 🟰 1.000 | — | — | — |
-| Redis | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
+| Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | ⏳ |
 | MySQL | 8 | ⚪ 0.997 | — | — | — |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | — | 🟢 **3.05** | 🟢 **3.21** | — |
@@ -68,7 +68,7 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 |---|---|---|
 | 1 | MySQL -O2: EA | ✅ done |
 | 2 | memcached -O0: EA, four code layouts | ✅ done |
-| 3 | Redis -O2: DE, DE reads only | 22 Oct, ~21:30 |
+| 3 | Redis -O2: DE, DE reads only | ✅ done |
 | 4 | Compiler with all three PRs; check that each arm's code equals the single-PR compilers' | 23 Oct, morning |
 | 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (builds, then 10 timed legs) | 23 Oct - 24 Oct, morning |
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | 24 Oct |
