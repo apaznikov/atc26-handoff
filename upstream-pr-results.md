@@ -29,7 +29,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | Redis | 8 | ⚪ 0.996 | ⏳ | ⏳ | ⏳ |
 | MySQL | 8 | ⚪ 0.999 | ⏳ | ⏳ | ⏳ |
 | **Applications, -O2** | | | | | |
-| SQLite | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
+| SQLite | 8 | 🟰 1.000 | ⚪ 0.98³ | ⚪ 0.98³ | 🟰 0.98 |
 | FFmpeg | 8 | ⚪ 0.993 | ⏳ | ⏳ | ⏳ |
 | memcached | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
 | Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | 🟰 0.997 |
@@ -56,6 +56,9 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 ² SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 1.9× between runs), but
 three tests do: checkpoint_starvation_1 DE 🟢 **1.67×**, reads only 🟢 **1.35×**, DE + EA 🟢 **1.78×**;
 walthread1 DE + EA 🟢 **1.07×**; walthread2 DE + EA 🟢 **1.03×**.
+
+³ SQLite -O2: only walthread1 separates from noise, DE reads only 🟢 **1.06×** (DE 1.04×, unresolved);
+checkpoint_starvation_1 gains nothing at -O2.
 
 In every column, EA means the two EA PRs (capture limit + local slots); the paper's broader escape analysis is not used.
 
