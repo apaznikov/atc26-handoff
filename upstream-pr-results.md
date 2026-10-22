@@ -7,9 +7,9 @@
 | **EA** | Escape analysis: capture-tracking limit + escape through local slots | [llvm#192945](https://github.com/llvm/llvm-project/pull/192945) + [llvm#169896](https://github.com/llvm/llvm-project/pull/169896) |
 | **DE** | Dominance-based elimination, reads and writes | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) |
 | **DE, reads only** | DE that keeps every write checked (fix for the write-after-report gap) | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) with F1 |
-| **DE + EA** | DE with escape analysis on | both |
+| **DE + EA** | DE + capture limit + local slots | all three |
 
-🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code  ·  ⏳ running  ·  — not measured
+🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code  ·  ⏳ planned or running  ·  — not measured
 
 ## Machine
 
@@ -40,21 +40,20 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | NPB LU, class A | 8 | — | 🟢 **2.27** | 🟢 **2.24** | — |
 | NPB LU, class W | 8 | — | 🟢 **2.02** | 🟢 **2.04** | — |
 | NPB BT, class A | 8 | — | 🟢 **1.76** | 🟢 **1.47** | — |
-| SPLASH-2x ocean_ncp | 8 | — | 🟢 **1.06** | 🟢 **1.07** | 🟰 = DE |
-| SPLASH-2x water_nsquared | 8 | — | 🟡 1.09 | 🟡 1.07 | 🟰 = DE |
+| SPLASH-2x ocean_ncp | 8 | — | 🟢 **1.06** | 🟢 **1.07** | ⏳ |
+| SPLASH-2x water_nsquared | 8 | — | 🟡 1.09 | 🟡 1.07 | ⏳ |
 | | 1 | — | 🟢 **1.26** | 🟢 **1.26** | — |
-| SPLASH-2x water_spatial | 8 | — | 🟡 1.10 | 🟡 1.08 | 🟰 = DE |
+| SPLASH-2x water_spatial | 8 | — | 🟡 1.10 | 🟡 1.08 | ⏳ |
 | | 1 | — | 🟢 **1.26** | 🟢 **1.26** | — |
-| Rodinia srad | 8 | — | ⚪ 1.02 | ⚪ 1.00 | ⚪ 0.94 |
+| Rodinia srad | 8 | — | ⚪ 1.02 | ⚪ 1.00 | ⏳ |
 | | 1 | — | 🟢 **1.07** | 🟢 **1.04** | — |
-| PARSEC streamcluster | 8 | — | ⚪ 0.98 | ⚪ 0.98 | 🔴 0.97 |
-| PARSEC fluidanimate | 8 | — | ⚪ 0.99 | ⚪ 1.00 | 🟰 = DE |
-| Rodinia lavaMD | 8 | — | 🟡 ~1.1 | 🟡 ~1.1 | 🟰 = DE |
+| PARSEC streamcluster | 8 | — | ⚪ 0.98 | ⚪ 0.98 | ⏳ |
+| PARSEC fluidanimate | 8 | — | ⚪ 0.99 | ⚪ 1.00 | ⏳ |
+| Rodinia lavaMD | 8 | — | 🟡 ~1.1 | 🟡 ~1.1 | ⏳ |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
-"🟰 = DE": escape analysis removes nothing more in that program, so the code equals DE's. The DE + EA column uses the
-full escape analysis of the paper, which is broader than the two EA PRs.
+In every column, EA means the two EA PRs (capture limit + local slots); the paper's broader escape analysis is not used.
 
 Not timed: 254 programs were screened by the share of checks DE removes; the rest fell below ~3 % or did not
 separate from noise (NPB IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, CoMD, miniFE,
