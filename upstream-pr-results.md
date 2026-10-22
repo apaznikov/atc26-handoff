@@ -33,7 +33,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | FFmpeg | 8 | ⚪ 0.993 | — | — | — |
 | memcached | 8 | 🟰 1.000 | — | — | — |
 | Redis | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
-| MySQL | 8 | ⏳ | — | — | — |
+| MySQL | 8 | ⚪ 0.997 | — | — | — |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | — | 🟢 **3.05** | 🟢 **3.21** | — |
 | | 1 | — | 🟢 **1.10** | 🟢 **1.10** | — |
@@ -66,7 +66,7 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 
 | # | Cells | When |
 |---|---|---|
-| 1 | MySQL -O2: EA | 22 Oct, ~17:00 |
+| 1 | MySQL -O2: EA | ✅ done |
 | 2 | memcached -O0: EA, four code layouts | 22 Oct, ~19:40 |
 | 3 | Redis -O2: DE, DE reads only | 22 Oct, ~21:30 |
 | 4 | Compiler with all three PRs; check that each arm's code equals the single-PR compilers' | 23 Oct, morning |
