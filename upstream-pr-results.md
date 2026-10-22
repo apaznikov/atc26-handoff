@@ -25,7 +25,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | **Applications, -O0** | | | | | |
 | SQLite | 8 | ⚪ 1.08¹ | — | — | — |
 | FFmpeg | 8 | 🟢 **1.004** | — | — | — |
-| memcached | 8 | 🟡 0.98 | — | — | — |
+| memcached | 8 | ⚪ 0.99 | — | — | — |
 | Redis | 8 | ⚪ 0.996 | — | — | — |
 | MySQL | 8 | ⚪ 0.999 | — | — | — |
 | **Applications, -O2** | | | | | |
@@ -67,7 +67,7 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | # | Cells | When |
 |---|---|---|
 | 1 | MySQL -O2: EA | ✅ done |
-| 2 | memcached -O0: EA, four code layouts | 22 Oct, ~19:40 |
+| 2 | memcached -O0: EA, four code layouts | ✅ done |
 | 3 | Redis -O2: DE, DE reads only | 22 Oct, ~21:30 |
 | 4 | Compiler with all three PRs; check that each arm's code equals the single-PR compilers' | 23 Oct, morning |
 | 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (builds, then 10 timed legs) | 23 Oct - 24 Oct, morning |
