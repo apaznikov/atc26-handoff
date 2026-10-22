@@ -1,6 +1,6 @@
 # Upstream PR measurements
 
-> Speed over stock TSan, **>1 = faster**, 95 % interval in small print. State of 22 Oct 2026.
+> Speed-up over stock TSan, **>1 = faster**. State of 22 Oct 2026.
 
 | Column | What it is | Upstream PR |
 |---|---|---|
@@ -16,33 +16,33 @@
 | Program | Threads | EA | DE | DE, reads only | DE + EA |
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
-| SQLite | 8 | ⚪ 1.08 <sub>[0.99, 1.18]</sub>¹ | — | — | — |
-| FFmpeg | 8 | 🟢 **1.004** <sub>[1.001, 1.009]</sub> | — | — | — |
-| memcached | 8 | 🟡 0.98 <sub>[0.96, 1.01]</sub> | — | — | — |
-| Redis | 8 | ⚪ 0.996 <sub>[0.961, 1.004]</sub> | — | — | — |
-| MySQL | 8 | ⚪ 0.999 <sub>[0.996, 1.006]</sub> | — | — | — |
+| SQLite | 8 | ⚪ 1.08¹ | — | — | — |
+| FFmpeg | 8 | 🟢 **1.004** | — | — | — |
+| memcached | 8 | 🟡 0.98 | — | — | — |
+| Redis | 8 | ⚪ 0.996 | — | — | — |
+| MySQL | 8 | ⚪ 0.999 | — | — | — |
 | **Applications, -O2** | | | | | |
 | SQLite | 8 | 🟰 1.000 | — | — | — |
-| FFmpeg | 8 | ⚪ 0.993 <sub>[0.976, 1.003]</sub> | — | — | — |
+| FFmpeg | 8 | ⚪ 0.993 | — | — | — |
 | memcached | 8 | 🟰 1.000 | — | — | — |
 | Redis | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
 | MySQL | 8 | ⏳ | — | — | — |
 | **Compute kernels** | | | | | |
-| Rodinia hotspot | 8 | — | 🟢 **3.05** <sub>[2.61, 3.50]</sub> | 🟢 **3.21** <sub>[2.79, 3.84]</sub> | — |
-| | 1 | — | 🟢 **1.10** <sub>[1.04, 1.16]</sub> | 🟢 **1.10** <sub>[1.04, 1.16]</sub> | — |
-| NPB LU, class A | 8 | — | 🟢 **2.27** <sub>[2.03, 2.41]</sub> | 🟢 **2.24** <sub>[2.00, 2.53]</sub> | — |
-| NPB LU, class W | 8 | — | 🟢 **2.02** <sub>[1.75, 2.20]</sub> | 🟢 **2.04** <sub>[1.83, 2.23]</sub> | — |
-| NPB BT, class A | 8 | — | 🟢 **1.76** <sub>[1.75, 1.80]</sub> | 🟢 **1.47** <sub>[1.46, 1.49]</sub> | — |
-| SPLASH-2x ocean_ncp | 8 | — | 🟢 **1.06** <sub>[1.05, 1.07]</sub> | 🟢 **1.07** <sub>[1.06, 1.08]</sub> | 🟰 = DE |
-| SPLASH-2x water_nsquared | 8 | — | 🟡 1.09 <sub>[1.01, 1.16]</sub> | 🟡 1.07 <sub>[1.01, 1.17]</sub> | 🟰 = DE |
-| | 1 | — | 🟢 **1.26** <sub>[1.26, 1.26]</sub> | 🟢 **1.26** <sub>[1.26, 1.26]</sub> | — |
-| SPLASH-2x water_spatial | 8 | — | 🟡 1.10 <sub>[0.98, 1.19]</sub> | 🟡 1.08 <sub>[1.02, 1.15]</sub> | 🟰 = DE |
-| | 1 | — | 🟢 **1.26** <sub>[1.26, 1.27]</sub> | 🟢 **1.26** <sub>[1.26, 1.27]</sub> | — |
-| Rodinia srad | 8 | — | ⚪ 1.02 <sub>[0.92, 1.12]</sub> | ⚪ 1.00 <sub>[0.91, 1.12]</sub> | ⚪ 0.94 <sub>[0.91, 1.07]</sub> |
-| | 1 | — | 🟢 **1.07** <sub>[1.07, 1.08]</sub> | 🟢 **1.04** <sub>[1.03, 1.05]</sub> | — |
-| PARSEC streamcluster | 8 | — | ⚪ 0.98 <sub>[0.96, 1.00]</sub> | ⚪ 0.98 <sub>[0.96, 1.00]</sub> | 🔴 0.97 <sub>[0.94, 0.99]</sub> |
-| PARSEC fluidanimate | 8 | — | ⚪ 0.99 <sub>[0.95, 1.04]</sub> | ⚪ 1.00 <sub>[0.97, 1.05]</sub> | 🟰 = DE |
-| Rodinia lavaMD | 8 | — | 🟡 1.06-1.19 | 🟡 1.08-1.14 | 🟰 = DE |
+| Rodinia hotspot | 8 | — | 🟢 **3.05** | 🟢 **3.21** | — |
+| | 1 | — | 🟢 **1.10** | 🟢 **1.10** | — |
+| NPB LU, class A | 8 | — | 🟢 **2.27** | 🟢 **2.24** | — |
+| NPB LU, class W | 8 | — | 🟢 **2.02** | 🟢 **2.04** | — |
+| NPB BT, class A | 8 | — | 🟢 **1.76** | 🟢 **1.47** | — |
+| SPLASH-2x ocean_ncp | 8 | — | 🟢 **1.06** | 🟢 **1.07** | 🟰 = DE |
+| SPLASH-2x water_nsquared | 8 | — | 🟡 1.09 | 🟡 1.07 | 🟰 = DE |
+| | 1 | — | 🟢 **1.26** | 🟢 **1.26** | — |
+| SPLASH-2x water_spatial | 8 | — | 🟡 1.10 | 🟡 1.08 | 🟰 = DE |
+| | 1 | — | 🟢 **1.26** | 🟢 **1.26** | — |
+| Rodinia srad | 8 | — | ⚪ 1.02 | ⚪ 1.00 | ⚪ 0.94 |
+| | 1 | — | 🟢 **1.07** | 🟢 **1.04** | — |
+| PARSEC streamcluster | 8 | — | ⚪ 0.98 | ⚪ 0.98 | 🔴 0.97 |
+| PARSEC fluidanimate | 8 | — | ⚪ 0.99 | ⚪ 1.00 | 🟰 = DE |
+| Rodinia lavaMD | 8 | — | 🟡 ~1.1 | 🟡 ~1.1 | 🟰 = DE |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
