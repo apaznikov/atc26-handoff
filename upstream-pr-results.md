@@ -30,7 +30,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | MySQL | 8 | ⚪ 0.999 | ⏳ | ⏳ | ⏳ |
 | **Applications, -O2** | | | | | |
 | SQLite | 8 | 🟰 1.000 | ⚪ 0.98³ | ⚪ 0.98³ | 🟰 0.98 |
-| FFmpeg | 8 | ⚪ 0.993 | ⏳ | ⏳ | ⏳ |
+| FFmpeg | 8 | ⚪ 0.993 | ⚪ 0.994 | ⚪ 0.996 | ⚪ 1.000 |
 | memcached | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
 | Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | 🟰 0.997 |
 | MySQL | 8 | ⚪ 0.997 | ⏳ | ⏳ | ⏳ |
