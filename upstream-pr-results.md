@@ -34,7 +34,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | memcached | 8 | 🟰 1.000 | — | — | — |
 | Redis | 8 | 🟰 1.000 | ⏳ | ⏳ | ⏳ |
 | MySQL | 8 | ⏳ | — | — | — |
-| **Compute kernels** | | | | | |
+| **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | — | 🟢 **3.05** | 🟢 **3.21** | — |
 | | 1 | — | 🟢 **1.10** | 🟢 **1.10** | — |
 | NPB LU, class A | 8 | — | 🟢 **2.27** | 🟢 **2.24** | — |
@@ -72,7 +72,7 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 3 | Redis -O2: DE, DE reads only | 22 Oct, ~21:30 |
 | 4 | Compiler with all three PRs; check that each arm's code equals the single-PR compilers' | 23 Oct, morning |
 | 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (builds, then 10 timed legs) | 23 Oct - 24 Oct, morning |
-| 6 | Compute kernels: EA and DE + EA (identical code is marked 🟰 without timing; the rest timed) | 24 Oct, morning |
+| 6 | Benchmark kernels: EA and DE + EA (identical code is marked 🟰 without timing; the rest timed) | 24 Oct, morning |
 
 Everything done: **24 Oct 2026, ~10:00**, provided each code-layout step runs without waiting for manual approval.
 
