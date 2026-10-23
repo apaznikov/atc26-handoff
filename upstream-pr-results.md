@@ -25,7 +25,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | **Applications, -O0** | | | | | |
 | SQLite | 8 | ⚪ 1.08¹ | 🟡 1.08² | 🟡 1.05² | 🟡 1.13² |
 | FFmpeg | 8 | 🟢 **1.004** | ⚪ 1.002 | ⚪ 1.003 | ⚪ 1.002 |
-| memcached | 8 | ⚪ 0.99 | ⏳ | ⏳ | ⏳ |
+| memcached | 8 | ⚪ 0.99 | ⚪ 1.004 | ⚪ 1.010 | ⚪ 1.007 |
 | Redis | 8 | ⚪ 0.996 | ⚪ 1.007 | ⚪ 1.003 | ⚪ 1.009 |
 | MySQL | 8 | ⚪ 0.999 | ⏳ | ⏳ | ⏳ |
 | **Applications, -O2** | | | | | |
@@ -77,7 +77,7 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 2 | memcached -O0: EA, four code layouts | ✅ done |
 | 3 | Redis -O2: DE, DE reads only | ✅ done |
 | 4 | Compiler with all three PRs; builds and relinks of every program; identical-code check | ✅ done (22 Oct) |
-| 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | running, until 23 Oct ~21:30 |
+| 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | running, until 23 Oct ~22:00 |
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | 24 Oct, until ~04:00 |
 | 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | 24 Oct, until ~06:00 |
 
