@@ -44,7 +44,14 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | brotli | 8 | 🟰 1.000 | ⚪ 1.005 | ⚪ 0.993 | 🟰 1.005 |
 | OpenSSL | 8 | ⚪ 1.008 | ⚪ 1.005 | ⚪ 1.001 | ⚪ 0.998 |
 | **Real applications, -O0** | | | | | |
-| RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL | 8 | ⏳ | ⏳ | ⏳ | ⏳ |
+| RocksDB db_bench | 8 | 🟡 1.02 | 🟡 1.01 | 🟡 1.06 | 🟡 1.01 |
+| LevelDB db_bench | 8 | ⚪ 1.000 | ⚪ 1.008 | ⚪ 1.010 | ⚪ 1.006 |
+| DuckDB TPC-H | 8 | ⚪ 0.997 | ⚪ 1.001 | ⚪ 1.003 | ⚪ 1.003 |
+| zstd | 8 | ⚪ 0.987 | ⚪ 1.004 | ⚪ 1.002 | ⚪ 1.006 |
+| xz | 8 | ⚪ 1.005 | 🟢 **1.006** | ⚪ 1.003 | 🟢 **1.006** |
+| pigz | 8 | ⚪ 0.98⁴ | ⚪ 0.98⁴ | ⚪ 0.98⁴ | ⚪ 0.98⁴ |
+| brotli | 8 | ⚪ 1.018 | ⚪ 0.999 | ⚪ 0.997 | 🟢 **1.018** |
+| OpenSSL | 8 | ⚪ 0.996 | ⚪ 0.998 | ⚪ 0.998 | ⚪ 1.000 |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | 🟰 1.000 | 🟢 **3.05** | 🟢 **3.21** | 🟰 3.05 |
 | | 1 | 🟰 1.000 | 🟢 **1.10** | 🟢 **1.10** | 🟰 1.10 |
@@ -71,6 +78,9 @@ walthread1 DE + EA 🟢 **1.07×**; walthread2 DE + EA 🟢 **1.03×**.
 ³ SQLite -O2: only walthread1 separates from noise, DE reads only 🟢 **1.06×** (DE 1.04×, unresolved);
 checkpoint_starvation_1 gains nothing at -O2.
 
+⁴ pigz -O0: all four non-stock builds are 2 % slower in both code layouts, by the same amount whatever they
+remove, which points to a shared build or layout effect rather than to the checks; not called slower.
+
 In every column, EA means the two EA PRs (capture limit + local slots); the paper's broader escape analysis is not used.
 
 Screening: 254 programs were ranked by the share of checks DE removes. Kernels below ~3 % were not timed (NPB
@@ -89,7 +99,7 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 3 | Redis -O2: DE, DE reads only | ✅ done |
 | 4 | Compiler with all three PRs; builds and relinks of every program; identical-code check | ✅ done (22 Oct) |
 | 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | ✅ done (23 Oct) |
-| 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | running, until 24 Oct ~05:30 |
+| 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | ✅ done (24 Oct) |
 | 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | 24 Oct, until ~07:00 |
 
 Everything done: **24 Oct 2026, ~07:00**, provided each code-layout step runs without waiting for manual approval.
