@@ -36,6 +36,15 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | MySQL | 8 | ⚪ 0.997 | ⚪ 0.998 | ⚪ 1.002 | ⚪ 1.003 |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
 | RocksDB db_bench | 8 | 🟰 1.000 | 🟡 1.01 | 🟡 1.02 | 🟰 1.01 |
+| LevelDB db_bench | 8 | 🟰 1.000 | ⚪ 0.998 | ⚪ 0.995 | 🟰 0.998 |
+| DuckDB TPC-H | 8 | ⚪ 1.001 | ⚪ 1.002 | ⚪ 0.995 | ⚪ 0.999 |
+| zstd | 8 | ⚪ 1.000 | ⚪ 1.003 | ⚪ 0.998 | ⚪ 1.000 |
+| xz | 8 | 🟰 1.000 | ⚪ 1.003 | ⚪ 0.998 | 🟰 1.003 |
+| pigz | 8 | 🟰 1.000 | ⚪ 1.001 | ⚪ 0.994 | 🟰 1.001 |
+| brotli | 8 | 🟰 1.000 | ⚪ 1.005 | ⚪ 0.993 | 🟰 1.005 |
+| OpenSSL | 8 | ⚪ 1.008 | ⚪ 1.005 | ⚪ 1.001 | ⚪ 0.998 |
+| **Real applications, -O0** | | | | | |
+| RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL | 8 | ⏳ | ⏳ | ⏳ | ⏳ |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | 🟰 1.000 | 🟢 **3.05** | 🟢 **3.21** | 🟰 3.05 |
 | | 1 | 🟰 1.000 | 🟢 **1.10** | 🟢 **1.10** | 🟰 1.10 |
