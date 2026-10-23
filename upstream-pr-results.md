@@ -33,7 +33,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | FFmpeg | 8 | ⚪ 0.993 | ⚪ 0.994 | ⚪ 0.996 | ⚪ 1.000 |
 | memcached | 8 | 🟰 1.000 | ⚪ 0.98 | ⚪ 0.99 | 🟰 0.98 |
 | Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | 🟰 0.997 |
-| MySQL | 8 | ⚪ 0.997 | ⏳ | ⏳ | ⏳ |
+| MySQL | 8 | ⚪ 0.997 | ⚪ 0.998 | ⚪ 1.002 | ⚪ 1.003 |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | 🟰 1.000 | 🟢 **3.05** | 🟢 **3.21** | 🟰 3.05 |
 | | 1 | 🟰 1.000 | 🟢 **1.10** | 🟢 **1.10** | 🟰 1.10 |
@@ -77,8 +77,8 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 2 | memcached -O0: EA, four code layouts | ✅ done |
 | 3 | Redis -O2: DE, DE reads only | ✅ done |
 | 4 | Compiler with all three PRs; builds and relinks of every program; identical-code check | ✅ done (22 Oct) |
-| 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | running, until 23 Oct ~22:00 |
-| 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | 24 Oct, until ~06:00 |
+| 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | ✅ done (23 Oct) |
+| 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | running, until 24 Oct ~05:30 |
 | 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | 24 Oct, until ~07:00 |
 
 Everything done: **24 Oct 2026, ~07:00**, provided each code-layout step runs without waiting for manual approval.
@@ -87,6 +87,8 @@ Everything done: **24 Oct 2026, ~07:00**, provided each code-layout step runs wi
 
 - 🟢 **DE gives 1.8-3× on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on ocean_ncp; no change
   elsewhere.
+- **On the five applications DE helps only SQLite at -O0** (checkpoint_starvation_1 1.67×, with EA 1.78×); at -O2
+  and on FFmpeg, Redis, memcached and MySQL there is no change.
 - **EA is measurable only at -O0** (SQLite on some tests, FFmpeg +0.4-0.9 %); at -O2 the code is identical or the
   speed unchanged.
 - With one thread the saving is 7-26 %; the larger 8-thread gains are consistent with less cross-core traffic on
