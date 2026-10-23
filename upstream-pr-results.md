@@ -55,9 +55,9 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | 🟰 1.000 | 🟢 **3.05** | 🟢 **3.21** | 🟰 3.05 |
 | | 1 | 🟰 1.000 | 🟢 **1.10** | 🟢 **1.10** | 🟰 1.10 |
-| NPB LU, class A | 8 | ⏳ | 🟢 **2.27** | 🟢 **2.24** | ⏳ |
-| NPB LU, class W | 8 | ⏳ | 🟢 **2.02** | 🟢 **2.04** | ⏳ |
-| NPB BT, class A | 8 | ⏳ | 🟢 **1.76** | 🟢 **1.47** | ⏳ |
+| NPB LU, class A | 8 | — | 🟢 **2.27** | 🟢 **2.24** | — |
+| NPB LU, class W | 8 | 🟡 0.96 | 🟢 **2.02** | 🟢 **2.04** | 🟢 **1.91** |
+| NPB BT, class A | 8 | 🟢 **1.085** | 🟢 **1.76** | 🟢 **1.47** | 🟢 **2.09** |
 | SPLASH-2x ocean_ncp | 8 | 🟰 1.000 | 🟢 **1.06** | 🟢 **1.07** | 🟰 1.06 |
 | SPLASH-2x water_nsquared | 8 | 🟰 1.000 | 🟡 1.09 | 🟡 1.07 | 🟰 1.09 |
 | | 1 | 🟰 1.000 | 🟢 **1.26** | 🟢 **1.26** | 🟰 1.26 |
@@ -87,10 +87,11 @@ Screening: 254 programs were ranked by the share of checks DE removes. Kernels b
 IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, CoMD, miniFE, XSBench, RSBench, Rodinia
 others); the eight real applications were timed regardless.
 
-## Open cells and schedule
+## Schedule
 
-Every "—" and "⏳" above is planned. All open cells are timed with one compiler that carries all three PRs, so
-the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
+All cells from 22 Oct on were timed with one compiler that carries all three PRs, so the arms differ only by flags:
+stock, EA, DE, DE reads only, DE + EA. DE + EA and DE come from different legs on the kernels; compare each with
+stock, not with each other.
 
 | # | Cells | When |
 |---|---|---|
@@ -100,18 +101,19 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 4 | Compiler with all three PRs; builds and relinks of every program; identical-code check | ✅ done (22 Oct) |
 | 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | ✅ done (23 Oct) |
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | ✅ done (24 Oct) |
-| 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | 24 Oct, until ~07:00 |
+| 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | ✅ done (24 Oct) |
 
-Everything done: **24 Oct 2026, ~07:00**, provided each code-layout step runs without waiting for manual approval.
+Everything done: **24 Oct 2026, 04:55**. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
 
 ## Takeaways
 
 - 🟢 **DE gives 1.8-3× on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on ocean_ncp; no change
   elsewhere.
-- **On the five applications DE helps only SQLite at -O0** (checkpoint_starvation_1 1.67×, with EA 1.78×); at -O2
-  and on FFmpeg, Redis, memcached and MySQL there is no change.
-- **EA is measurable only at -O0** (SQLite on some tests, FFmpeg +0.4-0.9 %); at -O2 the code is identical or the
-  speed unchanged.
+- **On the 13 applications DE helps only SQLite at -O0** (checkpoint_starvation_1 1.67×, with EA 1.78×) and xz at
+  -O0 (+0.6 %); everything else is within ±2 % of stock.
+- **EA is measurable on applications only at -O0** (SQLite on some tests, FFmpeg +0.4-0.9 %, brotli +1.8 % with
+  DE); at -O2 the code is mostly identical or the speed unchanged. On kernels EA gives NPB BT +8.5 %, and DE + EA
+  2.09× there.
 - With one thread the saving is 7-26 %; the larger 8-thread gains are consistent with less cross-core traffic on
   TSan shadow memory (not confirmed at cache-line level).
 - **DE, reads only** costs speed only where it removes fewer checks than DE: BT (0.83× of DE) and srad at 1 thread
