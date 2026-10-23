@@ -73,9 +73,9 @@ checkpoint_starvation_1 gains nothing at -O2.
 
 In every column, EA means the two EA PRs (capture limit + local slots); the paper's broader escape analysis is not used.
 
-Not timed: 254 programs were screened by the share of checks DE removes; the rest fell below ~3 % or did not
-separate from noise (NPB IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, CoMD, miniFE,
-XSBench, RSBench, xz, DuckDB, OpenSSL, zstd, RocksDB, LevelDB, pigz, brotli, Rodinia others).
+Screening: 254 programs were ranked by the share of checks DE removes. Kernels below ~3 % were not timed (NPB
+IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, CoMD, miniFE, XSBench, RSBench, Rodinia
+others); the eight real applications were timed regardless.
 
 ## Open cells and schedule
 
