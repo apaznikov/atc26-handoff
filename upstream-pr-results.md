@@ -1,6 +1,6 @@
 # Upstream PR measurements
 
-> Speed-up over stock TSan, **>1 = faster**. State of 22 Oct 2026.
+> Speed-up over stock TSan, **>1 = faster**. State of 24 Oct 2026: complete.
 
 | Column | What it is | Upstream PR |
 |---|---|---|
@@ -9,7 +9,7 @@
 | **DE, reads only** | DE that keeps every write checked (fix for the write-after-report gap) | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) with F1 |
 | **DE + EA** | DE + capture limit + local slots | all three |
 
-🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code (EA: to stock; DE + EA: to DE), not timed  ·  ⏳ planned or running  ·  — not measured
+🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code (EA: to stock; DE + EA: to DE), not timed  ·  — not measured
 
 ## Machine
 
