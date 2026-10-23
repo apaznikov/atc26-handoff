@@ -34,6 +34,8 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | memcached | 8 | 🟰 1.000 | ⚪ 0.98 | ⚪ 0.99 | 🟰 0.98 |
 | Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | 🟰 0.997 |
 | MySQL | 8 | ⚪ 0.997 | ⚪ 0.998 | ⚪ 1.002 | ⚪ 1.003 |
+| **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
+| RocksDB db_bench | 8 | 🟰 1.000 | 🟡 1.01 | 🟡 1.02 | 🟰 1.01 |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
 | Rodinia hotspot | 8 | 🟰 1.000 | 🟢 **3.05** | 🟢 **3.21** | 🟰 3.05 |
 | | 1 | 🟰 1.000 | 🟢 **1.10** | 🟢 **1.10** | 🟰 1.10 |
