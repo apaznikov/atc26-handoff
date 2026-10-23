@@ -27,7 +27,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | FFmpeg | 8 | 🟢 **1.004** | ⚪ 1.002 | ⚪ 1.003 | ⚪ 1.002 |
 | memcached | 8 | ⚪ 0.99 | ⚪ 1.004 | ⚪ 1.010 | ⚪ 1.007 |
 | Redis | 8 | ⚪ 0.996 | ⚪ 1.007 | ⚪ 1.003 | ⚪ 1.009 |
-| MySQL | 8 | ⚪ 0.999 | ⏳ | ⏳ | ⏳ |
+| MySQL | 8 | ⚪ 0.999 | ⚪ 0.998 | ⚪ 0.998 | ⚪ 0.997 |
 | **Applications, -O2** | | | | | |
 | SQLite | 8 | 🟰 1.000 | ⚪ 0.98³ | ⚪ 0.98³ | 🟰 0.98 |
 | FFmpeg | 8 | ⚪ 0.993 | ⚪ 0.994 | ⚪ 0.996 | ⚪ 1.000 |
@@ -79,9 +79,9 @@ the arms differ only by flags: stock, EA, DE, DE reads only, DE + EA.
 | 4 | Compiler with all three PRs; builds and relinks of every program; identical-code check | ✅ done (22 Oct) |
 | 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | running, until 23 Oct ~22:00 |
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | 24 Oct, until ~06:00 |
-| 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | 24 Oct, until ~07:30 |
+| 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | 24 Oct, until ~07:00 |
 
-Everything done: **24 Oct 2026, ~07:30**, provided each code-layout step runs without waiting for manual approval.
+Everything done: **24 Oct 2026, ~07:00**, provided each code-layout step runs without waiting for manual approval.
 
 ## Takeaways
 
