@@ -102,7 +102,8 @@ site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
 |---|:-:|:-:|:-:|:-:|:-:|---|
 | SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept in every arm (6-10/10 runs, as stock); undetermined: walIndexRecover (stock 1/10, every arm 0/10) |
 | SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 8/10 runs; 2 sites kept in every arm (stock 7-8/10, arms 5-10/10); undetermined: walIndexRecover (stock 1/10, arms 0-4/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
-| memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept at 10/10 in every arm (clock_handler, do_item_link, do_item_unlink ×2); the scheduling-dependent conn_new/conn_close family (7 sites) appears only in EA, DE and reads only (5-7/10), not in stock or DE + EA: not a loss, untested here |
+| memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept at 10/10 in every arm (clock_handler, do_item_link, do_item_unlink ×2); the scheduling-dependent conn_new/conn_close family (7 sites) appears only in EA, DE and reads only (5-7/10), not in stock or DE + EA: not a loss, untested here (each arm kept one CPU set; re-run with rotated sets queued) |
+| memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | CPU sets rotated across runs from here on; stock reports races in 10/10 runs; all 11 sites kept: 4 at 10/10 in every arm, the conn_new/conn_close family 2-3/10 in every arm, stock included |
 
 ## Schedule
 
