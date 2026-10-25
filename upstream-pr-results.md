@@ -70,6 +70,8 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | Rodinia lavaMD | 8 | 🟰 1.000 | 🟡 ~1.1 | 🟡 ~1.1 | 🟰 ~1.1 |
 | **Corpus programs timed from 26 Oct** (schedule row 11; -O2) | | | | | |
 | SPLASH-2x barnes | 8 | 🟰 1.000 | 🟡 1.08 | 🟡 1.07 | 🟰 1.08 |
+| SPLASH-2x radiosity | 8 | 🟰 1.000 | ⚪ 1.002 | ⚪ 1.002 | 🟰 1.002 |
+| PARSEC freqmine | 8 | 🟰 1.000 | 🟡 1.05 | 🟡 1.08 | 🟰 1.05 |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
