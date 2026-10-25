@@ -107,6 +107,7 @@ site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
 | Redis | -O0 | — | — | — | — | no test: no build reports any race under this workload (0 reports in 50 runs, stock included); -O2 skipped for the same reason |
 | FFmpeg | -O0 | — | — | — | — | no test: 0 reports in 50 runs, stock included (as in 30 runs in September; the encoders are uninstrumented system libraries); -O2 skipped |
 | MySQL | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs (~12,100 reports per run in every arm); 251 sites kept; 13 undetermined (stock ≤ 2/10 each) |
+| MySQL | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs (~12,000 reports per run in every arm); 226 sites kept; 26 undetermined, 15 of them seen only in arms; the closest case, dict_stats_set_persistent (stock 4/10, DE 0/10), is seen by DE + EA (1/10), which removes every check DE removes, so DE's 0/10 is detection noise |
 
 ## Schedule
 
