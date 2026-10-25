@@ -92,6 +92,16 @@ Screening: 254 programs were ranked by the share of checks DE removes. Kernels b
 IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, CoMD, miniFE, XSBench, RSBench, Rodinia
 others); the eight real applications were timed regardless.
 
+## Race preservation
+
+Each arm is run N = 10 times beside its own stock arm (the five arms in parallel) and compared race site by race
+site (location and writer site). Kept = the arm reports a site that stock reports; undetermined = stock reports the
+site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
+
+| Program | Level | EA | DE | DE, reads only | DE + EA | Notes |
+|---|:-:|:-:|:-:|:-:|:-:|---|
+| SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept in every arm (6-10/10 runs, as stock); undetermined: walIndexRecover (stock 1/10, every arm 0/10) |
+
 ## Schedule
 
 All cells from 22 Oct on were timed with one compiler that carries all three PRs, so the arms differ only by flags:
