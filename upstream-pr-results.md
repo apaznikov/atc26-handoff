@@ -105,6 +105,7 @@ site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
 | memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept at 10/10 in every arm (clock_handler, do_item_link, do_item_unlink ×2); the scheduling-dependent conn_new/conn_close family (7 sites) appears only in EA, DE and reads only (5-7/10), not in stock or DE + EA: not a loss, untested here (each arm kept one CPU set; re-run with rotated sets queued) |
 | memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | CPU sets rotated across runs from here on; stock reports races in 10/10 runs; all 11 sites kept: 4 at 10/10 in every arm, the conn_new/conn_close family 2-3/10 in every arm, stock included |
 | Redis | -O0 | — | — | — | — | no test: no build reports any race under this workload (0 reports in 50 runs, stock included); -O2 skipped for the same reason |
+| FFmpeg | -O0 | — | — | — | — | no test: 0 reports in 50 runs, stock included (as in 30 runs in September; the encoders are uninstrumented system libraries); -O2 skipped |
 
 ## Schedule
 
