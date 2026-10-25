@@ -102,7 +102,7 @@ site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
 |---|:-:|:-:|:-:|:-:|:-:|---|
 | SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept in every arm (6-10/10 runs, as stock); undetermined: walIndexRecover (stock 1/10, every arm 0/10) |
 | SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 8/10 runs; 2 sites kept in every arm (stock 7-8/10, arms 5-10/10); undetermined: walIndexRecover (stock 1/10, arms 0-4/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
-| memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept at 10/10 in every arm (clock_handler, do_item_link, do_item_unlink ×2); the scheduling-dependent conn_new/conn_close family (7 sites) appears only in EA, DE and reads only (5-7/10), not in stock or DE + EA: not a loss, untested here (each arm kept one CPU set; re-run with rotated sets queued) |
+| memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept at 10/10 in every arm (clock_handler, do_item_link, do_item_unlink ×2); the scheduling-dependent conn_new/conn_close family (7 sites) appears only in EA, DE and reads only (5-7/10), not in stock or DE + EA: an artefact of each arm keeping one CPU set. Re-run with rotated sets: 4 sites kept at 10/10; the conn family is rare in every arm (stock 2/10, arms 0-2/10), undetermined |
 | memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | CPU sets rotated across runs from here on; stock reports races in 10/10 runs; all 11 sites kept: 4 at 10/10 in every arm, the conn_new/conn_close family 2-3/10 in every arm, stock included |
 | Redis | -O0 | — | — | — | — | no test: no build reports any race under this workload (0 reports in 50 runs, stock included); -O2 skipped for the same reason |
 | FFmpeg | -O0 | — | — | — | — | no test: 0 reports in 50 runs, stock included (as in 30 runs in September; the encoders are uninstrumented system libraries); -O2 skipped |
@@ -125,9 +125,9 @@ stock, not with each other.
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | ✅ done (24 Oct) |
 | 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | ✅ done (24 Oct) |
 | 8 | RocksDB -O0 and -O2, all arms, twice the runs | ✅ done (25 Oct, 14:39) |
-| 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ⏳ running on focs, the five arms in parallel (own directories and ports), ~6-8 h; SQLite -O0 stock fires in 10 of 10 runs |
+| 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ✅ done (26 Oct, 01:15): no site lost; Redis and FFmpeg untestable (no build reports a race) |
 | 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ⏳ building; timed on focs after row 9 |
+| 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ⏳ running on focs since 26 Oct 01:15, ~3.5 h |
 | 12 | Compile time: 5 applications at -O2, every arm, compile step only | ⏳ after row 11 |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
