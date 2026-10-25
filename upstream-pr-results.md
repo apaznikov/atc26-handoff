@@ -106,6 +106,7 @@ site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
 | memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | CPU sets rotated across runs from here on; stock reports races in 10/10 runs; all 11 sites kept: 4 at 10/10 in every arm, the conn_new/conn_close family 2-3/10 in every arm, stock included |
 | Redis | -O0 | — | — | — | — | no test: no build reports any race under this workload (0 reports in 50 runs, stock included); -O2 skipped for the same reason |
 | FFmpeg | -O0 | — | — | — | — | no test: 0 reports in 50 runs, stock included (as in 30 runs in September; the encoders are uninstrumented system libraries); -O2 skipped |
+| MySQL | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs (~12,100 reports per run in every arm); 251 sites kept; 13 undetermined (stock ≤ 2/10 each) |
 
 ## Schedule
 
