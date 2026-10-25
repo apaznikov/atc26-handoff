@@ -101,6 +101,7 @@ site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
 | Program | Level | EA | DE | DE, reads only | DE + EA | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|---|
 | SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept in every arm (6-10/10 runs, as stock); undetermined: walIndexRecover (stock 1/10, every arm 0/10) |
+| SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 8/10 runs; 2 sites kept in every arm (stock 7-8/10, arms 5-10/10); undetermined: walIndexRecover (stock 1/10, arms 0-4/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
 
 ## Schedule
 
