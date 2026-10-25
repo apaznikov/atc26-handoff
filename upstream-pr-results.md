@@ -75,6 +75,11 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | llvm-test-suite SIBsim4 (single-threaded) | 1 | 🟰 1.000 | 🟢 **1.151** | 🟢 **1.154** | 🟰 1.151 |
 | Abseil graphcycles_benchmark | 1 | 🟰 1.000 | 🟡 1.009 | 🟡 1.009 | 🟰 1.009 |
 | Abseil str_join_benchmark | 1 | 🟰 1.000 | 🟡 0.984 | 🟡 0.990 | 🟰 0.984 |
+| llvm-test-suite CLAMR (single-threaded) | 1 | 🟰 1.000 | 🟢 **1.055** | 🟢 **1.057** | 🟰 1.055 |
+| llvm-test-suite 7zip-benchmark | auto | 🟡 1.004 | 🟢 **1.011** | 🟢 **1.016** | 🟢 **1.017** |
+| llvm-test-suite enc-pc1 (single-threaded) | 1 | 🟰 1.000 | 🟡 1.025 | ⚪ 0.999 | 🟰 1.025 |
+| SPLASH-2x raytrace | 8 | 🟡 1.02 | 🟡 0.91 | 🟡 0.99 | 🟡 0.93 |
+| Rodinia particlefilter | 8 | 🟰 1.000 | 🟡 1.039 | 🟡 1.045 | 🟡 1.049 |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
@@ -134,7 +139,7 @@ stock, not with each other.
 | 8 | RocksDB -O0 and -O2, all arms, twice the runs | ✅ done (25 Oct, 14:39) |
 | 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ✅ done (26 Oct, 01:15): no site lost; Redis and FFmpeg untestable (no build reports a race) |
 | 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ⏳ running on focs since 26 Oct 01:15, ~3.5 h |
+| 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ✅ done (26 Oct) |
 | 12 | Compile time: 5 applications at -O2, every arm, compile step only | ⏳ after row 11 |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
@@ -143,6 +148,12 @@ Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU
 
 - 🟢 **DE gives 1.8-3× on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on ocean_ncp; no change
   elsewhere.
+- 🟢 **Among the corpus programs timed on 26 Oct, DE speeds up three:** SIBsim4 1.15×, CLAMR 1.055× (both
+  single-threaded) and 7zip +1.1 % (+1.7 % with EA). The threaded SPLASH-2x/PARSEC/Rodinia programs vary too much
+  at 8 threads to separate (barnes, freqmine, raytrace, particlefilter); radiosity is unchanged.
+- **Race preservation (N = 10, every arm): no race site lost** on SQLite, memcached and MySQL at -O0 and -O2
+  (MySQL: 251 and 226 sites kept). Redis and FFmpeg cannot test it: no build, stock included, reports a race
+  under their workloads.
 - **On the 13 applications DE helps only SQLite at -O0** (checkpoint_starvation_1 1.67×, with EA 1.78×) and xz at
   -O0 (+0.6 %); everything else is within ±2 % of stock.
 - **EA is measurable on applications only at -O0** (SQLite on some tests, FFmpeg +0.4-0.9 %, brotli +1.8 % with
