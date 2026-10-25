@@ -70,6 +70,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | Rodinia lavaMD | 8 | 🟰 1.000 | 🟡 ~1.1 | 🟡 ~1.1 | 🟰 ~1.1 |
 | **Corpus programs timed from 26 Oct** (schedule row 11; -O2) | | | | | |
 | SPLASH-2x barnes | 8 | 🟰 1.000 | 🟡 1.08 | 🟡 1.07 | 🟰 1.08 |
+| | 1 | 🟰 1.000 | 🟢 **1.049** | 🟡 1.003 | 🟰 1.049 |
 | SPLASH-2x radiosity | 8 | 🟰 1.000 | ⚪ 1.002 | ⚪ 1.002 | 🟰 1.002 |
 | PARSEC freqmine | 8 | 🟰 1.000 | 🟡 1.05 | 🟡 1.08 | 🟰 1.05 |
 | llvm-test-suite SIBsim4 (single-threaded) | 1 | 🟰 1.000 | 🟢 **1.151** | 🟢 **1.154** | 🟰 1.151 |
@@ -79,7 +80,9 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | llvm-test-suite 7zip-benchmark | auto | 🟡 1.004 | 🟢 **1.011** | 🟢 **1.016** | 🟢 **1.017** |
 | llvm-test-suite enc-pc1 (single-threaded) | 1 | 🟰 1.000 | 🟡 1.025 | ⚪ 0.999 | 🟰 1.025 |
 | SPLASH-2x raytrace | 8 | 🟡 1.02 | 🟡 0.91 | 🟡 0.99 | 🟡 0.93 |
+| | 1 | ⚪ 0.999 | ⚪ 0.999 | ⚪ 0.996 | ⚪ 0.998 |
 | Rodinia particlefilter | 8 | 🟰 1.000 | 🟡 1.039 | 🟡 1.045 | 🟡 1.049 |
+| | 1 | 🟰 1.000 | ⚪ 1.000 | ⚪ 1.002 | ⚪ 0.996 |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
@@ -156,7 +159,7 @@ stock, not with each other.
 | 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
 | 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ✅ done (26 Oct) |
 | 12 | Compile time: 5 applications at -O2, every arm, compile step only (CPU time summed over the compiler invocations) | ✅ done (26 Oct, 05:11) |
-| 13 | 1-thread legs: SPLASH-2x raytrace, Rodinia particlefilter (barnes if cheap) | ⏳ after row 12 |
+| 13 | 1-thread legs: SPLASH-2x raytrace, Rodinia particlefilter, barnes | ✅ done (26 Oct) |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
 
@@ -166,7 +169,8 @@ Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU
   elsewhere.
 - 🟢 **Among the corpus programs timed on 26 Oct, DE speeds up three:** SIBsim4 1.15×, CLAMR 1.055× (both
   single-threaded) and 7zip +1.1 % (+1.7 % with EA). The threaded SPLASH-2x/PARSEC/Rodinia programs vary too much
-  at 8 threads to separate (barnes, freqmine, raytrace, particlefilter); radiosity is unchanged.
+  at 8 threads to separate (barnes, freqmine, raytrace, particlefilter); radiosity is unchanged. At 1 thread DE
+  gives barnes +4.9 % (from write elimination: reads only gains nothing); raytrace and particlefilter stay unchanged.
 - **Race preservation (N = 10, every arm): no race site lost** on SQLite, memcached and MySQL at -O0 and -O2
   (MySQL: 251 and 226 sites kept). Redis and FFmpeg cannot test it: no build, stock included, reports a race
   under their workloads.
