@@ -104,6 +104,21 @@ Screening: 254 programs were ranked by the share of checks DE removes. Kernels b
 IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, CoMD, miniFE, XSBench, RSBench, Rodinia
 others); the eight real applications were timed regardless.
 
+## Compile time
+
+CPU time of the compiler (user + sys summed over every source compile, configure probes excluded), -O2, 40 jobs,
+relative to stock. Stock varies by 0.2-0.6 % between builds.
+
+| Program | Compiles | Stock | EA | DE | DE, reads only | DE + EA |
+|---|--:|--:|:-:|:-:|:-:|:-:|
+| SQLite | 1 | 16.4 s | 1.006 | 1.003 | 1.006 | 1.006 |
+| memcached | 61 | 7.8 s | 1.007 | 1.013 | 1.007 | 1.026 |
+| Redis | — | 28.5 s | 0.997 | 1.005 | 1.005 | 0.998 |
+| FFmpeg | 1,936 | 350 s | 0.999 | 1.003 | 1.004 | 1.003 |
+| MySQL | 3,662 | 4,270 s | 1.000 | 1.002 | 1.001 | 1.001 |
+
+No arm adds measurable compile time: at most +0.4 % on FFmpeg and MySQL; memcached's +2.6 % is 0.2 s.
+
 ## Race preservation
 
 Each arm is run N = 10 times beside its own stock arm (the five arms in parallel) and compared race site by race
@@ -140,7 +155,7 @@ stock, not with each other.
 | 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ✅ done (26 Oct, 01:15): no site lost; Redis and FFmpeg untestable (no build reports a race) |
 | 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
 | 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ✅ done (26 Oct) |
-| 12 | Compile time: 5 applications at -O2, every arm, compile step only (CPU time summed over the compiler invocations) | ⏳ running on focs, ~6 h |
+| 12 | Compile time: 5 applications at -O2, every arm, compile step only (CPU time summed over the compiler invocations) | ✅ done (26 Oct, 05:11) |
 | 13 | 1-thread legs: SPLASH-2x raytrace, Rodinia particlefilter (barnes if cheap) | ⏳ after row 12 |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
