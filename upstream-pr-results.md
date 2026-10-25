@@ -72,6 +72,9 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | SPLASH-2x barnes | 8 | 🟰 1.000 | 🟡 1.08 | 🟡 1.07 | 🟰 1.08 |
 | SPLASH-2x radiosity | 8 | 🟰 1.000 | ⚪ 1.002 | ⚪ 1.002 | 🟰 1.002 |
 | PARSEC freqmine | 8 | 🟰 1.000 | 🟡 1.05 | 🟡 1.08 | 🟰 1.05 |
+| llvm-test-suite SIBsim4 (single-threaded) | 1 | 🟰 1.000 | 🟢 **1.151** | 🟢 **1.154** | 🟰 1.151 |
+| Abseil graphcycles_benchmark | 1 | 🟰 1.000 | 🟡 1.009 | 🟡 1.009 | 🟰 1.009 |
+| Abseil str_join_benchmark | 1 | 🟰 1.000 | 🟡 0.984 | 🟡 0.990 | 🟰 0.984 |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
