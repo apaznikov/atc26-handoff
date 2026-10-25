@@ -160,6 +160,8 @@ stock, not with each other.
 | 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ✅ done (26 Oct) |
 | 12 | Compile time: 5 applications at -O2, every arm, compile step only (CPU time summed over the compiler invocations) | ✅ done (26 Oct, 05:11) |
 | 13 | 1-thread legs: SPLASH-2x raytrace, Rodinia particlefilter, barnes | ✅ done (26 Oct) |
+| 14 | 17 more llvm-test-suite programs with a DE share of accesses ≥ 5 %, 1 thread | ⏳ running on focs, ~5-6 h |
+| 15 | Chromium (Intel): stock against DE + EA, Speedometer 3 and two blink_perf panels | ⏳ after row 14 |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
 
