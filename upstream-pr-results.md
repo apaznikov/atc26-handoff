@@ -110,7 +110,8 @@ stock, not with each other.
 | 8 | RocksDB -O0 and -O2, all arms, twice the runs | ✅ done (25 Oct, 14:39) |
 | 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ⏳ running on focs, the five arms in parallel (own directories and ports), ~6-8 h; SQLite -O0 stock fires in 10 of 10 runs |
 | 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| 11 | Corpus programs not yet timed whose dynamic removed share is large (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1, viterbi, 8b10b, imp) | ⏳ queued on focs after row 9 |
+| 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ⏳ building; timed on focs after row 9 |
+| 12 | Compile time: 5 applications at -O2, every arm, compile step only | ⏳ after row 11 |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
 
