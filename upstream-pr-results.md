@@ -1,6 +1,6 @@
 # Upstream PR measurements
 
-> Speed-up over stock TSan, **>1 = faster**. State of 24 Oct 2026: complete.
+> Speed-up over stock TSan, **>1 = faster**. State of 25 Oct 2026: complete; RocksDB re-timed (⁵).
 
 | Column | What it is | Upstream PR |
 |---|---|---|
@@ -35,7 +35,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | 🟰 0.997 |
 | MySQL | 8 | ⚪ 0.997 | ⚪ 0.998 | ⚪ 1.002 | ⚪ 1.003 |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
-| RocksDB db_bench | 8 | 🟰 1.000 | 🟡 1.01 | 🟡 1.02 | 🟰 1.01 |
+| RocksDB db_bench⁵ | 8 | 🟰 1.000 | 🟡 1.01 | 🟡 1.02 | 🟰 1.01 |
 | LevelDB db_bench | 8 | 🟰 1.000 | ⚪ 0.998 | ⚪ 0.995 | 🟰 0.998 |
 | DuckDB TPC-H | 8 | ⚪ 1.001 | ⚪ 1.002 | ⚪ 0.995 | ⚪ 0.999 |
 | zstd | 8 | ⚪ 1.000 | ⚪ 1.003 | ⚪ 0.998 | ⚪ 1.000 |
@@ -44,7 +44,7 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | brotli | 8 | 🟰 1.000 | ⚪ 1.005 | ⚪ 0.993 | 🟰 1.005 |
 | OpenSSL | 8 | ⚪ 1.008 | ⚪ 1.005 | ⚪ 1.001 | ⚪ 0.998 |
 | **Real applications, -O0** | | | | | |
-| RocksDB db_bench | 8 | 🟡 1.02 | 🟡 1.01 | 🟡 1.06 | 🟡 1.01 |
+| RocksDB db_bench⁵ | 8 | 🟡 1.02 | 🟡 1.01 | 🟡 1.06 | 🟡 1.01 |
 | LevelDB db_bench | 8 | ⚪ 1.000 | ⚪ 1.008 | ⚪ 1.010 | ⚪ 1.006 |
 | DuckDB TPC-H | 8 | ⚪ 0.997 | ⚪ 1.001 | ⚪ 1.003 | ⚪ 1.003 |
 | zstd | 8 | ⚪ 0.987 | ⚪ 1.004 | ⚪ 1.002 | ⚪ 1.006 |
@@ -81,6 +81,11 @@ checkpoint_starvation_1 gains nothing at -O2.
 ⁴ pigz -O0: all four non-stock builds are 2 % slower in both code layouts, by the same amount whatever they
 remove, which points to a shared build or layout effect rather than to the checks; not called slower.
 
+⁵ RocksDB re-timed on 25 Oct with twice the runs (N = 8 per layout, none discarded); the spread did not narrow,
+since RocksDB varies by ±3-5 % between runs at 8 threads. -O2: A/A 1.025 [0.978, 1.065], DE 1.055 [1.010, 1.101],
+reads only 1.065 [1.010, 1.110], both still 🟡. -O0: A/A 0.977 [0.955, 1.006], EA 1.005, DE 0.979, reads only
+1.007, DE + EA 0.995, all within A/A. The table keeps the first leg; neither leg separates any arm from noise.
+
 In every column, EA means the two EA PRs (capture limit + local slots); the paper's broader escape analysis is not used.
 
 Screening: 254 programs were ranked by the share of checks DE removes. Kernels below ~3 % were not timed (NPB
@@ -102,8 +107,11 @@ stock, not with each other.
 | 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | ✅ done (23 Oct) |
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | ✅ done (24 Oct) |
 | 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | ✅ done (24 Oct) |
+| 8 | RocksDB -O0 and -O2, all arms, twice the runs | ✅ done (25 Oct, 14:39) |
+| 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ⏳ running on focs, ends 26 Oct morning |
+| 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
 
-Everything done: **24 Oct 2026, 04:55**. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
+Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
 
 ## Takeaways
 
