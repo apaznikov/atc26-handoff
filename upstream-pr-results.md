@@ -9,7 +9,7 @@
 | **DE, reads only** | DE that keeps every write checked (fix for the write-after-report gap) | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) with F1 |
 | **DE + EA** | DE + capture limit + local slots | all three |
 
-🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code (EA: to stock; DE + EA: to DE), not timed  ·  — not measured
+🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code (EA: to stock; DE + EA: to DE), not timed  ·  — not measured  ·  ⏳ in progress
 
 ## Machine
 
