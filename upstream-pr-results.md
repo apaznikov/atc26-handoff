@@ -108,7 +108,7 @@ stock, not with each other.
 | 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | ✅ done (24 Oct) |
 | 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | ✅ done (24 Oct) |
 | 8 | RocksDB -O0 and -O2, all arms, twice the runs | ✅ done (25 Oct, 14:39) |
-| 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ⏳ running on focs since 25 Oct 14:40, ~25-30 h; SQLite -O0 stock fires in 10 of 10 runs |
+| 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ⏳ running on focs, the five arms in parallel (own directories and ports), ~6-8 h; SQLite -O0 stock fires in 10 of 10 runs |
 | 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
