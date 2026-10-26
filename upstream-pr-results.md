@@ -138,7 +138,8 @@ by 13-129 % between runs.
 
 Stock TSan forgets the write that raced: after a report it clears the location's history and does not record the
 access ([`DoReportRace`](https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/tsan/rtl/tsan_rtl_access.cpp)).
-Later reads of the location are then skipped altogether; the next write is recorded again. DE removes that next write
+Later plain reads of the location are then skipped altogether, by stock as well, so removing a covered read loses
+nothing; the next write is recorded again. DE removes that next write
 when an earlier write covers it, so nothing is recorded, and a later race on the location disappears.
 
 ```c
@@ -159,6 +160,8 @@ x = 9;    // C2
 The paper's argument allows reporting A–C2 instead of B–C2 (B's race is dominated by A's); it does not allow losing C2.
 The paper's runtime has this fix (`__tsan_write*_keep` for covering writes). Checked on 26 Oct with the paper's
 regression test for this case: the paper compiler with DE reports 2 races, the PR compiler with DE reports 1.
+(The paper's tree also merges checks and checks loop ranges; there premise P-REPORT in soundness-fixes.md accepts a
+second race on a reported cell. The PR removes only plain loads and stores, so no premise is needed here.)
 Removing only reads would also close the gap, but it costs much of DE's gain where the removed writes matter
 (NPB BT +47 instead of +76).
 
