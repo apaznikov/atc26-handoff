@@ -30,7 +30,7 @@ the AMD check are pending ([Open items](#open-items)).
 |---|---|---|
 | **EA** | Escape analysis: capture-tracking limit + escape through local slots (not the paper's broader escape analysis) | [llvm#192945](https://github.com/llvm/llvm-project/pull/192945) + [llvm#169896](https://github.com/llvm/llvm-project/pull/169896) |
 | **DE** | Dominance-based elimination of reads and writes, as in the PR today | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) |
-| **DE + runtime fix** | DE plus a runtime that keeps a racing write after reporting it ([why it is needed](#why-de-needs-a-runtime-fix)) | llvm#169897 + a compiler-rt PR in preparation |
+| **DE + runtime fix** | DE plus a runtime that keeps a racing write after reporting it ([why it is needed](#why-de-needs-a-runtime-fix)) | llvm#169897 (the runtime fix becomes part of it) |
 | **DE + EA** | DE + EA | all three |
 
 Each arm's 95 % interval is compared with that of A/A (stock timed against itself, same leg):
@@ -198,7 +198,7 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 | Item | State |
 |---|---|
 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| DE + runtime fix: compiler-rt PR (port of the paper runtime's keep-the-racing-write step), then timing and race preservation | ⏳ patch ready (local branch); compiler-rt tests: base 379 passed / 0 failed, patched 380 / 0; the new test fails on base (1 report) and passes with the patch (2); audit running; timing after Chromium |
+| DE + runtime fix: compiler-rt PR (port of the paper runtime's keep-the-racing-write step), then timing and race preservation | ⏳ in #169897 itself (one PR, decided 26 Oct): commits NFC → runtime fix → DE, local branch. Audited (no blocker; fixes applied). Compiler-rt TSan tests 383 passed / 0 failed (base 379 / 0); the TSan pass tests 26 / 0. The new DE test gives 2 reports with the fix and 1 without it (negative control). Timing from 26 Oct ~22:30 |
 | Resolve 🟡 and † cells, fill gaps (—): kernels at 8 threads after an A/A pilot per kernel, NPB LU A EA and DE + EA, SQLite -O0, RocksDB, the small 🟡 application cells, confirm the Redis -O2 LRANGE_600 slowdown | ⏳ queued after DE + runtime fix: ~50 h of machine time, Redis first, kernels after an A/A pilot each; expected to end ~30 Oct |
 | Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏳ current tree Chromium 156.0.8078.47 (Stable; pins clang 24, so no overrides), lld from the same LLVM commit; sync from 26 Oct 13:32, results expected 27 Oct ~01:00-03:00; the Aug-2024 tree (127) does not build with clang 24 without source edits. In that tree's libbase.so, DE + EA removes 1.74 % of read/write call sites |
 
