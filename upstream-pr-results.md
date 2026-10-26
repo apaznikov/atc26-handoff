@@ -163,7 +163,7 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 | Item | State |
 |---|---|
 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏳ moving to a current Chromium tree (newest Stable) with a matching clang 24 + lld; the Aug-2024 tree (127) does not build with clang 24 without source edits. In that tree's libbase.so, DE + EA removes 1.74 % of read/write call sites |
+| Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏳ current tree Chromium 156.0.8078.47 (Stable; pins clang 24, so no overrides), lld from the same LLVM commit; sync from 26 Oct 13:32, results expected 27 Oct ~01:00-03:00; the Aug-2024 tree (127) does not build with clang 24 without source edits. In that tree's libbase.so, DE + EA removes 1.74 % of read/write call sites |
 
 Done 20-26 Oct: the applications at -O0 and -O2, the eight real applications, the kernels, the llvm-test-suite and
 Abseil programs, the RocksDB re-time, compile time and race preservation.
