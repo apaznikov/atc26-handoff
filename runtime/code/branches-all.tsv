@@ -1,0 +1,375 @@
+archive/tsan-dev-backup-attrib	637d7b910205	2026-09-02	no	e90a3fc41004	4	6, 61, 20	33, 118, 3752	[TSan] Document the EA flow-sensitive elision; add STC func-entry lever; two hygiene notes
+archive/tsan-dev-backup-trailers	0de7a7350375	2026-09-02	no	e90a3fc41004	3	5, 49, 16	33, 114, 3756	[TSan] Test the escape-analysis fail-closed path, and quiet a per-module warning
+archive/tsan-ea-eliminate-dominating	574e8d6cbd50	2025-05-20	yes	574e8d6cbd50	0		34, 56, 4422	Fixed bug with argument lock/unlock arg number
+archive/tsan-ea-whitelist-DEBUG-enable-disable	34dff3204bc9	2025-04-22	no	54c7423cef36	0		34, 56, 4422	Refactor logging and fix InterceptorEnabled visibility.
+archive/tsan-with-ea-memintr-deal-with-interceptors	0191c4015837	2025-03-07	yes	0191c4015837	0		34, 53, 4429	Fixed bug ignored-interceptors-mmap.cpp
+artifact-clean	901c0f7353ca	2026-09-23	no	c609043dd009	7	15, 979, 6	30, 47, 3452	EA: walk pointee lists in place; cut the closure's and the walk's dead steps
+artifact/atc26	bd246fb3d5ee	2026-09-17	no	f3deebfbab60	0		30, 47, 3452	[TSan] Audit ledger: the 23rd shape, realpath and ctermid
+artifact/atc26-v1	88d09d4ba1d4	2026-09-14	no	e90a3fc41004	5	11, 229, 83	32, 106, 3635	Runtime: eviction counters and a per-granule watch; the ReX filter behind a CMake option
+atc26-camera-ready	b66bdad3cfd3	2026-10-06	no	9f5d402cb36b	11	35, 4879, 145	15, 1161, 105	tsan: Skip phase checks in runtime entries
+audit/lo-precision	f05851011865	2026-09-24	no	a960acaf8b75	0		30, 47, 3452	LO: Keep private mutexes across unknown and callback releases
+backup/a1-soundness-33f0	33f01d2c7195	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	STC: Conclude nothing in a unit that ignores sync
+backup/a1-soundness-3d1d	3d1d665349e7	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	STC: Conclude nothing in a unit that ignores sync
+backup/a1-soundness-adce	adcea3598465	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	EA: Do not trust the receiver of a release-like publication
+backup/a1-soundness-aefe	aefe376f9e78	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	EA: Do not trust the receiver of a release-like publication
+backup/de-merge-54be77809bf1	54be77809bf1	2026-09-24	no	97f9fb007d15	0		30, 47, 3452	DE: check adjacent accesses with one wider call (-tsan-de-merge)
+backup/de-package-138eae90daa1	138eae90daa1	2026-09-24	no	a960acaf8b75	1	4, 66	30, 50, 3389	DE: peel only loops whose peeled iteration can cover something
+backup/de-package-33ec43708767	33ec43708767	2026-09-24	no	a960acaf8b75	1	4, 66	30, 50, 3389	DE: peel only loops whose peeled iteration can cover something
+backup/de-package-792b62445091	792b62445091	2026-09-24	no	a960acaf8b75	1	4, 66	30, 50, 3389	DE: peel only loops whose peeled iteration can cover something
+backup/de-package-f2daab6ee11b	f2daab6ee11b	2026-09-24	no	a960acaf8b75	1	4, 66	30, 50, 3389	DE: peel only loops whose peeled iteration can cover something
+backup/de-potential-bdb6b1618269	bdb6b1618269	2026-09-24	no	a960acaf8b75	0		30, 47, 3452	TSan: count executed accesses, loops and entries per site (diagnostic)
+backup/de-recovery-f715f1fd1f11	f715f1fd1f11	2026-09-24	no	5695d6489a71	0		30, 47, 3452	DE: post-dominance sees cycles with more than one entry (shape 29)
+backup/de-verified-ca3c	ca3c590cf85d	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	DE: Hoist a verified test's address bits out of its loop
+backup/de-verified-package-db08	db088d93ea58	2026-09-25	no	29878d8b3e6c	1	1, 3	30, 121, 2751	DE: Check a counted loop's streams before it, under verified removal
+backup/de-verified-package-e1ec	e1ec3818d192	2026-09-25	no	29878d8b3e6c	1	1, 3	30, 121, 2751	DE: Check a counted loop's streams before it, under verified removal
+backup/de-verified-wide-5b93	5b93ca11cb5f	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	DE: Give the inline hit test to accesses likely to hit
+backup/dynstc-rt-before-series-rebase	d62f817671cf	2026-09-25	no	ebd910c9e8c9	3	5, 76, 2	30, 69, 3400	tsan: Keep dynstc_rt off in the use-after-free tests
+backup/dynstc-rt-before-squash	ecc3e42dd8f8	2026-09-24	no	ebd910c9e8c9	3	6, 179, 26	30, 177, 3429	tsan: Stop dynstc_rt for good once a thread's clock is dropped
+backup/dynstc-rt-counts-before-series-rebase	bc865269aa75	2026-09-25	no	ebd910c9e8c9	5	7, 345, 9	31, 337, 3406	tsan: Count the returns at the dynstc_rt flag
+backup/dynstc-rt-counts-before-v3	8b00d963bea9	2026-09-24	no	ebd910c9e8c9	4	9, 427, 33	31, 424, 3435	tsan: Count plain entries the dynstc_rt flag skips
+backup/ea-pre-holes-4943	494370b9a1d7	2026-09-25	no	2129c2640946	0		30, 118, 2751	tsan: Keep plugin-visible symbols external under -tsan-whole-program
+backup/evconf-a59b-fd-v1	c728a705c063	2026-10-06	no	8345a0396fa5	9	6, 396, 13	6, 396, 13	tsan: Print the descriptor model in the phase guard's stats
+backup/evconf-ddq-c11-amended	41b4cc2e0071	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Give a summary only the facts its reach may read
+backup/fix-soundness-33-37-01f1dd7eafc5	01f1dd7eafc5	2026-09-24	no	ebd910c9e8c9	1	1, 12, 2	30, 47, 3442	STC: __builtin_setjmp returns twice as well (shape 43)
+backup/fix-soundness-33-37-04d7b06789e2	04d7b06789e2	2026-09-24	no	ebd910c9e8c9	1	1, 12, 2	30, 47, 3442	EA: a store through a slot of unseen contents publishes (shape 35)
+backup/fix-soundness-33-37-1684058821a7	1684058821a7	2026-09-24	no	bfa7b1aeb09e	0		30, 47, 3442	EA: what memory holds is not modelled; a loaded pointer escapes
+backup/fix-soundness-33-37-3f869e483a84	3f869e483a84	2026-09-24	no	ebd910c9e8c9	1	1, 12, 2	30, 47, 3442	EA: a store through a slot of unseen contents publishes (shape 35)
+backup/fix-soundness-33-37-cf3aa10f9551	cf3aa10f9551	2026-09-24	no	f6459b53eb97	0		30, 47, 3442	EA: follow pointer bytes through integer data (flag)
+backup/fix-soundness-33-37-f7abd1b8b984	f7abd1b8b984	2026-09-24	yes	f7abd1b8b984	0		30, 47, 3442	EA: nocapture does not cover what the argument points to (shape 48)
+backup/integrate-all-0925-0aef6d9e0ee1	0aef6d9e0ee1	2026-09-25	no	6ed30d8ebcec	0		30, 90, 3380	tsan: pin the racy line in the soundness shapes' race tests
+backup/integrate-all-0925-step1-53d36eb28467	53d36eb28467	2026-09-25	yes	53d36eb28467	0		30, 87, 3443	TSan: Guard only loops where the loop guard can skip checks
+backup/lo-mark-pass-10939cf	10939cf85b80	2026-10-08	no	8345a0396fa5	65	22, 4569, 141	22, 4569, 141	tsan: Cache the owner a lock marker's test was refused for (WIP)
+backup/lo-mark-pass-337b1a0	337b1a001b7b	2026-10-08	no	8345a0396fa5	67	22, 4756, 144	22, 4756, 144	tsan: Test the length of a memory intrinsic into a bound member
+backup/lo-mark-pass-ad13a98	ad13a98d6ac2	2026-10-08	no	8345a0396fa5	69	22, 4956, 144	22, 4956, 144	tsan: Widen the lock markers' re-mark witnesses (audit A78b)
+backup/lo-mark-pass-b004217	b004217ebb38	2026-10-08	no	8345a0396fa5	67	22, 4756, 144	22, 4756, 144	tsan: LO-MARK pass tests (WIP)
+backup/n1-inline-before-export	e3d240c5ba20	2026-09-25	no	ebd910c9e8c9	1	4, 92, 7	30, 54, 3374	tsan: Emit the fast-path hit test inline
+backup/n1-inline-before-fix	6963943cf037	2026-09-24	no	ebd910c9e8c9	1	4, 92, 7	30, 57, 3377	tsan: Emit the fast-path hit test inline
+backup/n1-loop-d41e224ecb99	d41e224ecb99	2026-09-25	no	ebd910c9e8c9	1	5, 93, 7	30, 54, 3373	tsan: Optionally inline the hit test only in small loops
+backup/n1-volatile-cells-8237e7e	8237e7eccee4	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	tsan: Read the inline hit test's shadow cells volatile
+backup/n1b-pass-before-attr-order	e24138606f33	2026-09-25	no	ebd910c9e8c9	1	5, 245	30, 73, 3233	tsan: Add preserve_most access entries
+backup/o1-oracle-before-fold	e3e4762aa6a6	2026-09-25	no	74edc4be85f0	1	5, 339	30, 452, 3046	tsan: Profile the thread-local oracle (measurement)
+backup/owner-rt-a67b	3b924c3bf354	2026-10-06	no	8345a0396fa5	2	7, 325	7, 325	evconf: Refuse a take-guard table's use in an unnamed function
+backup/subs-package-9d857c2	9d857c2f74bf	2026-09-25	no	2129c2640946	3	4, 212, 6	30, 329, 2756	DE: Check a counted loop's streams before it, under verified removal
+backup/subsumption-hit-e5d5c1e	e5d5c1e8a93b	2026-09-25	no	29878d8b3e6c	1	4, 174, 6	30, 291, 2756	tsan: Test the stale record a subsumption hit leaves without absorption
+backup/subsumption-hit-pre-p1	54aadf12af39	2026-09-25	no	29878d8b3e6c	2	4, 209, 6	30, 326, 2756	tsan: Check the inline subsumption test against the runtime's
+backup/tsan-audit-2026-09-03	ac45cf4556b1	2026-09-03	no	e90a3fc41004	7	11, 229, 83	32, 106, 3635	[TSan] Audit ledger: dominance elimination under the bounded shadow, quantified
+backup/tsan-dev-2026-09-03	9864b0e9e094	2026-09-03	no	e90a3fc41004	4	6, 61, 20	33, 118, 3752	[TSan] Invalidate the per-function escape union whenever a block state changes
+backup/tsan-dev-pre-push	8e271eab146d	2026-09-03	no	9f5d402cb36b	7	11, 231, 82	32, 106, 3635	[TSan] Audit ledger: shape 14's hash and gate; the second read's verification
+dbg/cr-rmw-carried	f337fc92068e	2026-10-19	no	8345a0396fa5	0			EA: Count atomicrmw/cmpxchg results taken as carried loads
+experiment/alloc-nouaf-validate	b032815698a0	2026-10-07	no	8345a0396fa5	14	13, 1029, 13	13, 1029, 13	tsan: Check accesses against pushed free-list blocks
+experiment/als	c911b1f1ff67	2026-10-10	no	8345a0396fa5	5	8, 312, 6	8, 312, 6	tsan: Make the size of ALS's per-thread cache a flag
+experiment/auto-bio	946cbb3827a6	2026-10-05	no	8345a0396fa5	0			tsan: Do not re-read the skip bit after a musttail call
+experiment/batch-checks	3b06462c8d7b	2026-09-24	no	a960acaf8b75	2	4, 766	31, 798, 3437	tsan: Measure an inline test that hands its work to the miss entry
+experiment/camera-ready	8345a0396fa5	2026-10-05	yes	8345a0396fa5	0			tsan: Merge EVCONF v5 into the quiet-mode line
+experiment/carve-check	b575340c1ee8	2026-10-08	no	8345a0396fa5	33	20, 1928, 108	20, 1928, 108	tsan: Test the length of a memory intrinsic into a bound member
+experiment/carve-ownercheck	da51c2dd8b3c	2026-10-09	no	8345a0396fa5	36	20, 1992, 108	20, 1992, 108	tsan: Require named loads in fieldcheck; test owners on the edge
+experiment/cfg-table-proof	5ea28b0553ae	2026-10-05	no	1ecdb893a521	0		11, 65, 97	tsan: Close the config-table proof's last gaps from audit A57c
+experiment/cr-candidate	744024407b56	2026-10-07	no	8345a0396fa5	24	15, 1169, 105	15, 1169, 105	Merge experiment/cr-phase-asm into experiment/cr-candidate
+experiment/cr-phase-asm	ab32a9bea55e	2026-10-06	no	8345a0396fa5	23	15, 1161, 105	15, 1161, 105	tsan: Let the phase summary write the program digest itself
+experiment/ctime-lockscope-memo	a0c3b51bbe07	2026-10-07	no	8345a0396fa5	24	15, 1169, 105	15, 1169, 105	tsan: Compute the lock scope's releasers once per derivation round
+experiment/dd-census	5e944dac269e	2026-09-29	no	3da0e56a1b3f	2	2, 58	30, 183, 2748	tsan: Census the deadlock detector's work by lock class
+experiment/dd-cheap	40788cc8bbf7	2026-09-29	no	3da0e56a1b3f	2	2, 17, 1	30, 140, 2747	tsan: Skip the pre-lock detector hook when it would change nothing
+experiment/dd-exact	a2a7387e90aa	2026-09-30	no	314a3c67e14d	2	2, 22	30, 147, 2655	tsan: Offer the deadlock detector a larger node table
+experiment/dd-exact-ab	944fb9f4c502	2026-10-01	no	314a3c67e14d	5	6, 80	30, 205, 2655	tsan: Let the stress test's labels match a described start
+experiment/de-allpaths	ab6881b91492	2026-10-02	no	0f4bccf83809	2	4, 163, 4	27, 123, 2494	tsan: Skip scalable accesses before the all-paths granule test
+experiment/de-improve	9798075e5bd2	2026-09-25	no	ebd910c9e8c9	1	1, 12, 2	30, 47, 3442	Tests: pin the bounded walk of the cycle cut
+experiment/de-loop-guard	9dec2782fd5f	2026-09-25	no	ebd910c9e8c9	2	6, 52, 3	30, 87, 3443	TSan: Guard only loops where the loop guard can skip checks
+experiment/de-merge	b747151b259f	2026-09-24	no	a960acaf8b75	0		30, 47, 3452	DE: check adjacent accesses with one wider call (-tsan-de-merge)
+experiment/de-package	485374e95707	2026-09-24	no	a960acaf8b75	1	4, 66	30, 50, 3389	STC: a setjmp in main is multi-threaded once main may start a thread (shape 30)
+experiment/de-package-astats	c4fa7a48e175	2026-09-24	no	a960acaf8b75	3	9, 303, 7	31, 286, 3395	Runtime counters: count the loop range entries with the range calls (measurement)
+experiment/de-potential	f27c79eefc80	2026-09-24	no	a960acaf8b75	0		30, 47, 3452	TSan: count executed accesses, loops and entries per site (diagnostic)
+experiment/de-recovery	e2b4c2b49b4a	2026-09-24	yes	e2b4c2b49b4a	0		30, 47, 3452	STC: a setjmp in main is multi-threaded once main may start a thread (shape 30)
+experiment/de-reject-census	1fa3df292f17	2026-09-24	no	97f9fb007d15	0		30, 47, 3452	DE: census dump of the pairs it cannot classify (diagnostic)
+experiment/de-relaxed	fdf78fb5a982	2026-09-29	no	0f4bccf83809	0		29, 127, 2657	tsan: Attribute the relaxed premise by its date
+experiment/dynstc-mt-guards	e4fc4781e47f	2026-09-24	no	e2b4c2b49b4a	0		30, 47, 3452	DynSTC: Count guard outcomes per module and process
+experiment/dynstc-rt	cf0ef4ec0f3c	2026-09-25	no	073b1974c37f	3	5, 77, 2	30, 62, 3382	tsan: Keep dynstc_rt off in the use-after-free tests
+experiment/ea-census	9e7945ae012b	2026-09-26	no	03ac22055568	0		30, 125, 2748	tsan: Report which rule drops each access's check (measurement)
+experiment/ea-contents	d655bf26ae15	2026-10-01	yes	d655bf26ae15	0		29, 125, 2655	EA: Turn contents escape on by default
+experiment/ea-returns-fresh	73d7ea730692	2026-09-25	no	b524e4dbc28f	0		30, 47, 3442	EA: carry "returns fresh" across units in the summary
+experiment/ea-typed	1dfa83ab6147	2026-09-30	no	314a3c67e14d	0		29, 125, 2655	EA: Match invokes in the typed indirect-call test
+experiment/ea-typed-p3	b8cf008e02e6	2026-09-30	no	ecaeca971e07	0		29, 125, 2655	STC: Put the premise-bearing options on the summary's rules line
+experiment/evconf	99837bc10d31	2026-10-01	no	ecaeca971e07	0		29, 125, 2655	tsan: Match evconf anonymous structs by member types
+experiment/evconf-a59b-dev	079a8f86ce1e	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	Merge experiment/evconf-a59h2 into experiment/evconf-ddq
+experiment/evconf-a59b-fd	bac215a62656	2026-10-06	no	8345a0396fa5	9	7, 402, 13	7, 402, 13	tsan: Test the split's phase-guard latch, with a mutant
+experiment/evconf-a59b-own	e62056e0e3fe	2026-10-06	no	8345a0396fa5	11	11, 727, 13	11, 727, 13	evconf: Refuse a take-guard table's use in an unnamed function
+experiment/evconf-a59f	1a246a41a605	2026-10-06	no	8345a0396fa5	0			evconf-derive: Merge the rest.ll RE update into the A59f tree
+experiment/evconf-a59g-own	ba515c1940b4	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Do not trust a holder whose address a call takes
+experiment/evconf-a59g-owner	5ac44eb6b47e	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Test A59g's OWNER-RT acceptance, clear finality, base-check
+experiment/evconf-a59h-pre	fbcba8ed0876	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Report the sites of named functions' results
+experiment/evconf-a59h2	106f4c4893d1	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Treat past-the-struct as container_of only where embedded
+experiment/evconf-args	9c0db1ea6605	2026-10-04	yes	9c0db1ea6605	0		17, 96, 1678	tsan: Expect the right reason in the per-unit hinge test
+experiment/evconf-basechk	b920a8252c23	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Test the entry check on an object taken back from a loan
+experiment/evconf-c11perf-m68f	62331aefcdbe	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Count the value analysis's work on request
+experiment/evconf-c12-unlink	2a1a6bcd5cf7	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Test the holder-owned iovec array rule
+experiment/evconf-candidates	551e03de6161	2026-10-07	no	8345a0396fa5	11	11, 727, 13	11, 727, 13	[TSan] EvConf: No covered argument for a release function
+experiment/evconf-checked	b45d2976051a	2026-10-07	no	8345a0396fa5	19	17, 1857, 22	17, 1857, 22	tsan: Pin the refill twin's select to the loop's own
+experiment/evconf-checked-pass	1410be2bba6e	2026-10-07	no	8345a0396fa5	11	11, 727, 13	11, 727, 13	evconf: Elide candidate ranges and C library calls under owner checks
+experiment/evconf-checked-rt	5fb6c13bcd60	2026-10-07	no	8345a0396fa5	12	15, 1431, 22	15, 1431, 22	tsan: Add shadow ownership markers for EVCONF-CHECKED
+experiment/evconf-checked-twins	b45d2976051a	2026-10-07	no	8345a0396fa5	19	17, 1857, 22	17, 1857, 22	tsan: Pin the refill twin's select to the loop's own
+experiment/evconf-d1-fixed	cd0b8562785e	2026-10-08	no	8345a0396fa5	25	17, 2028, 20	17, 2028, 20	tsan: Test an ordered and a nested mark over another key
+experiment/evconf-ddq	5fef64823fe0	2026-10-07	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	[TSan] EvConf: Resolve a store at a constant global address at once
+experiment/evconf-ddq-c11	986e2d6ddaab	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive tests: Say why no model shows the fact-memo rollback
+experiment/evconf-ddq-c11-relevance	5c716bc72032	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Give a summary only the facts its reach may read
+experiment/evconf-ddq-c11perf	fe0c52f191f4	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Count the value analysis's work on request
+experiment/evconf-ddq-det	607ee9dd818b	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Make the report the same on every run
+experiment/evconf-ddq-det2	68f31735b148	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Look up a field's writers once per fact
+experiment/evconf-ddq-held	5a3a9ddc6802	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Index the loads a take may be
+experiment/evconf-ddq-perf	7259659371fd	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Hash the innermost-key memo
+experiment/evconf-ddq-perf2	c410ef1ab681	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	Merge experiment/evconf-c12-unlink into experiment/evconf-ddq
+experiment/evconf-ddq-tests	ed194df8af34	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Print report values with one slot tracker per module
+experiment/evconf-derive	3167f277d22d	2026-10-05	no	8345a0396fa5	0			tsan: Ask DWARF only about local values in EVCONF's derivation
+experiment/evconf-derive-probe	c1b5534746af	2026-10-05	no	8345a0396fa5	0			probe: assume the crawler and logger client fields are loans (not for merging)
+experiment/evconf-derive-wip	70420da7aba5	2026-10-06	no	8345a0396fa5	0			evconf-derive: Expect the index-space refusal for rest.ll's RE
+experiment/evconf-derive-wip-c12	18f29560a400	2026-10-05	no	8345a0396fa5	0			wip: test loans; the lockset model's receiver reads a covered field
+experiment/evconf-dh8	b2e636bd5ff6	2026-10-06	no	8345a0396fa5	0			evconf-derive: An array's holder through a loop's phi; a list walk's loads typed by member (D-H8 work)
+experiment/evconf-dh8b	712f554d5f2f	2026-10-06	no	8345a0396fa5	0			evconf-derive: Test SitePTA's placement in uwt.ll
+experiment/evconf-dh8b-land	da54807ed204	2026-10-06	no	8345a0396fa5	9	7, 402, 13	7, 402, 13	evconf-derive: Land the D-H8 work into the integration branch
+experiment/evconf-e52d	00e9b23dc27f	2026-10-08	no	8345a0396fa5	51	20, 2948, 138	20, 2948, 138	tsan: Keep the access entries leaf functions on the N1-S root
+experiment/evconf-e52d-merge	9773f3e32355	2026-10-08	no	8345a0396fa5	59	22, 3682, 141	22, 3682, 141	tsan: Or the raw flag bytes in the free hook's gate
+experiment/evconf-handoff-clear	03f855a0d612	2026-10-07	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive tests: Test the hand-off must-clear on rbuf's shape
+experiment/evconf-inbounds	75ccfe7e3564	2026-10-04	no	9c0db1ea6605	0		17, 96, 1678	tsan: Skip covered ranges of any length under IN-BOUNDS
+experiment/evconf-iopend	11d9d925cdcf	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Test a latched io thread's read of a lent buffer
+experiment/evconf-lazyclear	44ba10969e17	2026-10-08	no	8345a0396fa5	30	17, 2224, 39	17, 2224, 39	tsan: Test an ordered and a nested mark over another key
+experiment/evconf-loanback	bc541036d7aa	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Match HB's entry line by function and argument
+experiment/evconf-markergate	44ba10969e17	2026-10-08	no	8345a0396fa5	30	17, 2224, 39	17, 2224, 39	tsan: Test an ordered and a nested mark over another key
+experiment/evconf-ownrt-2	026fd942ce7c	2026-10-06	no	8345a0396fa5	11	11, 727, 13	11, 727, 13	evconf-derive: Test OWNER-RT's fallback take-guard and entry check
+experiment/evconf-ownrt-wip	700c170ad7cf	2026-10-06	no	8345a0396fa5	9	7, 402, 13	7, 402, 13	evconf-derive: Find the take table through phis and selects
+experiment/evconf-pta	691dd6cad20b	2026-10-06	no	8345a0396fa5	9	7, 402, 13	7, 402, 13	evconf-derive: Keep constants, functions and library memory unwritten
+experiment/evconf-ranges	a94e05a7e778	2026-10-04	yes	a94e05a7e778	0		17, 96, 1678	tsan: Keep the interceptor for an intrinsic without a precomputed verdict
+experiment/evconf-site-det	9773f3e32355	2026-10-08	no	8345a0396fa5	59	22, 3682, 141	22, 3682, 141	tsan: Or the raw flag bytes in the free hook's gate
+experiment/evconf-v5	7f970ce2ff11	2026-10-05	no	e6c7211d984b	0		17, 96, 1678	tsan: Seed EVCONF-FIELDS' set with every named reader
+experiment/fd-reuse	3a1bf6d1422f	2026-10-05	no	8345a0396fa5	16	11, 878, 84	11, 878, 84	tsan: Test the split and the A64b fixes of the reuse model
+experiment/fe-inline	312860dc7f9e	2026-09-26	no	2129c2640946	1	4, 93	29, 120, 2660	tsan: Make stack_sync_reuse.cpp's frames coincide
+experiment/fe-inline-p1v2	28694aa2690d	2026-09-26	no	66512bff785e	1	4, 93	29, 127, 2657	tsan: Emit the fast path of function entry and exit inline
+experiment/fe-inline-p1v3	5ea63db70e43	2026-09-26	no	03ac22055568	1	4, 93	29, 127, 2657	tsan: Add knobs that bound FE-INL's code at unwind exits and by size
+experiment/fe-inline-p1v3b	ae52640be659	2026-09-26	yes	ae52640be659	0		29, 127, 2657	tsan: Add knobs that bound FE-INL's code at unwind exits and by size
+experiment/fe-lazy	b6c5417665fd	2026-09-30	no	ecaeca971e07	2	7, 180, 2	29, 305, 2657	tsan: Keep the lazy-entry IR check independent of inlining
+experiment/fe-pm	c998c9c9a1a7	2026-10-02	no	314a3c67e14d	2	3, 188, 3	29, 313, 2658	tsan: Test FP values and call shapes around the PM FE entries
+experiment/fe-sink	d7e0ec71df33	2026-09-28	no	ae52640be659	2	2, 190	29, 204, 2544	tsan: Test FE-SINK's exits, loops and miss entries further
+experiment/g-ea	e8769c375926	2026-09-30	no	3da0e56a1b3f	9	15, 525, 5	23, 165, 2268	tsan: Check the fourth cached root pair by index, not by name
+experiment/gea4-hot	98e6d46fdd72	2026-10-01	no	3da0e56a1b3f	8	15, 466, 5	23, 186, 2348	tsan: Place the inline hit test by a hot-site list
+experiment/integrate-cr	db2a0b979ef9	2026-10-03	no	1738fdee35e7	0		17, 96, 1678	tsan: Check cycle cut in verified mode
+experiment/libcall-light	6a1b9a0faf05	2026-09-28	no	3da0e56a1b3f	3	2, 215, 1	30, 340, 2749	tsan: Tail-call the interceptor from light entries
+experiment/libfacts	ba288ab65247	2026-09-30	no	314a3c67e14d	0		29, 125, 2655	tsan: Fill the DE and EA columns of the classified rows
+experiment/libfacts-bd6d	a708d45aab40	2026-09-30	yes	a708d45aab40	0		29, 125, 2655	tsan: Fill the DE and EA columns of the classified rows
+experiment/lo-checked	5ae6fe82f07e	2026-10-08	no	8345a0396fa5	26	20, 1672, 108	20, 1672, 108	tsan: Check roots, retired locks and frees in path B
+experiment/lo-checked-b	716c4d3d3e27	2026-10-08	no	8345a0396fa5	26	20, 1672, 108	20, 1672, 108	tsan: Let lo_checked_e2e.c's IR checks pass with DynSTC
+experiment/lo-checked-e2e	f588c7d40178	2026-10-08	no	8345a0396fa5	26	20, 1672, 108	20, 1672, 108	tsan: Let lo_checked_e2e.c's IR checks pass with DynSTC
+experiment/lo-checked-pass	f808bd6a09ac	2026-10-08	no	8345a0396fa5	25	19, 1396, 105	19, 1396, 105	tsan: Report unheld accesses to candidate fields (lock spec path B)
+experiment/lo-mark	718c7520052c	2026-10-08	no	8345a0396fa5	72	22, 5012, 147	22, 5012, 147	tsan: Test a mark over another lock's released marker
+experiment/lo-mark-counters	913cae99c263	2026-10-09	no	8345a0396fa5	79	22, 5276, 147	22, 5276, 147	tsan: Pin live-at-exit on the guard call, not on held hits
+experiment/lo-mark-memo	664aa4376bdb	2026-10-09	no	8345a0396fa5	77	22, 5295, 147	22, 5295, 147	tsan: Remember the release key a thread is ordered after
+experiment/lo-mark-memo-split	a239f64958f9	2026-10-09	no	8345a0396fa5	79	22, 5296, 147	22, 5296, 147	tsan: Count LO-MARK's guard calls per thread
+experiment/lo-mark-multilock	81ba6b17fd4d	2026-10-09	no	8345a0396fa5	76	22, 5219, 147	22, 5219, 147	tsan: Require an unlink store to store into the list
+experiment/lo-mark-pass	03a05e1b2cc8	2026-10-08	no	8345a0396fa5	70	22, 4994, 145	22, 4994, 145	tsan: Widen the lock markers' re-mark witnesses (audit A78b)
+experiment/lo-mark-v2	dec6992dd63b	2026-10-09	no	8345a0396fa5	72	22, 5012, 147	22, 5012, 147	wip: lo-mark v2 pass side (release directive, param pointer test); not compiled
+experiment/lo-mark-v2c	36c805dd1906	2026-10-09	no	8345a0396fa5	75	22, 5199, 147	22, 5199, 147	tsan: Require an unlink store to store into the list
+experiment/lo-mark-v2ml	30a221352122	2026-10-09	no	8345a0396fa5	73	22, 5072, 147	22, 5072, 147	tsan: End a root's marked life at its unlink (release lines)
+experiment/lo-obj-g	17bf94ae77d5	2026-09-29	no	3da0e56a1b3f	1	11, 147, 4	28, 141, 2621	tsan: Match the invoke TSan makes of a call in lo-obj-g.ll
+experiment/lo-precision	f05851011865	2026-09-24	no	a960acaf8b75	0		30, 47, 3452	LO: Keep private mutexes across unknown and callback releases
+experiment/lo-swmr-hb	77886e3ff0ed	2026-09-24	no	ebd910c9e8c9	0		30, 47, 3452	SWMR: Accept writes that precede every publication (parked)
+experiment/lo-w-potential	f2e03eb08f61	2026-09-24	no	a960acaf8b75	10	16, 2822, 29	39, 2849, 3461	tsan: Fix three LO-W readers found wrong on the first full run
+experiment/loobj-v5	cd8631a425b9	2026-10-02	no	3da0e56a1b3f	10	15, 553, 5	23, 166, 2241	tsan: Test the LO-OBJ-G latch in private mode
+experiment/mc-integrated	4040515f569b	2026-10-02	yes	4040515f569b	0		29, 125, 2655	stc: Key carried statics by unit identity and check them
+experiment/mcq-levers	4f39efea27a2	2026-10-06	no	8345a0396fa5	23	15, 1161, 105	15, 1161, 105	EA: Take setsockopt through a pointer as enabling zero-copy
+experiment/memintrin	327c74e53d67	2026-09-26	no	2ae4e920f4ca	0		30, 125, 2748	tsan: Report memcpy/memmove sides for a census (measurement)
+experiment/memintrin-one-side	99cf8525892d	2026-09-27	no	3da0e56a1b3f	2	3, 43	30, 135, 2715	tsan: Fix two expectations of the one-side IR test
+experiment/multilock	beda0f7da225	2026-10-08	no	8345a0396fa5	31	20, 1901, 108	20, 1901, 108	tsan: Count each lock's guards under -tsan-lo-obj-census
+experiment/n1-atomic	fc762f401f92	2026-09-29	no	0f4bccf83809	6	3, 39, 2	29, 157, 2650	tsan: Cite the design notes by name, not by path
+experiment/n1-atomic-hot	e6b97f0ebc66	2026-10-01	no	314a3c67e14d	6	7, 82, 9	29, 155, 2612	tsan: Test the atomic hit test across single mode
+experiment/n1-cse	81db35939cc1	2026-09-29	no	0f4bccf83809	4	2, 55, 2	29, 173, 2650	tsan: Cite the design notes by name, not by path
+experiment/n1-dynstc-skip	8b15a76e9920	2026-09-27	no	0f4bccf83809	1	1, 5	29, 127, 2652	tsan: Test the miss-path skip after a call and in loops
+experiment/n1-inline	44ec3848eb24	2026-09-25	no	ebd910c9e8c9	1	5, 93, 7	30, 54, 3373	tsan: Keep the plain call's location on an unlocated miss call
+experiment/n1-loop	080740e05970	2026-09-25	no	ebd910c9e8c9	1	5, 93, 7	30, 54, 3373	tsan: Optionally inline the hit test only in small loops
+experiment/n1-static-hot	55efffb5a554	2026-09-26	no	66512bff785e	0		30, 125, 2748	tsan: Fix N1-S's parameters at their tuned values
+experiment/n1-static-hot-p1v3	e0e8a32fa376	2026-09-26	no	03ac22055568	0		30, 125, 2748	tsan: Fix N1-S's parameters at their tuned values
+experiment/n1b-pass	bcf3ad95807a	2026-09-25	no	ebd910c9e8c9	1	5, 245	30, 73, 3233	tsan: Test the preserve_most hit test against the runtime's
+experiment/n1s-8345a	429bd8cf76b9	2026-10-10	no	8345a0396fa5	0			tsan: Test N1-S's size cap, its control and verified DE
+experiment/n1s-ffk	bd979a775aa7	2026-10-07	no	8345a0396fa5	24	15, 1169, 105	15, 1169, 105	tsan: Fix N1-S's parameters at their tuned values
+experiment/n1s-p0	e52d8787b59e	2026-10-07	no	8345a0396fa5	24	15, 1169, 105	15, 1169, 105	tsan: Fix N1-S's parameters at their tuned values
+experiment/n1st-fs	78fee75ba768	2026-09-30	no	314a3c67e14d	2	5, 50, 9	29, 123, 2612	tsan: Read the single-mode skip from the fast state
+experiment/n1st-fs-hot	1dbee392cbc8	2026-10-01	no	314a3c67e14d	2	5, 50, 9	29, 123, 2612	tsan: Place the inline fast paths by a hot-site list
+experiment/n2-batch-checks	ad11b284a34f	2026-09-25	no	f7abd1b8b984	3	7, 342, 1	30, 90, 3144	TSan: Check a call-free run of accesses with one call
+experiment/n2-runtime	1b80a5b187c5	2026-09-25	no	53d36eb28467	2	5, 302	30, 90, 3144	tsan: Add batch check entries for the common signatures
+experiment/own-conn	3480d51a905e	2026-09-29	no	3da0e56a1b3f	3	11, 173, 4	28, 166, 2620	tsan: Start OWN-CONN claims (unfinished, withdrawn)
+experiment/own-handoff	ddccf8375d9f	2026-09-29	no	3da0e56a1b3f	2	11, 158, 4	28, 152, 2621	tsan: State and enforce OWN-HANDOFF's phase conditions
+experiment/owner-rt	2a14a2fbf2d5	2026-10-06	no	8345a0396fa5	11	11, 727, 13	11, 727, 13	evconf: Refuse a take-guard table's use in an unnamed function
+experiment/p-dict-a63c	1d6aef520471	2026-10-06	no	8345a0396fa5	0			wip: zeroed entries only at offset 0; M95 check; version 12
+experiment/p-dict-full-wip	36e2f57dcbb9	2026-10-05	no	8345a0396fa5	0			tsan: Do not re-read the skip bit after a musttail call
+experiment/peel-invariant-slack	bd246fb3d5ee	2026-09-17	no	f3deebfbab60	0		30, 47, 3452	[TSan] Audit ledger: the 23rd shape, realpath and ctermid
+experiment/per-element	409548d2bb2d	2026-09-30	no	ecaeca971e07	2	6, 45, 1	29, 164, 2650	tsan: Drop the summary warning from the per-element flag-off check
+experiment/pgo-place	15be169c753b	2026-10-01	no	314a3c67e14d	0		29, 125, 2655	tsan: Let the hot list place the hit test alone
+experiment/phase-guard	bb6f40d9905b	2026-10-03	no	0ce5ad461014	3	6, 146, 2	18, 223, 1697	tsan: Move the phase guard to the quiet-thread runtime
+experiment/phase-guard-final-tests	ae7c7b6284d6	2026-10-05	no	69db48e2aee0	0		11, 68, 134	tsan: Test a quiet period restarted after a wake
+experiment/phase-guard-h2	e4a2e067cf5d	2026-10-04	yes	e4a2e067cf5d	0		12, 141, 406	tsan: Accept the shapes Redis's phase-guard build showed
+experiment/phase-guard-h2-368c-tests	c1ae9a05eef4	2026-10-04	no	368cefdfb504	0		11, 91, 201	tsan: Test the late-module rule for a plain module
+experiment/phase-guard-h2-next	281382f2c70c	2026-10-05	yes	281382f2c70c	0			tsan: Export the entries compiled code calls to shared libraries
+experiment/phase-guard-h2-next-tests	eff2c80e677b	2026-10-04	no	78834280faa9	0		11, 91, 201	tsan: Expect late_exe's race before its skip line
+experiment/phase-guard-h2-rt	2edcfa3b31d6	2026-10-04	yes	2edcfa3b31d6	0		11, 65, 97	tsan: Answer the range skip's overlap test without a division
+experiment/phase-guard-h2-tests	d5e41bf8a9e7	2026-10-04	no	c9f57ab544ea	0		12, 141, 406	tsan: Build both units of the hole test with the spec
+experiment/phase-guard-h2-tests-e4a2	80b7b9379a83	2026-10-04	no	e4a2e067cf5d	0		12, 141, 406	tsan: Start the late-module test's thread from main in its twins
+experiment/phase-guard-quiet	2d1622f97752	2026-10-03	no	0ce5ad461014	10	13, 993, 14	15, 257, 896	tsan: Say why the phase guard latched off
+experiment/phase-guard-quiet-tests	fd9071435864	2026-10-03	no	0ce5ad461014	10	13, 993, 14	15, 257, 896	tsan: Pin the phase guard's registrations in the hole and admission tests
+experiment/phase-guard-ranges-tests	6da72199d92e	2026-10-03	no	0ce5ad461014	13	13, 1100, 13	15, 264, 795	tsan: Test the skipping main thread's range skip
+experiment/phase-guard-reach	d739341eb1d9	2026-10-04	no	0ce5ad461014	21	13, 1248, 20	14, 262, 652	tsan: Accept the shapes Redis's phase-guard build showed
+experiment/phase-guard-reach-tests	19ae25ca8447	2026-10-03	no	0ce5ad461014	12	13, 1047, 14	15, 259, 844	tsan: Test excluded objects and sync handlers in the phase guard
+experiment/phase-guard-rt	3fb7fd3017ed	2026-10-02	no	0ce5ad461014	2	10, 630, 2	18, 528, 1518	tsan: Let the main thread skip while every other thread is parked
+experiment/phase-guard-tests	c219b619867e	2026-10-03	no	0ce5ad461014	0		19, 170, 1788	tsan: Follow the phase guard's address rule and static admission
+experiment/phase-hooks-off	7ad8d3c7e668	2026-10-05	no	8345a0396fa5	10	9, 536, 74	9, 536, 74	tsan: Address the phase runtime audit's cost self-off findings
+experiment/phase-quiet-rt	f8061e814c0e	2026-10-02	no	0ce5ad461014	8	13, 935, 14	15, 255, 952	tsan: Name the access in a phase-guard violation report
+experiment/pre-attributor	4a10ee553e54	2026-09-30	no	314a3c67e14d	0		29, 125, 2655	tsan: Allow analysis runs between the Attributor and TSan in the test
+experiment/pristine-up59b2	0f1aed148576	2026-10-02	no	c609043dd009	0		34, 52, 4430	[TSan, SanitizerBinaryMetadata] Analyze the capture status for `alloca` rather than arbitrary `Addr` (#132756)
+experiment/qp	281382f2c70c	2026-10-05	yes	281382f2c70c	0			tsan: Export the entries compiled code calls to shared libraries
+experiment/qp-cfgproof	bd17a87957a9	2026-10-05	yes	bd17a87957a9	0			tsan: Close the config-table proof's last gaps from audit A57c
+experiment/rt-sync	3da6710f0d43	2026-09-29	no	3da0e56a1b3f	1	6, 75, 10	32, 200, 2758	tsan: Skip an acquire's join the thread's own release makes a no-op
+experiment/rt-sync-lf	61af8477c754	2026-09-30	no	314a3c67e14d	2	6, 99, 6	31, 224, 2661	tsan: Keep the token counter out of the eviction statistics
+experiment/stc-returns-twice	69ffbd730880	2026-09-24	no	a960acaf8b75	0		30, 47, 3452	STC: a setjmp in main is multi-threaded once main may start a thread (shape 30)
+experiment/stc-ts	dea3a8ffb733	2026-09-30	no	314a3c67e14d	0		29, 125, 2655	STC: Carry read-only statics in the whole-program summary
+experiment/stc-ts-p3	d6411fb0e035	2026-09-30	no	ecaeca971e07	0		29, 125, 2655	STC: Carry read-only statics in the whole-program summary
+experiment/subs-package	d73e071a2065	2026-09-29	no	66512bff785e	4	5, 227, 7	30, 347, 2750	tsan: Cite the design notes by name, not by path
+experiment/subs-package-p1v3	22f5fff64b11	2026-09-29	no	3da0e56a1b3f	4	5, 227, 7	30, 347, 2750	tsan: Cite the design notes by name, not by path
+experiment/subs-selective	add8aa7bfe27	2026-09-30	no	ecaeca971e07	1	1, 142	29, 266, 2654	tsan: Merge exactly under verified removal, subsuming only in groups
+experiment/subsumption-hit	7c0a7c968e2e	2026-09-29	no	2129c2640946	3	4, 221, 7	30, 336, 2755	tsan: Cite the design notes by name, not by path
+experiment/swmr-roots	2cebfb772b24	2026-10-02	no	ecaeca971e07	0		29, 125, 2655	stc: Key carried statics by unit identity and check them
+experiment/tls-hidden	302d070bf406	2026-10-05	yes	302d070bf406	0		2, 2, 10	tsan: Keep the thread-locals compiled code reads hidden
+experiment/tls-rooted	f22559b0c0d5	2026-10-01	no	ecaeca971e07	0		29, 125, 2655	tsan: Trust ODR bodies in the thread-escape analysis; fail closed on deep constants
+experiment/zgbu-unsound-elide	09e0e46b27a2	2026-10-08	no	8345a0396fa5	24	15, 1169, 105	15, 1169, 105	tsan: Add an unsound site-list control for timing ceilings
+feature/libfacts-de-ea	ecaeca971e07	2026-09-30	yes	ecaeca971e07	0		29, 125, 2655	tsan: Let DE and EA read the library-facts table
+fix/a1-soundness	f3802c161c20	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	STC: Conclude nothing in a unit that ignores sync
+fix/a26-removal	3de333b8d069	2026-10-02	no	0f4bccf83809	2	4, 163, 4	27, 123, 2494	tsan: Say what a merge window may still hold
+fix/de-addrspace-cast	b45769089506	2026-09-28	no	3da0e56a1b3f	0		30, 125, 2748	tsan: Pin the address-space twin as alias analysis decides it
+fix/de-generation-guard	0a4c719c7bd7	2026-09-25	no	761e80228afe	1	5, 42, 17	30, 140, 3048	tsan: mark a shadow drop in progress in the generation word
+fix/de-generation-guard-preloop	71bd4991ccab	2026-09-25	no	761e80228afe	0		30, 115, 3048	DE: check a counted loop's streams before the loop
+fix/de-relaxed-a26	0167017c5e93	2026-09-29	no	0f4bccf83809	0		29, 127, 2657	tsan: Attribute the relaxed premise by its date
+fix/de-verified	c7385d5eca30	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	DE: Hoist a verified test's address bits out of its loop
+fix/de-verified-merge	8467c53eb7b3	2026-09-25	no	2129c2640946	0		30, 118, 2751	DE: Merge under verified removal, keeping members' tests
+fix/de-verified-package	b32225cee9f6	2026-09-25	no	2129c2640946	1	1, 3	30, 121, 2751	DE: Check a counted loop's streams before it, under verified removal
+fix/de-verified-wide	9161eff369c7	2026-09-26	no	3da0e56a1b3f	0		30, 125, 2748	DE: Give the inline hit test to accesses likely to hit
+fix/de9-decl	8fbeee77da91	2026-09-28	no	0f4bccf83809	0		29, 127, 2657	tsan: Trust only defined constants for constant data
+fix/dynstc-rt-followups	de172424d355	2026-09-27	no	0f4bccf83809	3	3, 18, 2	30, 143, 2657	tsan: Test range-all's join and premise boundary
+fix/ea-p5p6p7	0abafa6d3796	2026-09-30	no	314a3c67e14d	0		29, 125, 2655	EA: Close the publication rule's gaps found in audit A29
+fix/ea-pre-holes	2ae4e920f4ca	2026-09-26	yes	2ae4e920f4ca	0		30, 125, 2748	tsan: Keep the DynSTC-RT test out of the Go runtime
+fix/ea-print-mst	6f124a965e88	2026-09-26	yes	6f124a965e88	0		30, 125, 2748	EA: Print the module's escape info with one slot tracker
+fix/lo-private-reach	ebd910c9e8c9	2026-09-24	yes	ebd910c9e8c9	0		30, 47, 3452	LO, SWMR, STC: a symbol reachable without an IR use is not private (shape 31)
+fix/n1-volatile-cells	39172bd0836e	2026-09-25	no	29878d8b3e6c	0		30, 118, 2751	tsan: Read shadow and fast state afresh in each inline test
+fix/p1v3	6f124a965e88	2026-09-26	yes	6f124a965e88	0		30, 125, 2748	EA: Print the module's escape info with one slot tracker
+fix/p1v3-next	3da0e56a1b3f	2026-09-26	yes	3da0e56a1b3f	0		30, 125, 2748	LO: Do not take main for a callback because it is the entry
+fix/postdom-nounwind	d1978c232ef1	2026-10-01	no	314a3c67e14d	0		29, 125, 2655	DE: Declare the post-dominance tests' callees nounwind
+fix/postdom-nounwind-0f4b	f2208045a11b	2026-10-01	no	0f4bccf83809	0		29, 127, 2657	DE: Declare the post-dominance tests' callees nounwind
+fix/soundness-33-37	8d456e63e2a2	2026-09-25	yes	8d456e63e2a2	0		30, 47, 3442	tsan: make ea_loaded_value_published.c race only on l
+fix/tls-placeholder-first-use	4c8ec458f12a	2026-10-12	no	8345a0396fa5	0			tsan: Declare the thread-state placeholder at its first use
+fix/wide-min-freq	38d8ca2c1575	2026-09-26	no	3da0e56a1b3f	0		30, 125, 2748	DE: Allow the wide inline test only inside loops, on request
+fix/wp-explicit-list	862cd7cfc986	2026-09-26	no	2ae4e920f4ca	0		30, 125, 2748	tsan: Require an explicit external-symbols list under WP
+gate/de-0929	0167017c5e93	2026-09-29	no	0f4bccf83809	0		29, 127, 2657	tsan: Attribute the relaxed premise by its date
+gate/de-improve-on-f7abd1b	d3131095a965	2026-09-25	no	f7abd1b8b984	1	6, 40, 1	30, 87, 3443	TSan: Guard only loops where the loop guard can skip checks
+integ/step34-candidate	dbc73286ee8d	2026-09-25	yes	dbc73286ee8d	0		30, 115, 3048	tsan: Count merged checks the inline test skips; test it with the guard
+integrate/all-0925	29878d8b3e6c	2026-09-25	yes	29878d8b3e6c	0		30, 118, 2751	tsan: make ea_memcpy_source_contents.c fail without shape 46's fix
+integrate/p1-0926	f8c57744c32a	2026-09-29	no	3da0e56a1b3f	1	1, 1, 1	30, 124, 2747	tsan: Fit the summary tests to the whole-program writer
+integrate/p3-0926	d655bf26ae15	2026-10-01	yes	d655bf26ae15	0		29, 125, 2655	EA: Turn contents escape on by default
+main	c609043dd009	2024-05-06	yes	c609043dd009	0		34, 52, 4430	[clang-format] Don't allow comma in front of structural enum (#91056)
+measure/alias-census	e2a16ba031e1	2026-10-03	no	720fef34a3db	12	16, 2827, 28	29, 2989, 1808	tsan: Count same-frame pair hits with no acquire between
+measure/atomic-hit-stats	9960fb1fc5cb	2026-09-29	no	3da0e56a1b3f	2	4, 84, 2	30, 207, 2748	tsan: Cite the design notes by name, not by path
+measure/ceilings-0925	728226d20f98	2026-09-25	no	761e80228afe	0		30, 115, 3048	SWMR: Accept writes that precede every publication (parked)
+measure/dd-census	ab37a3e5a204	2026-10-06	no	314a3c67e14d	6	6, 205	30, 330, 2655	tsan: Count lock operations per mutex for a census
+measure/de-improve-sites	c9460e104a98	2026-09-25	no	ebd910c9e8c9	1	6, 40, 1	30, 87, 3453	DE: A relaxed atomic does not synchronize
+measure/de-same-location	2d962df0617b	2026-10-03	no	1738fdee35e7	0		17, 96, 1678	tsan: Add a field-proxy census to the DE measurement branch
+measure/deav-ceiling	149d65dd8056	2026-10-03	no	1738fdee35e7	0		17, 96, 1678	tsan: Leave accesses named by a skip list uninstrumented (measurement)
+measure/dynstc-rt-counts	d1b977fa997f	2026-09-25	no	073b1974c37f	5	7, 346, 9	31, 330, 3388	tsan: Count the returns at the dynstc_rt flag
+measure/ea-contents-census	a44a5b9d2091	2026-10-01	no	4e84fd4d7cbc	0		29, 125, 2655	EA: Keep contents escape off Top and off whole-object erasure (A33)
+measure/ea-escape-log	12472449ddc7	2026-09-24	no	ebd910c9e8c9	0		30, 47, 3452	EA, TSan: log heap sites, fresh results and pre-publication (measurement)
+measure/ea-odr-census	da75eed9cd70	2026-10-02	no	3da0e56a1b3f	10	15, 553, 5	23, 166, 2241	tsan: Dump top-down argument facts for the census
+measure/ea-record-compare-cf	b5997842b308	2026-09-25	no	b524e4dbc28f	0		30, 47, 3442	EA: assume named arguments do not escape (measurement only)
+measure/ea-slot-census	5aecd182d257	2026-09-27	no	0f4bccf83809	0		29, 127, 2657	EA: Count what publishing a slot's contents removes
+measure/eva-count	ee660cd989bf	2026-10-04	no	1411b68acb18	1	7, 240	17, 333, 1675	tsan: Count checks and misses per caller pc (measurement)
+measure/eva-prof	58ae74eb9bab	2026-10-04	no	1411b68acb18	3	5, 561	17, 655, 1676	tsan: Exempt O2's exclusive phase only when it was published
+measure/evi-oracle	60f93818c277	2026-10-04	no	f1af4f1d1531	0		17, 96, 1678	tsan: Leave one struct's field reads uninstrumented (measurement)
+measure/evr-skip	5f687a7f9419	2026-10-04	no	a94e05a7e778	0		17, 96, 1678	tsan: Leave accesses named by a skip list uninstrumented (measurement)
+measure/fe-oracle	4f0c692a4b85	2026-09-30	no	ecaeca971e07	6	7, 334, 2	30, 458, 2656	tsan: Count live threads in the oracle's report
+measure/gea-count	b1317b19a6e4	2026-09-30	no	3da0e56a1b3f	9	15, 524, 5	23, 249, 2353	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+measure/gea-count2	aae3a1d80ea7	2026-09-30	no	3da0e56a1b3f	10	15, 585, 5	23, 233, 2276	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+measure/hotspots	5bd1070eef6f	2026-10-03	no	1738fdee35e7	1	7, 240	17, 333, 1675	tsan: Count checks and misses per caller pc (measurement)
+measure/icall-oracle	01a63d0e2265	2026-09-30	no	314a3c67e14d	0		29, 125, 2655	tsan: Let every analysis treat indirect calls as harmless (measurement)
+measure/inline-count	6100b4ce382f	2026-10-01	no	ecaeca971e07	2	7, 236, 7	30, 361, 2662	tsan: Let the any-call test accept the invoke the call becomes
+measure/lg-count-relaxed	71b7f43180b1	2026-09-25	no	ebd910c9e8c9	2	6, 52, 3	30, 87, 3443	tsan: Count guarded runs and checks per loop (measurement only)
+measure/lg-count-sel	1a82eacd8494	2026-09-25	no	ebd910c9e8c9	2	6, 52, 3	30, 87, 3443	tsan: Count guarded runs and checks per loop (measurement only)
+measure/libcall-astats	32f742e9c8f6	2026-09-28	no	3da0e56a1b3f	4	9, 518, 7	31, 643, 2755	Runtime: count compare calls per call site (TSAN_ACCESS_STATS)
+measure/libfacts-astats	bc2ce619c508	2026-09-29	no	314a3c67e14d	1	7, 231, 7	30, 356, 2662	Runtime: counters for executed accesses, fast-path hits and function entries
+measure/lo-obj-g-count	02e2b961466f	2026-09-29	no	3da0e56a1b3f	2	11, 221, 4	28, 215, 2621	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+measure/lo-w-integ	c7af5ad2fb7e	2026-10-02	no	720fef34a3db	11	16, 2820, 28	29, 2982, 1808	tsan: Merge the LO-W counters onto the integration tip
+measure/loa-oracle	478ee6eaa0d9	2026-10-04	no	1738fdee35e7	0		17, 96, 1678	tsan: Keep the toggle-list test's calls from unwinding
+measure/loobj-v4-cnt	fdc66a81cca6	2026-10-01	no	3da0e56a1b3f	10	15, 584, 5	23, 224, 2268	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+measure/loobj-v5-cnt	3fd5106a247d	2026-10-01	no	3da0e56a1b3f	10	15, 584, 5	23, 224, 2268	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+measure/loobj-v5-count	578cc2f954f3	2026-10-01	no	3da0e56a1b3f	10	15, 585, 5	23, 233, 2276	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+measure/loobj-v5-mutant	943c257e0ffc	2026-10-02	no	3da0e56a1b3f	9	15, 525, 5	23, 165, 2268	tsan: Read a merged root's owner from an incoming value (mutant)
+measure/loop-guard-count	f2a89fbf20d6	2026-09-25	no	ebd910c9e8c9	2	6, 52, 3	30, 87, 3443	tsan: Count guarded runs and checks (measurement only)
+measure/mcq-a2only	46887a69e242	2026-10-06	no	8345a0396fa5	23	15, 1161, 105	15, 1161, 105	EA: Match invokes in the typed indirect-call test
+measure/mcq-mutate-noesc	1d0d1e94c249	2026-10-06	no	8345a0396fa5	23	15, 1161, 105	15, 1161, 105	MUTATION (not for merge): byte-channel operand as plain NO_ESCAPE
+measure/missed-census	ba12296a79f1	2026-10-01	no	ecaeca971e07	0		29, 125, 2655	EA: Census switch that drops the loaded slot escape (unsound bound)
+measure/n1cse-r1-parent	6d587e8d6877	2026-09-29	no	0f4bccf83809	4	2, 55, 2	29, 173, 2650	tsan: Cite the design notes by name, not by path
+measure/o-stc	8308839a4989	2026-09-29	no	3da0e56a1b3f	8	8, 817, 1	30, 938, 2745	tsan: Cite the design notes by name, not by path
+measure/o1-oracle	4bd95bfd04dd	2026-09-25	no	74edc4be85f0	1	5, 339	30, 452, 3046	tsan: Check the oracle skip report without assuming its order
+measure/o2-lockid	367bd595a958	2026-09-27	no	74edc4be85f0	7	5, 782	30, 895, 3046	tsan: Name the common lock of the oracle's locked sites (measurement)
+measure/o2-lockset	9089aef16c05	2026-09-26	no	74edc4be85f0	6	5, 756	30, 869, 3046	tsan: Recycle the oracle's nodes when a lifetime ends (measurement)
+measure/o3-threads	20308d639087	2026-10-01	no	74edc4be85f0	5	6, 999	30, 1112, 3046	tsan: Profile thread classes and create/join-only order (measurement)
+measure/oracle-own-stack	ee59c412741c	2026-10-02	no	ffa8bb0e2ea6	1	5, 64	19, 234, 1788	tsan: Rename FileCheck variables in the own-stack oracle test
+measure/own-handoff-count	81144cb9c1c8	2026-09-29	no	3da0e56a1b3f	3	11, 232, 4	28, 226, 2621	tsan: Count LO-OBJ-G and OWN-HANDOFF tests and skipped checks (measurement)
+measure/p1-astats	2129c2640946	2026-09-25	yes	2129c2640946	0		30, 118, 2751	tsan: Read shadow and fast state afresh in each inline test
+measure/quiet-census	fe74ac99e8f5	2026-10-03	no	720fef34a3db	13	16, 2902, 28	29, 3064, 1808	tsan: Count how often every other thread is quiet (measurement)
+measure/quiet-census-v2	1b1fc33f7591	2026-10-04	no	720fef34a3db	14	16, 2991, 28	29, 3153, 1808	tsan: Count the waiver bound and what blocks quiet (measurement)
+measure/range-census	f4ef684205dd	2026-10-01	no	314a3c67e14d	7	3, 410, 13	29, 530, 2663	tsan: Count runtime checks and hits by entry kind
+measure/range-hit-astats	40be4af6535c	2026-09-28	no	3da0e56a1b3f	5	9, 598, 8	31, 723, 2756	Runtime: count range calls whose every cell hits (TSAN_ACCESS_STATS)
+measure/range-uniform-astats	e03e517726c2	2026-09-28	no	3da0e56a1b3f	6	9, 668, 8	31, 793, 2756	Runtime: count uniform cells in range calls (TSAN_ACCESS_STATS)
+measure/redis-main-oracle	dbecd0ab7791	2026-10-02	no	314a3c67e14d	1	5, 130, 11	29, 228, 2639	tsan: Add an unsound main-thread oracle for Redis
+measure/redis-main-oracle-fs	6e92679bf9db	2026-10-02	no	314a3c67e14d	3	6, 61, 9	29, 141, 2619	tsan: Add an unsound front-skip oracle for the main thread
+measure/slot-cost	c15e136e6771	2026-09-28	no	ae52640be659	5	9, 588, 8	29, 594, 2544	Runtime: count what slot turnover costs (TSAN_ACCESS_STATS)
+measure/slot-stats	eece0eea7c77	2026-09-28	no	ae52640be659	4	8, 403, 7	29, 409, 2543	Runtime: count slot attaches, preemptions and re-locks
+measure/stc-oracle	dbfeb9e8632c	2026-09-24	no	a960acaf8b75	0		30, 47, 3452	STC: Add an oracle mode that measures the ceiling of STC
+measure/sum-census	6dfe6005f24b	2026-09-28	no	3da0e56a1b3f	0		30, 125, 2748	tsan: Report which rule drops each access's check (measurement)
+measure/sync-counters	c8f04181f253	2026-09-25	no	29878d8b3e6c	1	6, 190	32, 308, 2751	tsan: Count the synchronisation path's events (measurement)
+measure/tls-only-1738	80713d33678e	2026-10-05	no	1738fdee35e7	1	9, 87, 63	14, 33, 1591	tsan: Hide the runtime's thread-locals on 1738 (measurement)
+measure/wide-astats	b26d7c6eded2	2026-09-26	no	2ae4e920f4ca	2	7, 246, 7	31, 371, 2755	tsan: Count entries through the inline test's miss path
+n2-on-integrate	21c9c176d8ff	2026-09-25	yes	21c9c176d8ff	0		30, 118, 2751	Tests: pin the race each DE flag test must report by source line
+p3/fe-vw-guard	0f4bccf83809	2026-09-26	yes	0f4bccf83809	0		29, 127, 2657	tsan: Test the wide test with inline entry and exit
+perf-recovery	796a367ed04f	2026-09-23	yes	796a367ed04f	0		30, 47, 3452	EA: follow a memcpy whose source is not a local alloca (shape 24)
+perf/access-stats	1391bf330765	2026-09-09	no	9f5d402cb36b	9	13, 582, 85	31, 277, 3458	Runtime: counters for executed accesses, fast-path hits and function entries
+perf/ea-compile-time	c38c1e7e94ec	2026-09-07	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	EA: walk pointee lists in place; cut the closure's and the walk's dead steps
+perf/ea-join-sharing	35e03631a20a	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	EA: block states as shared bases plus journals; joins fold journals and update incrementally
+perf/ea-pointee-views	9e678cc6ae3e	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	EA: walk pointee lists in place; cut the closure's and the walk's dead steps
+perf/granule-merge	d32f542acb4f	2026-09-10	no	9f5d402cb36b	9	13, 582, 85	31, 277, 3458	Ledger: the MySQL static-count row completes the table
+perf/runtime-counters	7e9172350922	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	Runtime: the shadow-eviction counters behind a build option, per thread when on
+perf/shape22	8bc2ba53fe00	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	EA: a library call that stores a pointer to its argument through another argument (shape 22)
+perf/stage-b	c38c1e7e94ec	2026-09-07	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	EA: walk pointee lists in place; cut the closure's and the walk's dead steps
+perf/stage-b2	c38c1e7e94ec	2026-09-07	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	EA: walk pointee lists in place; cut the closure's and the walk's dead steps
+perf/window-coalesce-sizing	5dfb1bbbc703	2026-09-15	no	9f5d402cb36b	9	13, 582, 85	31, 277, 3458	Notes: the 12-config matrix and K=5 replay are clean; the one 'lost' bucket is a flaky thread leak
+rebase/subs-package-fixes	82e199cbf242	2026-09-26	no	2ae4e920f4ca	3	5, 226, 6	30, 348, 2751	DE: Require the inline subsumption test for verified merge
+rebase/subs-package-fixes2	e8000904d98d	2026-09-26	no	2ae4e920f4ca	3	5, 226, 6	30, 348, 2751	DE: Require the inline subsumption test for verified merge
+rebase/subs-package-fixes3	e7081deb1fc2	2026-09-26	no	66512bff785e	3	5, 226, 6	30, 348, 2751	DE: Require the inline subsumption test for verified merge
+rebase/subs-package-p1v2	2777c3dfed93	2026-09-26	no	2ae4e920f4ca	3	4, 225, 6	30, 347, 2751	DE: Require the inline subsumption test for verified merge
+replay/integrate-cr-lows	9452fcec7584	2026-10-02	yes	9452fcec7584	0		19, 170, 1788	tsan: Test the LO-OBJ-G latch in private mode
+replay/integrate-cr-v4-fesink	f0e4884e1132	2026-10-02	yes	f0e4884e1132	0		19, 190, 1895	tsan: Let a sunk entry's miss call push the frame itself
+replay/integrate-cr-v5	0eb911a641ea	2026-10-02	yes	0eb911a641ea	0		19, 170, 1788	tsan: Add an LO-OBJ-G latch for readers that take no lock
+summaries-default	f8c57744c32a	2026-09-29	no	3da0e56a1b3f	1	1, 1, 1	30, 124, 2747	tsan: Fit the summary tests to the whole-program writer
+summaries-default-p3	314a3c67e14d	2026-09-29	yes	314a3c67e14d	0		29, 125, 2655	tsan: Fit the summary tests to the whole-program writer
+tmp/ecc-census	1072c7acaed9	2026-10-07	no	8345a0396fa5	13	15, 1458, 22	15, 1458, 22	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census2	9be497ac4fa7	2026-10-07	no	8345a0396fa5	14	15, 1691, 22	15, 1691, 22	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census3	ec2d2fe12d13	2026-10-07	no	8345a0396fa5	15	16, 1703, 22	16, 1703, 22	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census4	a0480e35cfee	2026-10-07	no	8345a0396fa5	16	16, 1748, 22	16, 1748, 22	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census6	122a807a8057	2026-10-07	no	8345a0396fa5	17	16, 1769, 22	16, 1769, 22	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/kstats-base-68f	8967eae816b5	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	tmp: value-analysis counters on the base (measurement only, not for merging)
+tmp/kstats-c1-68f	ffc2345c2700	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	evconf-derive: Count the value analysis's work on request
+tmp/mut-noedge	398d0240e064	2026-10-06	no	8345a0396fa5	13	11, 781, 13	11, 781, 13	tmp: mutation, no read edge on a settled summary hit (not for merging)
+tmp/phase-hook-count	7017a5f8266f	2026-10-07	no	8345a0396fa5	25	15, 1197, 105	15, 1197, 105	tmp: count phase hook calls before and after the first thread creation (measurement only, not for merging)
+tools/tsan-access-trace-oracle	3c90ee0f8c5f	2026-03-10	no	d585de68fa20	3	4, 50, 1	33, 171, 3800	Remove debug print from `ThreadCreate` in ThreadSanitizer.
+tools/tsan-interceptor-trace	6af3e502adac	2025-06-26	no	89da79094aee	4	3, 144, 77	34, 200, 4499	Remove extra print
+tsan-dev	57e972845154	2026-09-07	no	9f5d402cb36b	7	11, 231, 82	32, 106, 3635	LO: an OpenMP fork runs its microtask on the calling thread (shape 17)
+wip/two-archive-delta1	feee39f615ae	2026-10-08	no	8345a0396fa5	62	22, 3636, 141	22, 3636, 141	Revert "tsan: Return the owner's marked granule inside the range loop"
+yield/all	fdf7a4dd41e9	2026-09-05	no	9f5d402cb36b	9	14, 362, 81	30, 55, 3452	LO: design note on widening lock identity and protection to striped locks (C7)
+yield/all-b2	d98873cda906	2026-09-08	no	9f5d402cb36b	9	14, 362, 81	30, 55, 3452	STC: three glibc names the thread-free list did not carry
+yield/de-atomic-ordering	eede63e4e9b5	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	DE: an atomic on the path counts by its memory ordering
+yield/de-cover-containment	80a25d4ae80a	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	DE: a cover is any access whose byte range contains the covered one's
+yield/dynstc-runs	c877c6eca80b	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	DynSTC: a guard run spans calls that cannot create a thread, and is hoisted out of loops
+yield/ea-later-escape-summaries	7fdae665f93f	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	EA: a later call the summary proves non-retaining is not an escape site
+yield/glibc-aliases	ab8219f64cf7	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	STC: three glibc names the thread-free list did not carry
+yield/interceptor-table	529d7f481ac0	2026-09-05	no	9f5d402cb36b	9	14, 362, 81	30, 55, 3452	Pass, runtime: the interceptor toggle for the whole string table
+yield/lo-widening-note	ebbf79366181	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	LO: design note on widening lock identity and protection to striped locks (C7)
+yield/swmr-stc-small	3c29e065da21	2026-09-05	no	9f5d402cb36b	8	13, 354, 81	30, 47, 3452	STC: a declaration that promises not to write memory starts no thread
