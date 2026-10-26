@@ -19,6 +19,12 @@ tsan-improve keeps the upstream PRs and the ATC'26 work.
   - `tsan-rt/measure` merges the ideas a leg needs and is never proposed upstream.
   - Local clone: /extra/alexey/tsan-rt/repo. Remote `paper` = the ATC tree; `paper/camera-ready` = 8345a0396fa5, whose
     runtime is 34 files, +4430 lines over upstream of 6 May 2024. Ideas built there are ported, not merged.
+- **Related projects in the same repository (26 Oct),** each in its own branch folder. Contributors work through pull
+  requests from their own llvm-project forks (same fork network), with base = their folder's branch:
+  - `meta-shadow/`: Ownership Meta-Shadow Memory (docs, profiler and results in the project's own docs repo):
+    `meta-shadow/base` (73e729f7b2f0), `parallel-note`, `shadow-resident-filter`, `workload-profiler`;
+  - `l0-filter/`: compiler-inlined thread-local memoization (L0 filter): `l0-filter/base` (4d87e55d8a41), `l0-filter/main`;
+  - `aba/`: ABA detection on atomic CAS (followed by another lane): `aba/base` (8947e494f92e), `aba/main`.
 - **Hosts.**
   - apollo (AMD EPYC 9115, 2 sockets x 16 cores): node0 (CPUs 0-15,32-47) for this track's timed legs; node1 is wtc's,
     which measures continuously; stretto stops its untimed work on node0 during our legs. Every leg opens and closes a
