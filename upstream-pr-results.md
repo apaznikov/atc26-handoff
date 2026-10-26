@@ -98,7 +98,7 @@ Each arm's 95 % interval is compared with that of A/A (stock timed against itsel
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
 | PARSEC fluidanimate † | 8 | 🟰 | = | ⏳ | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | ⏳ | 🟢 **+1.7** |
-| **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284) | | | | | |
+| **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284, and 1.7 % with its 552 shared libraries, 17,172,360 → 16,882,221) | | | | | |
 | Speedometer 3 (20 stories)⁹ | browser | ⏳ | ⏳ | ⏳ | 🟡 +1.0 |
 | blink_perf.dom (3 stories)¹⁰ | browser | ⏳ | ⏳ | ⏳ | 🟡 −0.3 |
 | blink_perf.paint (2 stories) | browser | ⏳ | ⏳ | ⏳ | = |
