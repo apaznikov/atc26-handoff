@@ -37,14 +37,15 @@ Each arm's 95 % interval is compared with that of A/A (stock timed against itsel
 🟢 faster (arm's lower bound above A/A's upper bound) · 🔴 slower (arm's upper bound below A/A's lower bound) ·
 **=** no change (point estimate inside the A/A interval) · 🟡 unresolved (neither; the number is the point estimate) ·
 † A/A wider than ±3 % ·
-🟰 same machine code (EA as stock, DE + EA as DE), not timed · — not measured · ⏳ pending · ⏸ stopped
+🟰 same machine code (EA as stock, DE + EA as DE), not timed; in the DE + runtime fix column: no race report in 5
+census runs, so the changed runtime code never runs · — not measured · ⏳ pending · ⏸ stopped
 
 ## Results
 
 | Program | Threads | EA, % | DE, % | DE + runtime fix, % | DE + EA, % |
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
-| SQLite¹ † | 8 | 🟡 +8 | = | ⏳ | 🟡 +13 |
+| SQLite¹ † | 8 | 🟡 +8 | = | = | 🟡 +13 |
 | FFmpeg | 8 | = | = | ⏳ | = |
 | memcached⁵ † | 8 | = | = | ⏳ | = |
 | Redis | 8 | = | = | ⏳ | = |
@@ -57,22 +58,22 @@ Each arm's 95 % interval is compared with that of A/A (stock timed against itsel
 | MySQL | 8 | = | = | ⏳ | = |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
 | RocksDB db_bench³ † | 8 | 🟰 | = | ⏳ | 🟰 |
-| LevelDB db_bench | 8 | 🟰 | = | ⏳ | 🟰 |
+| LevelDB db_bench | 8 | 🟰 | = | 🟰 | 🟰 |
 | DuckDB TPC-H | 8 | = | = | ⏳ | = |
-| zstd | 8 | = | = | ⏳ | = |
-| xz | 8 | 🟰 | = | ⏳ | 🟰 |
+| zstd | 8 | = | = | 🟰 | = |
+| xz | 8 | 🟰 | = | 🟰 | 🟰 |
 | pigz | 8 | 🟰 | = | ⏳ | 🟰 |
-| brotli | 8 | 🟰 | = | ⏳ | 🟰 |
-| OpenSSL | 8 | 🟡 +0.8 | = | ⏳ | = |
+| brotli | 8 | 🟰 | = | 🟰 | 🟰 |
+| OpenSSL | 8 | 🟡 +0.8 | = | 🟰 | = |
 | **Real applications, -O0** | | | | | |
 | RocksDB db_bench³ † | 8 | = | = | ⏳ | = |
-| LevelDB db_bench | 8 | = | = | ⏳ | = |
+| LevelDB db_bench | 8 | = | = | 🟰 | = |
 | DuckDB TPC-H | 8 | = | = | ⏳ | = |
-| zstd | 8 | = | = | ⏳ | = |
-| xz | 8 | 🟡 +0.5 | 🟢 **+0.6** | ⏳ | 🟢 **+0.6** |
+| zstd | 8 | = | = | 🟰 | = |
+| xz | 8 | 🟡 +0.5 | 🟢 **+0.6** | 🟰 | 🟢 **+0.6** |
 | pigz⁴ | 8 | 🟡 −2 | 🟡 −2 | ⏳ | 🟡 −2 |
-| brotli | 8 | 🟡 +1.8 | = | ⏳ | 🟢 **+1.8** |
-| OpenSSL | 8 | = | = | ⏳ | = |
+| brotli | 8 | 🟡 +1.8 | = | 🟰 | 🟢 **+1.8** |
+| OpenSSL | 8 | = | = | 🟰 | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
 | Rodinia hotspot † | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+10** | ⏳ | 🟰 |
@@ -105,7 +106,8 @@ Each arm's 95 % interval is compared with that of A/A (stock timed against itsel
 
 ¹ SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 90 % between runs), but
 single tests do: checkpoint_starvation_1 EA 🟢 **+78**, DE **+67**, DE + EA **+78**; walthread1 EA and DE + EA
-🟢 **+7**; walthread2 EA 🟢 **+2.4**, DE + EA 🟢 **+3**. The DE and DE + EA figures for checkpoint_starvation_1 come from a
+🟢 **+7**; walthread2 EA 🟢 **+2.4**, DE + EA 🟢 **+3**. DE + runtime fix (27 Oct leg): checkpoint_starvation_1 🟢 **+66** (DE +65 in the same leg),
+walthread1 🟢 **+4.3** (DE +7.1; intervals overlap). The DE and DE + EA figures for checkpoint_starvation_1 come from a
 leg whose A/A for that test is itself off zero (+0.9 [+0.2, +1.5]); by the registered rule such a test is reported but
 not called, although the effect is 70 times that offset.
 
@@ -198,8 +200,8 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 
 | Program | Level | EA | DE | DE + runtime fix | DE + EA | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|---|
-| SQLite | -O0 | 0 lost | 0 lost | ⏳ | 0 lost | 4 sites kept; walIndexRecover undetermined (stock 1/10) |
-| SQLite | -O2 | 0 lost | 0 lost | ⏳ | 0 lost | 2 sites kept; walIndexRecover undetermined (stock 1/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
+| SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | 4 sites kept; walIndexRecover undetermined (stock 1/10) |
+| SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | 2 sites kept; walIndexRecover undetermined (stock 1/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
 | memcached | -O0 | 0 lost | 0 lost | ⏳ | 0 lost | 4 sites kept at 10/10; the scheduling-dependent conn_new/conn_close family (7 sites) is undetermined (stock 2/10) |
 | memcached | -O2 | 0 lost | 0 lost | ⏳ | 0 lost | all 11 sites kept: 4 at 10/10, the conn_new/conn_close family 2-3/10 in every arm, stock included |
 | MySQL | -O0 | 0 lost | 0 lost | ⏳ | 0 lost | ~12,100 reports per run in every arm; 251 sites kept; 13 undetermined |
