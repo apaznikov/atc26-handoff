@@ -103,6 +103,16 @@ Hosts: `f` = focs (Intel Xeon w9-3495X), `a` = apollo (AMD EPYC 9115).
 | C23 | **DE loop ranges** (`__tsan_{read,write}_range_all`, `MemoryAccessRangeAllT`) | one range check per sync-free loop | flag-off in 8345a; no gain (ideas.md:174) | — | — | EVICT / P-EV-DEFER, ASYNC-TERM, FWD-PROGRESS | 8345a: `tsan_interface.inc:244-248`, `tsan_rtl_access.cpp:1072`; 66b6fdc302f9 | — |
 | C24 | **Active-thread counter** (`__tsan_active_thread_count`) | runtime side of the compile-time DynSTC guard | in 8345a, always on | DynSTC (compiled guard) FFmpeg `f` +10.1 %, Redis −5.5 % (optimization-results.md:209) | — | PREMISE(A10) + shape-36 fix | 8345a: `tsan_rtl.cpp:39`, `tsan_rtl_thread.cpp:128, 358-391`; 6c928316fc25 … d54a22baed6a | seq_cst RMW per create/join on the stock path |
 
+### 1c. Related projects (branch folders meta-shadow/ and l0-filter/, audited 26 Oct; details in projects/)
+
+| # | name | mechanism | status | best measured effect | soundness | relation to our rows | next |
+|---|---|---|---|---|---|---|---|
+| P1 | **Shadow-resident filter** (meta-shadow) | compiler-inlined copy of TSan's 4-slot hit check, runtime on a miss; leaf functions only; fast state from a runtime call per entry; shadow constants exported (portable) | built, no negative tests | NPB BT ~ −30 % CPU, private loop −69 % (AArch64 VM); Redis/SQLite/memcached/FFmpeg ±1 %; MySQL −2.6 % TPS; no A/A | EXACT | same mechanism as C1 (N1); new: portability (AArch64, Darwin), slot-0-first order | lift the leaf-only rule, `_miss` entries, start-up layout check: a portable N1 for upstream; negative tests |
+| P2 | **Parallel note** (meta-shadow) | one exact shadow word per heap cell in a parallel region | built; slower everywhere outside a private loop (Redis −31 %, SQLite +72 % time, BT +253 %) | private loop +27 % | UNSOUND as built (free > 1 KB drops notes; hand-over stores before its CAS) | C14 ALLOC-COVER (its only effective case), C16 | fix the two holes, keep as a negative result |
+| P3 | **Workload profiler** (meta-shadow) | hits by slot, private-phase share, shadow-page density | built (diagnostic) | — | n/a (one flag test per access when off) | P1 phase census, R18/R22 | run on our 5 apps for the motivation figure and C14's size |
+| P4 | **Fifth shadow slot** (meta-shadow, archived design) | a victim word per cell, consulted only on a miss: fewer eviction losses than stock | design only | — | STRONGER | R23, R24, phase P4 | build in the detection story |
+| P5 | **L0 filter** (l0-filter) | per-thread 4096-entry TLS table (address tag, 15-bit local epoch, write bit) checked inline before every access; epoch bumped at atomics and ~26 interceptors | built (on by default; does not compile on Linux; no tests) | call count only (macOS, -O0) | UNSOUND as built: sub-cell bytes, second cell of wide accesses, releases it does not see (sem_post, pipes, annotations), ignore regions, use-after-free, global reset and slot preemption, fibers | DE, DE-LC/DE-AV, C18, C1 (N1), R5/R6 (how ALS keeps a per-thread cache exact) | tag entries with TSan's fast state, key on exact cell/bytes/type, global generation at reset and free; then measure against N1 |
+
 ### Notes on the rows
 
 - **R1/R5/R6 are one line of work.** RT-SYNC skipped only the join and kept SlotLocker and the SyncVar lock; it read
