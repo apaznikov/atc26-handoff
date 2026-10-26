@@ -1,0 +1,192 @@
+artifact-clean	901c0f7353ca	2026-09-23	1	Paper state e90a3fc41004
+atc26-camera-ready	b66bdad3cfd3	2026-10-06	10	tsan: Skip phase checks in runtime entries
+backup/de-verified-package-db08	db088d93ea58	2026-09-25	1	tsan: Record nothing in a range-all check while the thread is alone
+backup/de-verified-package-e1ec	e1ec3818d192	2026-09-25	1	tsan: Record nothing in a range-all check while the thread is alone
+backup/dynstc-rt-before-series-rebase	d62f817671cf	2026-09-25	2	tsan: Test dynstc_rt next to the ignore bit, not at the entries
+backup/dynstc-rt-before-squash	ecc3e42dd8f8	2026-09-24	2	tsan: Stop dynstc_rt for good once a thread's clock is dropped
+backup/dynstc-rt-counts-before-series-rebase	bc865269aa75	2026-09-25	4	tsan: Count the returns at the dynstc_rt flag
+backup/dynstc-rt-counts-before-v3	8b00d963bea9	2026-09-24	3	tsan: Count plain entries the dynstc_rt flag skips
+backup/evconf-a59b-fd-v1	c728a705c063	2026-10-06	9	tsan: Print the descriptor model in the phase guard's stats
+backup/evconf-ddq-c11-amended	41b4cc2e0071	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+backup/lo-mark-pass-10939cf	10939cf85b80	2026-10-08	64	tsan: Cache the owner a lock marker's test was refused for (WIP)
+backup/lo-mark-pass-337b1a0	337b1a001b7b	2026-10-08	66	tsan: Check a variable index into a listed member array
+backup/lo-mark-pass-ad13a98	ad13a98d6ac2	2026-10-08	68	tsan: Give a root's first granule its own form of the lock marker
+backup/lo-mark-pass-b004217	b004217ebb38	2026-10-08	66	tsan: Check a variable index into a listed member array
+backup/n1-inline-before-export	e3d240c5ba20	2026-09-25	1	tsan: Export what an inline hit test needs
+backup/n1-inline-before-fix	6963943cf037	2026-09-24	1	tsan: Export what an inline hit test needs
+backup/n1-loop-d41e224ecb99	d41e224ecb99	2026-09-25	1	tsan: Export what an inline hit test needs
+backup/n1b-pass-before-attr-order	e24138606f33	2026-09-25	1	tsan: Add preserve_most access entries
+backup/o1-oracle-before-fold	e3e4762aa6a6	2026-09-25	1	tsan: Profile the thread-local oracle (measurement)
+backup/owner-rt-a67b	3b924c3bf354	2026-10-06	2	tsan: Address the OWNER-RT code audit's runtime lows
+backup/subs-package-9d857c2	9d857c2f74bf	2026-09-25	3	tsan: Record nothing in a range-all check while the thread is alone
+backup/subsumption-hit-e5d5c1e	e5d5c1e8a93b	2026-09-25	1	tsan: Let a covering record of the same epoch satisfy an access
+backup/subsumption-hit-pre-p1	54aadf12af39	2026-09-25	2	tsan: Test for covering records inline with -tsan-inline-subsumption
+backup/tsan-audit-2026-09-03	ac45cf4556b1	2026-09-03	3	[TSan] Runtime: per-granule eviction counters (evict_watch)
+experiment/alloc-nouaf-validate	b032815698a0	2026-10-07	14	tsan: Check accesses against pushed free-list blocks
+experiment/als	c911b1f1ff67	2026-10-10	5	tsan: Make the size of ALS's per-thread cache a flag
+experiment/batch-checks	3b06462c8d7b	2026-09-24	2	tsan: Measure an inline test that hands its work to the miss entry
+experiment/carve-check	b575340c1ee8	2026-10-08	33	tsan: Check a variable index into a listed member array
+experiment/carve-ownercheck	da51c2dd8b3c	2026-10-09	36	tsan: Test the owner of an object read from a holder (fieldcheck lines
+experiment/cr-candidate	744024407b56	2026-10-07	24	tsan: Turn a latched run's hooks off at a thread creation
+experiment/cr-phase-asm	ab32a9bea55e	2026-10-06	23	tsan: Test the main thread's done check in its window
+experiment/ctime-lockscope-memo	a0c3b51bbe07	2026-10-07	24	tsan: Turn a latched run's hooks off at a thread creation
+experiment/dd-census	5e944dac269e	2026-09-29	2	tsan: Census the deadlock detector's work by lock class
+experiment/dd-cheap	40788cc8bbf7	2026-09-29	2	tsan: Skip the pre-lock detector hook when it would change nothing
+experiment/dd-exact	a2a7387e90aa	2026-09-30	2	tsan: Offer the deadlock detector a larger node table
+experiment/dd-exact-ab	944fb9f4c502	2026-10-01	5	tsan: Count detector flushes and skipped pre-locks
+experiment/de-package-astats	c4fa7a48e175	2026-09-24	2	Runtime counters: count the loop range entries with the range calls (m
+experiment/dynstc-rt	cf0ef4ec0f3c	2026-09-25	2	tsan: Test dynstc_rt next to the ignore bit, not at the entries
+experiment/evconf-a59b-dev	079a8f86ce1e	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-a59b-fd	bac215a62656	2026-10-06	9	tsan: Test the split's phase-guard latch, with a mutant
+experiment/evconf-a59b-own	e62056e0e3fe	2026-10-06	11	tsan: Address the OWNER-RT code audit's runtime lows
+experiment/evconf-a59g-own	ba515c1940b4	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-a59g-owner	5ac44eb6b47e	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-a59h-pre	fbcba8ed0876	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-a59h2	106f4c4893d1	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-basechk	b920a8252c23	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-c11perf-m68f	62331aefcdbe	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-c12-unlink	2a1a6bcd5cf7	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-candidates	551e03de6161	2026-10-07	11	tsan: Address the OWNER-RT code audit's runtime lows
+experiment/evconf-checked	b45d2976051a	2026-10-07	19	tsan: Hold the next chunk to check_block's terms at a cursor's end
+experiment/evconf-checked-pass	1410be2bba6e	2026-10-07	11	tsan: Address the OWNER-RT code audit's runtime lows
+experiment/evconf-checked-rt	5fb6c13bcd60	2026-10-07	12	tsan: Add shadow ownership markers for EVCONF-CHECKED
+experiment/evconf-checked-twins	b45d2976051a	2026-10-07	19	tsan: Hold the next chunk to check_block's terms at a cursor's end
+experiment/evconf-d1-fixed	cd0b8562785e	2026-10-08	25	tsan: Void a mark over another key's unordered release
+experiment/evconf-ddq	5fef64823fe0	2026-10-07	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-c11	986e2d6ddaab	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-c11-relevance	5c716bc72032	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-c11perf	fe0c52f191f4	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-det	607ee9dd818b	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-det2	68f31735b148	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-held	5a3a9ddc6802	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-perf	7259659371fd	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-perf2	c410ef1ab681	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-ddq-tests	ed194df8af34	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-dh8b-land	da54807ed204	2026-10-06	9	tsan: Test the split's phase-guard latch, with a mutant
+experiment/evconf-e52d	00e9b23dc27f	2026-10-08	50	tsan: Keep the access entries leaf functions on the N1-S root
+experiment/evconf-e52d-merge	9773f3e32355	2026-10-08	58	tsan: Or the raw flag bytes in the free hook's gate
+experiment/evconf-handoff-clear	03f855a0d612	2026-10-07	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-iopend	11d9d925cdcf	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-lazyclear	44ba10969e17	2026-10-08	30	tsan: Void a mark over another key's unordered release
+experiment/evconf-loanback	bc541036d7aa	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+experiment/evconf-markergate	44ba10969e17	2026-10-08	30	tsan: Void a mark over another key's unordered release
+experiment/evconf-ownrt-2	026fd942ce7c	2026-10-06	11	tsan: Address the OWNER-RT code audit's runtime lows
+experiment/evconf-ownrt-wip	700c170ad7cf	2026-10-06	9	tsan: Test the split's phase-guard latch, with a mutant
+experiment/evconf-pta	691dd6cad20b	2026-10-06	9	tsan: Test the split's phase-guard latch, with a mutant
+experiment/evconf-site-det	9773f3e32355	2026-10-08	58	tsan: Or the raw flag bytes in the free hook's gate
+experiment/fd-reuse	3a1bf6d1422f	2026-10-05	16	tsan: Test the split and the A64b fixes of the reuse model
+experiment/fe-lazy	b6c5417665fd	2026-09-30	2	tsan: Run FE-LAZY in runtime tests and check trace_top
+experiment/fe-pm	c998c9c9a1a7	2026-10-02	2	tsan: Close the FE-PM audit's low findings
+experiment/fe-sink	d7e0ec71df33	2026-09-28	1	tsan: Test FE-SINK's exits, loops and miss entries further
+experiment/libcall-light	6a1b9a0faf05	2026-09-28	3	tsan: Tail-call the interceptor from light entries
+experiment/lo-checked	5ae6fe82f07e	2026-10-08	26	tsan: Check roots, retired locks and frees in path B
+experiment/lo-checked-b	716c4d3d3e27	2026-10-08	26	tsan: Check roots, retired locks and frees in path B
+experiment/lo-checked-e2e	f588c7d40178	2026-10-08	26	tsan: Check roots, retired locks and frees in path B
+experiment/lo-checked-pass	f808bd6a09ac	2026-10-08	25	tsan: Check unheld accesses to lock-derived fields at run time
+experiment/lo-mark	718c7520052c	2026-10-08	71	tsan: Build the Go runtime again after the lock markers' unlock check
+experiment/lo-mark-counters	913cae99c263	2026-10-09	78	tsan: Count threads still running into LO-MARK's census
+experiment/lo-mark-memo	664aa4376bdb	2026-10-09	76	tsan: Remember the release key a thread is ordered after
+experiment/lo-mark-memo-split	a239f64958f9	2026-10-09	78	tsan: Count LO-MARK's guard calls per thread
+experiment/lo-mark-multilock	81ba6b17fd4d	2026-10-09	75	tsan: Read a released root under the lock; census behind a flag
+experiment/lo-mark-pass	03a05e1b2cc8	2026-10-08	69	tsan: Keep a lock marker until a full write replaces it
+experiment/lo-mark-v2	dec6992dd63b	2026-10-09	71	tsan: Build the Go runtime again after the lock markers' unlock check
+experiment/lo-mark-v2c	36c805dd1906	2026-10-09	74	tsan: Keep a retired tail beside another range; a key per release
+experiment/lo-mark-v2ml	30a221352122	2026-10-09	72	tsan: Count the lock markers' work per root type
+experiment/lo-w-potential	f2e03eb08f61	2026-09-24	10	tsan: Fix three LO-W readers found wrong on the first full run
+experiment/mcq-levers	4f39efea27a2	2026-10-06	23	tsan: Test the main thread's done check in its window
+experiment/multilock	beda0f7da225	2026-10-08	31	tsan: Check carve reads by address, per thread and without a lock
+experiment/n1-atomic	fc762f401f92	2026-09-29	4	tsan: Export the relaxed-atomics premise check
+experiment/n1-atomic-hot	e6b97f0ebc66	2026-10-01	4	tsan: Export the relaxed-atomics premise check
+experiment/n1-cse	81db35939cc1	2026-09-29	3	tsan: Cite the design notes by name, not by path
+experiment/n1-inline	44ec3848eb24	2026-09-25	1	tsan: Export what an inline hit test needs
+experiment/n1-loop	080740e05970	2026-09-25	1	tsan: Export what an inline hit test needs
+experiment/n1b-pass	bcf3ad95807a	2026-09-25	1	tsan: Add preserve_most access entries
+experiment/n1s-ffk	bd979a775aa7	2026-10-07	24	tsan: Turn a latched run's hooks off at a thread creation
+experiment/n1s-p0	e52d8787b59e	2026-10-07	24	tsan: Turn a latched run's hooks off at a thread creation
+experiment/n2-batch-checks	ad11b284a34f	2026-09-25	2	tsan: Add batch check entries for the common signatures
+experiment/n2-runtime	1b80a5b187c5	2026-09-25	2	tsan: Add batch check entries for the common signatures
+experiment/own-conn	3480d51a905e	2026-09-29	2	tsan: Start OWN-CONN claims (unfinished, withdrawn)
+experiment/own-handoff	ddccf8375d9f	2026-09-29	1	tsan: Add OWN-HANDOFF, checks left out for the owning thread
+experiment/owner-rt	2a14a2fbf2d5	2026-10-06	11	tsan: Address the OWNER-RT code audit's runtime lows
+experiment/per-element	409548d2bb2d	2026-09-30	2	tsan: Exclude only the bytes a merged field pointer reaches
+experiment/phase-guard-quiet	2d1622f97752	2026-10-03	1	tsan: Let the main thread skip while every other thread is quiet
+experiment/phase-guard-quiet-tests	fd9071435864	2026-10-03	1	tsan: Let the main thread skip while every other thread is quiet
+experiment/phase-guard-ranges-tests	6da72199d92e	2026-10-03	1	tsan: Let the main thread skip while every other thread is quiet
+experiment/phase-guard-reach	d739341eb1d9	2026-10-04	1	tsan: Let the main thread skip while every other thread is quiet
+experiment/phase-guard-reach-tests	19ae25ca8447	2026-10-03	1	tsan: Let the main thread skip while every other thread is quiet
+experiment/phase-guard-rt	3fb7fd3017ed	2026-10-02	1	tsan: Let the main thread skip while every other thread is parked
+experiment/phase-hooks-off	7ad8d3c7e668	2026-10-05	10	tsan: Address the phase runtime audit's cost self-off findings
+experiment/phase-quiet-rt	f8061e814c0e	2026-10-02	2	tsan: Add lock-scoped accesses and count violations by cause
+experiment/rt-sync	3da6710f0d43	2026-09-29	1	tsan: Skip an acquire's join the thread's own release makes a no-op
+experiment/rt-sync-lf	61af8477c754	2026-09-30	2	tsan: Keep the token counter out of the eviction statistics
+experiment/subs-package	d73e071a2065	2026-09-29	4	tsan: Cite the design notes by name, not by path
+experiment/subs-package-p1v3	22f5fff64b11	2026-09-29	4	tsan: Cite the design notes by name, not by path
+experiment/subs-selective	add8aa7bfe27	2026-09-30	1	tsan: Merge exactly under verified removal, subsuming only in groups
+experiment/subsumption-hit	7c0a7c968e2e	2026-09-29	3	tsan: Cite the design notes by name, not by path
+experiment/zgbu-unsound-elide	09e0e46b27a2	2026-10-08	24	tsan: Turn a latched run's hooks off at a thread creation
+fix/de-generation-guard	0a4c719c7bd7	2026-09-25	1	tsan: mark a shadow drop in progress in the generation word
+fix/de-verified-package	b32225cee9f6	2026-09-25	1	tsan: Record nothing in a range-all check while the thread is alone
+fix/dynstc-rt-followups	de172424d355	2026-09-27	3	tsan: Note when dynstc_rt is ignored on Apple
+integrate/p1-0926	f8c57744c32a	2026-09-29	1	tsan: Cite the design notes by name, not by path
+measure/alias-census	e2a16ba031e1	2026-10-03	12	tsan: Count same-frame pair hits with no acquire between
+measure/atomic-hit-stats	9960fb1fc5cb	2026-09-29	2	tsan: Cite the design notes by name, not by path
+measure/dd-census	ab37a3e5a204	2026-10-06	6	tsan: Count lock operations per mutex for a census
+measure/dynstc-rt-counts	d1b977fa997f	2026-09-25	4	tsan: Count the returns at the dynstc_rt flag
+measure/eva-count	ee660cd989bf	2026-10-04	1	tsan: Count checks and misses per caller pc (measurement)
+measure/eva-prof	58ae74eb9bab	2026-10-04	3	tsan: Exempt O2's exclusive phase only when it was published
+measure/fe-oracle	4f0c692a4b85	2026-09-30	6	tsan: Count live threads in the oracle's report
+measure/gea-count	b1317b19a6e4	2026-09-30	1	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+measure/gea-count2	aae3a1d80ea7	2026-09-30	1	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+measure/hotspots	5bd1070eef6f	2026-10-03	1	tsan: Count checks and misses per caller pc (measurement)
+measure/inline-count	6100b4ce382f	2026-10-01	2	tsan: Count inline hit tests per placement (measurement)
+measure/libcall-astats	32f742e9c8f6	2026-09-28	4	Runtime: count compare calls per call site (TSAN_ACCESS_STATS)
+measure/libfacts-astats	bc2ce619c508	2026-09-29	1	Runtime: counters for executed accesses, fast-path hits and function e
+measure/lo-obj-g-count	02e2b961466f	2026-09-29	1	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+measure/lo-w-integ	c7af5ad2fb7e	2026-10-02	11	tsan: Merge the LO-W counters onto the integration tip
+measure/loobj-v4-cnt	fdc66a81cca6	2026-10-01	1	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+measure/loobj-v5-cnt	3fd5106a247d	2026-10-01	1	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+measure/loobj-v5-count	578cc2f954f3	2026-10-01	1	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+measure/mcq-a2only	46887a69e242	2026-10-06	23	tsan: Test the main thread's done check in its window
+measure/mcq-mutate-noesc	1d0d1e94c249	2026-10-06	23	tsan: Test the main thread's done check in its window
+measure/n1cse-r1-parent	6d587e8d6877	2026-09-29	3	tsan: Cite the design notes by name, not by path
+measure/o-stc	8308839a4989	2026-09-29	8	tsan: Cite the design notes by name, not by path
+measure/o1-oracle	4bd95bfd04dd	2026-09-25	1	tsan: Profile the thread-local oracle (measurement)
+measure/o2-lockid	367bd595a958	2026-09-27	7	tsan: Name the common lock of the oracle's locked sites (measurement)
+measure/o2-lockset	9089aef16c05	2026-09-26	6	tsan: Recycle the oracle's nodes when a lifetime ends (measurement)
+measure/o3-threads	20308d639087	2026-10-01	5	tsan: Profile thread classes and create/join-only order (measurement)
+measure/oracle-own-stack	ee59c412741c	2026-10-02	1	tsan: Add an own-stack oracle for measurement
+measure/own-handoff-count	81144cb9c1c8	2026-09-29	2	tsan: Count LO-OBJ-G and OWN-HANDOFF tests and skipped checks (measure
+measure/quiet-census	fe74ac99e8f5	2026-10-03	13	tsan: Count how often every other thread is quiet (measurement)
+measure/quiet-census-v2	1b1fc33f7591	2026-10-04	14	tsan: Count the waiver bound and what blocks quiet (measurement)
+measure/range-census	f4ef684205dd	2026-10-01	7	tsan: Count runtime checks and hits by entry kind
+measure/range-hit-astats	40be4af6535c	2026-09-28	5	Runtime: count range calls whose every cell hits (TSAN_ACCESS_STATS)
+measure/range-uniform-astats	e03e517726c2	2026-09-28	6	Runtime: count uniform cells in range calls (TSAN_ACCESS_STATS)
+measure/redis-main-oracle	dbecd0ab7791	2026-10-02	1	tsan: Add an unsound main-thread oracle for Redis
+measure/redis-main-oracle-fs	6e92679bf9db	2026-10-02	1	tsan: Add an unsound front-skip oracle for the main thread
+measure/slot-cost	c15e136e6771	2026-09-28	4	Runtime: count what slot turnover costs (TSAN_ACCESS_STATS)
+measure/slot-stats	eece0eea7c77	2026-09-28	3	Runtime: count slot attaches, preemptions and re-locks
+measure/sync-counters	c8f04181f253	2026-09-25	1	tsan: Count the synchronisation path's events (measurement)
+measure/wide-astats	b26d7c6eded2	2026-09-26	2	tsan: Count entries through the inline test's miss path
+perf/access-stats	1391bf330765	2026-09-09	1	Runtime: counters for executed accesses, fast-path hits and function e
+perf/granule-merge	d32f542acb4f	2026-09-10	1	Runtime: counters for executed accesses, fast-path hits and function e
+perf/window-coalesce-sizing	5dfb1bbbc703	2026-09-15	1	Runtime: counters for executed accesses, fast-path hits and function e
+rebase/subs-package-fixes	82e199cbf242	2026-09-26	3	tsan: Record nothing in a range-all check while the thread is alone
+rebase/subs-package-fixes2	e8000904d98d	2026-09-26	3	tsan: Record nothing in a range-all check while the thread is alone
+rebase/subs-package-fixes3	e7081deb1fc2	2026-09-26	3	tsan: Record nothing in a range-all check while the thread is alone
+rebase/subs-package-p1v2	2777c3dfed93	2026-09-26	3	tsan: Record nothing in a range-all check while the thread is alone
+summaries-default	f8c57744c32a	2026-09-29	1	tsan: Cite the design notes by name, not by path
+tmp/ecc-census	1072c7acaed9	2026-10-07	13	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census2	9be497ac4fa7	2026-10-07	14	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census3	ec2d2fe12d13	2026-10-07	15	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census4	a0480e35cfee	2026-10-07	16	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/ecc-census6	122a807a8057	2026-10-07	17	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+tmp/kstats-base-68f	8967eae816b5	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+tmp/kstats-c1-68f	ffc2345c2700	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+tmp/mut-noedge	398d0240e064	2026-10-06	13	evconf: Export the base-check entries; refuse a check before any loop
+tmp/phase-hook-count	7017a5f8266f	2026-10-07	25	tmp: count phase hook calls before and after the first thread creation
+tools/tsan-access-trace-oracle	3c90ee0f8c5f	2026-03-10	2	Guard REX filtering
+tools/tsan-interceptor-trace	6af3e502adac	2025-06-26	4	Fix signatures and add prints for 16-byte read/write
+wip/two-archive-delta1	feee39f615ae	2026-10-08	61	Revert "tsan: Return the owner's marked granule inside the range loop"
+yield/all	fdf7a4dd41e9	2026-09-05	1	Pass, runtime: the interceptor toggle for the whole string table
+yield/all-b2	d98873cda906	2026-09-08	1	Pass, runtime: the interceptor toggle for the whole string table
+yield/interceptor-table	529d7f481ac0	2026-09-05	1	Pass, runtime: the interceptor toggle for the whole string table
