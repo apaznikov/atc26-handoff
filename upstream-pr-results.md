@@ -98,6 +98,10 @@ Each arm's 95 % interval is compared with that of A/A (stock timed against itsel
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
 | PARSEC fluidanimate † | 8 | 🟰 | = | ⏳ | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | ⏳ | 🟢 **+1.7** |
+| **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284) | | | | | |
+| Speedometer 3 (20 stories)⁹ | browser | ⏳ | ⏳ | ⏳ | 🟡 +1.0 |
+| blink_perf.dom (3 stories)¹⁰ | browser | ⏳ | ⏳ | ⏳ | 🟡 −0.3 |
+| blink_perf.paint (2 stories) | browser | ⏳ | ⏳ | ⏳ | = |
 
 ¹ SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 90 % between runs), but
 single tests do: checkpoint_starvation_1 EA 🟢 **+78**, DE **+67**, DE + EA **+78**; walthread1 EA and DE + EA
@@ -124,6 +128,12 @@ LRANGE_300/500/600 🟢 faster by 1.9-2.1 %. To be confirmed by a re-run.
 ⁷ lavaMD DE: three legs disagree, +19 (unresolved), +6 (=) and +15 (unresolved, shown).
 
 ⁸ freqmine: the A/A of this leg is itself +13 [−2, +30], so the leg cannot be read; to be re-timed.
+
+⁹ Speedometer 3: the A/A of this leg is itself −2.0 [−3.4, −0.8] and excludes zero, so by the registered rule the leg
+is not called, although DE + EA's interval [−0.1, +2.3] lies above it. Re-timed with 5 repetitions.
+
+¹⁰ blink_perf.dom: one story, modify-element-classname, is 2.6-3.1 % slower with DE + EA in all 3 repetitions (A/A
+−0.1 to −0.2 %); a per-story hint, checked with 8 repetitions.
 
 † The A/A interval of this row is wider than ±3 %: changes smaller than that cannot be resolved here.
 
