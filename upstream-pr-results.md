@@ -198,15 +198,16 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 
 ## Open items
 
+Everything below runs on focs (Intel) first; the AMD check follows if time allows.
+
 | Item | State |
 |---|---|
-| AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| DE + runtime fix: compiler-rt PR (port of the paper runtime's keep-the-racing-write step), then timing and race preservation | ⏳ in #169897 itself (one PR, decided 26 Oct): commits NFC → runtime fix → DE, local branch. Audited (no blocker; fixes applied). Compiler-rt TSan tests 383 passed / 0 failed (base 379 / 0); the TSan pass tests 26 / 0. The new DE test gives 2 reports with the fix and 1 without it (negative control). Timing from 26 Oct ~22:30 |
-| Resolve 🟡 and † cells, fill gaps (—): kernels at 8 threads after an A/A pilot per kernel, NPB LU A EA and DE + EA, SQLite -O0, RocksDB, the small 🟡 application cells, confirm the Redis -O2 LRANGE_600 slowdown | ⏳ queued after DE + runtime fix: ~50 h of machine time, Redis first, kernels after an A/A pilot each; expected to end ~30 Oct |
-| Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏳ current tree Chromium 156.0.8078.47 (Stable; pins clang 24, so no overrides), lld from the same LLVM commit; sync from 26 Oct 13:32, results expected 27 Oct ~01:00-03:00; the Aug-2024 tree (127) does not build with clang 24 without source edits. In that tree's libbase.so, DE + EA removes 1.74 % of read/write call sites |
-
-Done 20-26 Oct: the applications at -O0 and -O2, the eight real applications, the kernels, the corpus
-programs, the RocksDB re-time, compile time and race preservation.
+| DE + runtime fix, timing: SQLite, memcached, MySQL at -O0 and -O2 (quiet), race preservation for all five (on a-p13) | ⏳ from 27 Oct, ~10-12 h |
+| DE + runtime fix, every other row: added to each re-timed leg below; rows not re-timed first get a report census (5 runs each) — a row with no race report runs identical code paths and is marked 🟰, a row with reports is timed | ⏳ census on a-p13 now; timing after the re-timing |
+| Resolve 🟡 and † cells, fill gaps (—): Redis -O2 LRANGE_600 first, kernels at 8 threads after an A/A pilot each (two at a time, one per half), NPB LU A EA and DE + EA, freqmine, SQLite -O0, RocksDB, the small 🟡 application cells | ⏳ after DE + runtime fix; ~29 Oct |
+| Chromium 156 (Intel): proper readout of stock against DE + EA (Speedometer 3, blink_perf.dom, .paint; a possible 3 % slowdown on blink_perf.dom modify-element-classname to check), static counts, then builds for DE alone and EA alone (EA skipped if its code equals stock), DE + runtime fix by relinking, and a 5-repetition leg with all arms | ⏳ readout now; builds and leg after the re-timing |
+| Race preservation for Redis and FFmpeg: workloads that run their own threaded code (Redis io-threads, FFmpeg H.264/HEVC decoding with threads); "—" stays if stock still reports no race | ⏳ on a-p13 |
+| AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | after Intel, if time allows |
 
 ## Method
 
