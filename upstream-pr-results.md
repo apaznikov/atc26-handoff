@@ -34,7 +34,8 @@ the AMD check are pending ([Open items](#open-items)).
 | **DE + runtime fix** | DE plus a runtime that keeps a racing write after reporting it ([why it is needed](#why-de-needs-a-runtime-fix)) | llvm#169897 + a compiler-rt PR in preparation |
 | **DE + EA** | DE + EA | all three |
 
-🟢 faster than A/A (stock timed against itself) · ⚪ no change · 🟡 unresolved (noise) · 🔴 slower ·
+🟢 faster than A/A (stock timed against itself) · **=** no change (within A/A) · 🟡 unresolved (noise; the number is
+the point estimate) · 🔴 slower ·
 🟰 same machine code (EA as stock, DE + EA as DE), not timed · — not measured · ⏳ pending · ⏸ stopped
 
 ## Results
@@ -43,34 +44,34 @@ the AMD check are pending ([Open items](#open-items)).
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
 | SQLite¹ | 8 | 🟡 +8 | 🟡 +8 | ⏳ | 🟡 +13 |
-| FFmpeg | 8 | 🟢 **+0.4** | ⚪ +0.2 | ⏳ | ⚪ +0.2 |
-| memcached | 8 | ⚪ −1 | ⚪ +0.4 | ⏳ | ⚪ +0.7 |
-| Redis | 8 | ⚪ −0.4 | ⚪ +0.7 | ⏳ | ⚪ +0.9 |
-| MySQL | 8 | ⚪ −0.1 | ⚪ −0.2 | ⏳ | ⚪ −0.3 |
+| FFmpeg | 8 | 🟢 **+0.4** | = | ⏳ | = |
+| memcached | 8 | = | = | ⏳ | = |
+| Redis | 8 | = | = | ⏳ | = |
+| MySQL | 8 | = | = | ⏳ | = |
 | **Applications, -O2** | | | | | |
-| SQLite² | 8 | 🟰 | ⚪ −2 | ⏳ | 🟰 |
-| FFmpeg | 8 | ⚪ −0.7 | ⚪ −0.6 | ⏳ | ⚪ 0.0 |
-| memcached | 8 | 🟰 | ⚪ −2 | ⏳ | 🟰 |
-| Redis | 8 | 🟰 | ⚪ −0.3 | ⏳ | 🟰 |
-| MySQL | 8 | ⚪ −0.3 | ⚪ −0.2 | ⏳ | ⚪ +0.3 |
+| SQLite² | 8 | 🟰 | = | ⏳ | 🟰 |
+| FFmpeg | 8 | = | = | ⏳ | = |
+| memcached | 8 | 🟰 | = | ⏳ | 🟰 |
+| Redis | 8 | 🟰 | = | ⏳ | 🟰 |
+| MySQL | 8 | = | = | ⏳ | = |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
 | RocksDB db_bench³ | 8 | 🟰 | 🟡 +1 | ⏳ | 🟰 |
-| LevelDB db_bench | 8 | 🟰 | ⚪ −0.2 | ⏳ | 🟰 |
-| DuckDB TPC-H | 8 | ⚪ +0.1 | ⚪ +0.2 | ⏳ | ⚪ −0.1 |
-| zstd | 8 | ⚪ 0.0 | ⚪ +0.3 | ⏳ | ⚪ 0.0 |
-| xz | 8 | 🟰 | ⚪ +0.3 | ⏳ | 🟰 |
-| pigz | 8 | 🟰 | ⚪ +0.1 | ⏳ | 🟰 |
-| brotli | 8 | 🟰 | ⚪ +0.5 | ⏳ | 🟰 |
-| OpenSSL | 8 | ⚪ +0.8 | ⚪ +0.5 | ⏳ | ⚪ −0.2 |
+| LevelDB db_bench | 8 | 🟰 | = | ⏳ | 🟰 |
+| DuckDB TPC-H | 8 | = | = | ⏳ | = |
+| zstd | 8 | = | = | ⏳ | = |
+| xz | 8 | 🟰 | = | ⏳ | 🟰 |
+| pigz | 8 | 🟰 | = | ⏳ | 🟰 |
+| brotli | 8 | 🟰 | = | ⏳ | 🟰 |
+| OpenSSL | 8 | = | = | ⏳ | = |
 | **Real applications, -O0** | | | | | |
 | RocksDB db_bench³ | 8 | 🟡 +2 | 🟡 +1 | ⏳ | 🟡 +1 |
-| LevelDB db_bench | 8 | ⚪ 0.0 | ⚪ +0.8 | ⏳ | ⚪ +0.6 |
-| DuckDB TPC-H | 8 | ⚪ −0.3 | ⚪ +0.1 | ⏳ | ⚪ +0.3 |
-| zstd | 8 | ⚪ −1.3 | ⚪ +0.4 | ⏳ | ⚪ +0.6 |
-| xz | 8 | ⚪ +0.5 | 🟢 **+0.6** | ⏳ | 🟢 **+0.6** |
-| pigz⁴ | 8 | ⚪ −2 | ⚪ −2 | ⏳ | ⚪ −2 |
-| brotli | 8 | 🟡 +1.8 | ⚪ −0.1 | ⏳ | 🟢 **+1.8** |
-| OpenSSL | 8 | ⚪ −0.4 | ⚪ −0.2 | ⏳ | ⚪ 0.0 |
+| LevelDB db_bench | 8 | = | = | ⏳ | = |
+| DuckDB TPC-H | 8 | = | = | ⏳ | = |
+| zstd | 8 | = | = | ⏳ | = |
+| xz | 8 | = | 🟢 **+0.6** | ⏳ | 🟢 **+0.6** |
+| pigz⁴ | 8 | = | = | ⏳ | = |
+| brotli | 8 | 🟡 +1.8 | = | ⏳ | 🟢 **+1.8** |
+| OpenSSL | 8 | = | = | ⏳ | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
 | Rodinia hotspot | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+10** | ⏳ | 🟰 |
@@ -82,20 +83,20 @@ the AMD check are pending ([Open items](#open-items)).
 | | 1 | 🟰 | 🟢 **+26** | ⏳ | 🟰 |
 | SPLASH-2x water_spatial | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+26** | ⏳ | 🟰 |
-| Rodinia srad | 8 | 🟰 | ⚪ +2 | ⏳ | 🟰 |
+| Rodinia srad | 8 | 🟰 | = | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+7** | ⏳ | 🟰 |
 | Rodinia lavaMD | 8 | 🟰 | 🟡 ~+10 | ⏳ | 🟰 |
 | SPLASH-2x barnes | 8 | 🟰 | 🟡 +8 | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+4.9** | ⏳ | 🟰 |
 | PARSEC freqmine | 8 | 🟰 | 🟡 +5 | ⏳ | 🟰 |
 | Rodinia particlefilter | 8 | 🟰 | 🟡 +3.9 | ⏳ | 🟡 +4.9 |
-| | 1 | 🟰 | ⚪ 0.0 | ⏳ | ⚪ −0.4 |
-| SPLASH-2x radiosity | 8 | 🟰 | ⚪ +0.2 | ⏳ | 🟰 |
+| | 1 | 🟰 | = | ⏳ | = |
+| SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
 | SPLASH-2x raytrace | 8 | 🟡 +2 | 🟡 −9 | ⏳ | 🟡 −7 |
-| | 1 | ⚪ −0.1 | ⚪ −0.1 | ⏳ | ⚪ −0.2 |
-| PARSEC streamcluster | 8 | 🟰 | ⚪ −2 | ⏳ | 🟰 |
-| PARSEC fluidanimate | 8 | 🟰 | ⚪ −1 | ⏳ | 🟰 |
-| **llvm-test-suite** (single-threaded except 7zip) | | | | | |
+| | 1 | = | = | ⏳ | = |
+| PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
+| PARSEC fluidanimate | 8 | 🟰 | = | ⏳ | 🟰 |
+| **llvm-test-suite**: LLVM's own benchmark suite, used by LLVM reviewers for performance claims. Sequential C/C++ programs (7zip is multi-threaded); TSan still checks every access, so they measure the per-check saving | | | | | |
 | consumer-typeset | 1 | 🟰 | 🟢 **+15.5** | ⏳ | 🟰 |
 | SIBsim4 | 1 | 🟰 | 🟢 **+15.1** | ⏳ | 🟰 |
 | LoopRestructuring-flt | 1 | 🟰 | 🟢 **+11.2** | ⏳ | 🟰 |
@@ -105,7 +106,7 @@ the AMD check are pending ([Open items](#open-items)).
 | CLAMR | 1 | 🟰 | 🟢 **+5.5** | ⏳ | 🟰 |
 | espresso | 1 | 🟰 | 🟢 **+5.4** | ⏳ | 🟰 |
 | Olden bisort | 1 | 🟰 | 🟢 **+4.4** | ⏳ | 🟰 |
-| oggenc | 1 | ⚪ 0.0 | 🟢 **+4.1** | ⏳ | 🟢 **+4.3** |
+| oggenc | 1 | = | 🟢 **+4.1** | ⏳ | 🟢 **+4.3** |
 | CoMD | 1 | 🟰 | 🟢 **+3.8** | ⏳ | 🟰 |
 | LoopRestructuring-dbl | 1 | 🟰 | 🟢 **+3.7** | ⏳ | 🟰 |
 | Obsequi | 1 | 🟰 | 🟢 **+3.4** | ⏳ | 🟰 |
@@ -115,8 +116,8 @@ the AMD check are pending ([Open items](#open-items)).
 | RSBench | 1 | 🟰 | 🟢 **+2.0** | ⏳ | 🟰 |
 | mpeg2decode | 1 | 🟰 | 🟢 **+1.3** | ⏳ | 🟰 |
 | 7zip-benchmark | auto | 🟡 +0.4 | 🟢 **+1.1** | ⏳ | 🟢 **+1.7** |
-| fourinarow | 1 | 🟰 | ⚪ +0.1 | ⏳ | 🟰 |
-| pcompress2 | 1 | 🟰 | ⚪ 0.0 | ⏳ | 🟰 |
+| fourinarow | 1 | 🟰 | = | ⏳ | 🟰 |
+| pcompress2 | 1 | 🟰 | = | ⏳ | 🟰 |
 | **Abseil benchmarks** | | | | | |
 | graphcycles_benchmark | 1 | 🟰 | 🟡 +0.9 | ⏳ | 🟰 |
 | str_join_benchmark | 1 | 🟰 | 🟡 −1.6 | ⏳ | 🟰 |
