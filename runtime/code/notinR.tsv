@@ -1,0 +1,428 @@
+0023419e22e0	new	2026-09-26	tsan: Test for covering records inline with -tsan-inline-subsumption
+009e610aa016	new	2026-09-26	tsan: Record nothing in a range-all check while the thread is alone
+00e9b23dc27f	new	2026-10-08	tsan: Keep the access entries leaf functions on the N1-S root
+0162f96f1645	equiv	2026-09-30	tsan: Cache four root blocks per private owner and skip known sizes
+0168ba8d990e	new	2026-10-06	tsan: Model descriptor reuse only in programs with EVCONF
+023782c6031b	new	2026-10-06	tsan: Let the runtime obey the phase skip bit
+02e2b961466f	new	2026-09-29	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+0303ed1aad41	new	2026-10-05	tsan: Turn the phase guard off when skipping costs more
+038ad13a053d	new	2026-09-25	tsan: Export what an inline hit test needs
+049af11d5d5c	new	2026-10-08	tsan: Void a mark over another key's unordered release
+05e767cd51ee	new	2026-10-05	tsan: Run MemoryAccess's hit test first, on a cleared word
+0630ade16a90	new	2026-10-08	tsan: Let only a full write replace an ownership marker
+0743c0511684	new	2026-10-06	tsan: Add LO-OBJ-G and one-sided memory intrinsics
+08a2c4fa8f0d	equiv	2026-10-03	tsan: Add lock-scoped accesses and count violations by cause
+08a5874878de	equiv	2026-09-26	tsan: Emit the fast path of function entry and exit inline
+08bbee14858b	equiv	2026-09-29	tsan: Make G-EA's private answer conditional, rooted and invalidated
+0a4c719c7bd7	new	2026-09-25	tsan: mark a shadow drop in progress in the generation word
+0ab646db7060	new	2026-09-30	tsan: Bound same-thread old sids by epoch in the census
+0b2f84615f6d	new	2026-09-27	tsan: Check the relaxed-atomics premise at start-up
+0cc4f26f00cc	new	2026-10-08	Revert "tsan: Pin the race_mask guard of the SHARED owner return"
+0d137293a3db	new	2026-09-26	tsan: Split the lockset oracle's gain by kind (measurement)
+0d5a1e1996a3	equiv	2026-10-02	tsan: Fix quiet mode's wakes and its ignore-region trap
+0d63553b3e43	new	2026-09-03	[TSan] Runtime: the ReX filter behind a CMake option, and the default path back to upstream's
+0e568d03ef4c	new	2026-09-24	tsan: Skip plain checks at run time while one thread remains
+0e9bb9f721cc	new	2026-09-30	tsan: Count function entries a lazy scheme could skip (measurement only)
+0f9f4139062a	new	2026-09-28	tsan: Profile hand-off ownership of heap blocks (measurement)
+1072c7acaed9	new	2026-10-07	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+10939cf85b80	new	2026-10-08	tsan: Cache the owner a lock marker's test was refused for (WIP)
+1161e837917a	new	2025-06-26	Add source file name print
+1226b38c1b64	new	2026-10-06	tsan: Report a descriptor reused after an unseen free
+122a807a8057	new	2026-10-07	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+136af08ef97b	new	2026-09-30	tsan: Key the range census by the program call site too
+1391bf330765	new	2026-09-09	Runtime: counters for executed accesses, fast-path hits and function entries
+144377fd3912	equiv	2026-10-03	tsan: Keep a thread quiet only on registered objects
+1443a91f059b	new	2026-10-02	tsan: Let the main thread skip while every other thread is quiet
+1458ec849970	new	2026-10-06	tsan: Inline entry/exit; use whole-program summaries
+14f09b3d252f	equiv	2026-10-03	tsan: Require one spec hash of every module once a spec is in use
+1528d67bf886	equiv	2026-10-01	tsan: Keep a widened check's record after it reports
+158f8d82ea2f	new	2026-10-08	tsan: Return the owner's marked granule inside the range loop
+17aca7998e82	equiv	2026-10-02	tsan: Keep a thread quiet only on registered objects
+17bbdc8a9b85	new	2026-10-05	tsan: End the start-up waiver where startup_end arms no trap
+17f24744af64	equiv	2026-09-03	[TSan] Runtime: eviction counters and a per-granule watch; the ReX filter behind a CMake option
+18aa7e5fd408	new	2026-09-25	tsan: Test for covering records inline with -tsan-inline-subsumption
+18cdfa05bd45	equiv	2026-10-03	tsan: Check the skip's end against a clock snapshot
+19bea01eeeeb	equiv	2026-09-03	[TSan] Second review: lock ownership, thread creation, the dynamic guard, post-dominance, intrinsics
+19c1721babec	new	2026-10-08	tsan: Return the owner's marked access before the marker call
+1af068d46cae	equiv	2026-09-02	[TSan] Guard the ReX lockset bookkeeping so the baseline stops paying for it
+1b1fc33f7591	new	2026-10-04	tsan: Count the waiver bound and what blocks quiet (measurement)
+1b31601b927e	new	2026-10-06	tsan: Address the OWNER-RT code audit's runtime lows
+1b80a5b187c5	new	2026-09-25	tsan: Add batch check entries for the common signatures
+1b95f0bf4e14	equiv	2026-10-03	tsan: Clear the main thread's skip bit at every latch on it
+1bb30a4665bb	new	2026-09-24	tsan: Count per-site locksets to bound what lock ownership could remove
+1c1d4847eec0	equiv	2026-10-03	tsan: Arm quiet traps only while on, and record a trap as plain
+1cb0d3144417	new	2026-09-26	tsan: Let a covering record of the same epoch satisfy an access
+1eca7fa91c9c	new	2026-09-27	tsan: Note when dynstc_rt is ignored on Apple
+1fefa888bf9c	equiv	2026-10-08	tsan: Merge EVCONF-CHECKED and the marker gate onto the N1-S root
+202d968f6a31	new	2026-10-06	evconf: Export the base-check entries; refuse a check before any loop
+20308d639087	new	2026-10-01	tsan: Profile thread classes and create/join-only order (measurement)
+208ace36b1e0	new	2026-09-29	tsan: Count the deadlock detector's work (census only)
+223e937bd23f	new	2026-10-07	tsan: Skip the owner's own accesses to its marked bytes
+22f5fff64b11	new	2026-09-29	tsan: Cite the design notes by name, not by path
+248f45c260ef	new	2026-09-03	[TSan] Runtime: per-granule eviction counters (evict_watch)
+24afe0a3e4b1	new	2026-09-26	Runtime: counters for executed accesses, fast-path hits and function entries
+24ff62f6acb9	new	2026-09-29	tsan: Add OWN-HANDOFF, checks left out for the owning thread
+272b6334c6e6	new	2026-10-08	tsan: Return the owner's marked granule inside the range loop
+278a7b496714	new	2026-09-26	tsan: Test for covering records inline with -tsan-inline-subsumption
+2802b19d9a5e	new	2026-09-23	Paper state e90a3fc41004
+281bfab36f05	new	2026-10-03	tsan: Let the main thread skip while every other thread is quiet
+28694aa2690d	equiv	2026-09-26	tsan: Emit the fast path of function entry and exit inline
+28dc28689655	new	2026-10-05	tsan: Check an edge-less thread creation with the hooks off
+29fff1b7564d	new	2026-09-30	tsan: Keep the oracle out of forked children
+2acbaaa8eef3	new	2026-10-08	tsan: Check roots, retired locks and frees in path B
+2b831af0fa48	equiv	2026-10-03	tsan: Add __tsan_phase_startup_end, ending the start-up waiver
+2d03af9b098c	new	2026-10-06	tsan: Order a descriptor number's free before its reuse
+2d1622f97752	equiv	2026-10-03	tsan: Say why the phase guard latched off
+2da7fe34d344	new	2026-10-06	tsan: Add quiet threads and EVCONF memory ranges
+2e05c77d0399	new	2026-10-08	tsan: Test for a marker only where a marked granule must arrive
+2efeb7bb501f	new	2026-10-08	tsan: Leave post-stamp records to the free's own check
+2f131c17aa47	new	2026-10-09	tsan: Count LO-MARK's marker outcomes per thread
+2f6f3143fcc6	new	2026-10-08	tsan: Read a stale lock field as no lock in path B
+31c07a3be506	new	2026-10-06	tsan: Address the descriptor-reuse audit
+32f742e9c8f6	new	2026-09-28	Runtime: count compare calls per call site (TSAN_ACCESS_STATS)
+332d6a85cfa9	new	2026-09-10	Runtime: counters for executed accesses, fast-path hits and function entries
+3480d51a905e	new	2026-09-29	tsan: Start OWN-CONN claims (unfinished, withdrawn)
+367bd595a958	new	2026-09-27	tsan: Name the common lock of the oracle's locked sites (measurement)
+372b67129779	new	2026-10-06	tsan: Toggle interceptors only around library code
+37e5bc717205	new	2026-09-28	tsan: Count entries through the inline test's miss path
+3a1bf6d1422f	new	2026-10-05	tsan: Test the split and the A64b fixes of the reuse model
+3a37f1be3df6	new	2026-10-08	tsan: Keep the owner's early return out of the Go build
+3a96b3cc6ee7	new	2026-10-01	tsan: Check the relaxed-atomics premise at start-up
+3aed47950bf0	equiv	2026-09-01	[TSan] Make InterceptorEnabled per-thread and decrement the thread count at join
+3b06462c8d7b	new	2026-09-24	tsan: Measure an inline test that hands its work to the miss entry
+3b2cc53a3812	new	2026-09-28	Runtime: counters for executed accesses, fast-path hits and function entries
+3c4072c091e6	new	2026-09-30	tsan: Elide checks on fields guarded by their own object's mutex
+3c4896595d5c	new	2026-09-27	tsan: Count atomic fast-path hits (measurement)
+3c90ee0f8c5f	equiv	2026-03-10	Remove debug print from `ThreadCreate` in ThreadSanitizer.
+3d9fa40788b1	equiv	2026-09-03	Remove debug print from `ThreadCreate` in ThreadSanitizer.
+3da6710f0d43	new	2026-09-29	tsan: Skip an acquire's join the thread's own release makes a no-op
+3e68310014b6	new	2026-09-26	tsan: Let a covering record of the same epoch satisfy an access
+3fb7fd3017ed	new	2026-10-02	tsan: Let the main thread skip while every other thread is parked
+3fd5106a247d	new	2026-10-01	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+40788cc8bbf7	new	2026-09-29	tsan: Skip the pre-lock detector hook when it would change nothing
+40be4af6535c	new	2026-09-28	Runtime: count range calls whose every cell hits (TSAN_ACCESS_STATS)
+422a1cc89a1e	equiv	2026-09-23	Runtime: eviction counters and a per-granule watch; the ReX filter behind a CMake option
+422b08b047ca	new	2026-10-01	tsan: Deliver pending signals before an atomic hit
+42dea40c3f32	new	2026-10-01	tsan: Put the pre-lock shortcut behind a flag
+432f96dd2fd3	new	2026-09-26	tsan: Test for covering records inline with -tsan-inline-subsumption
+435ab02714dc	new	2025-06-26	Add line number tracking to the tracing
+4585413865b6	new	2026-09-26	tsan: Record nothing in a range-all check while the thread is alone
+45b23daeee9c	new	2026-10-06	tsan: Address the descriptor-reuse delta audit
+465df54a2a31	new	2026-10-08	tsan: Keep the free hook's gate inline in OnUserFree
+46abad109422	new	2026-09-29	tsan: Tell conflicting pairs from concurrent reads in the profile
+46b431ccbb0c	equiv	2026-09-26	tsan: Emit the fast path of function entry and exit inline
+475bb729dd4e	new	2026-10-08	tsan: Pin the race_mask guard of the SHARED owner return
+47d0f1790502	new	2026-10-05	tsan: Merge the descriptor-reuse audit fixes into the candidate
+482e9dcc2df8	equiv	2026-10-03	tsan: Report a thread created without a creation edge
+4b5981ea1360	new	2026-10-06	tsan: Add inline hit tests and single-thread mode
+4b8b8af0bef1	new	2026-09-24	tsan: Measure batched and inline fast-path checks
+4d3abf3569d6	new	2026-09-30	tsan: Count slot churn and same-thread old sids
+4d5f86d8f7b3	equiv	2026-10-02	tsan: Add an LO-OBJ-G latch for readers that take no lock
+4d95f5ccc8fd	new	2026-09-25	tsan: Record nothing in a range-all check while the thread is alone
+4efae0db42fa	new	2026-09-25	tsan: Add batch check entries for the common signatures
+4f0c692a4b85	new	2026-09-30	tsan: Count live threads in the oracle's report
+4f0e2f6e4aef	new	2026-09-25	tsan: Record nothing in a range-all check while the thread is alone
+4f1516a7242d	new	2026-09-05	Pass, runtime: the interceptor toggle for the whole string table
+4f2d7932a620	new	2026-10-06	tsan: Self-off by cost; model descriptor reuse
+4ffd796f21b1	equiv	2026-10-03	tsan: Keep the quiet-end check after a latch that is no violation
+50456473f997	new	2026-09-30	tsan: Write function-entry trace events lazily (FE-LAZY)
+51628a558ecf	equiv	2026-09-01	Repair the TSan runtime and test builds
+529d7f481ac0	new	2026-09-05	Pass, runtime: the interceptor toggle for the whole string table
+538c60da86f5	new	2026-10-05	tsan: Count self-off from the first thread creation
+559a752f7f4e	new	2026-09-26	tsan: Record nothing in a range-all check while the thread is alone
+55d8b0029d20	new	2026-09-27	tsan: Inline the hit test of relaxed atomics
+56a0fba4667e	new	2026-10-08	tsan: Keep the free hook's gate inline in OnUserFree
+576a75b9c631	new	2026-09-25	tsan: Let a covering record of the same epoch satisfy an access
+578cc2f954f3	new	2026-10-01	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+57bc4046fc00	new	2026-10-07	tsan: Key an attached element by the block that holds it
+57d83cba7029	new	2026-10-06	tsan: Test the split and the A64b fixes of the reuse model
+582a1b5d866f	new	2026-10-08	tsan: Check carved sub-arrays at run time (lock spec `carve`)
+58ae74eb9bab	new	2026-10-04	tsan: Exempt O2's exclusive phase only when it was published
+58afd15c745c	equiv	2026-09-14	Second review: lock ownership, thread creation, the dynamic guard, post-dominance, intrinsics
+5912df1411ac	equiv	2026-09-24	tsan: Count one thread in the child of a multi-threaded fork
+592b6b01fa62	equiv	2026-09-25	tsan: Count the times the runtime drops shadow records
+5a569fe4b5d4	new	2026-10-06	tsan: Fix lost-race shapes in the static analyses
+5a89e32fb900	new	2026-09-25	tsan: Export what an inline hit test needs
+5ae6fe82f07e	new	2026-10-08	tsan: Check roots, retired locks and frees in path B
+5bd1070eef6f	new	2026-10-03	tsan: Count checks and misses per caller pc (measurement)
+5c8d277a8b13	new	2026-10-08	tsan: Add two test-only mutants for the lock markers
+5c97c538c57e	new	2026-10-10	tsan: Skip an atomic load's acquire of a clock already acquired
+5cceccf2d605	new	2026-10-06	tsan: Let the descriptor model latch the phase guard off
+5d7821ac96e9	new	2026-09-24	tsan: Split LO-W's shared read-only locations by how they were written
+5de7945fb6b0	new	2026-10-05	tsan: Address the descriptor-reuse delta audit
+5deae28e4d91	new	2026-10-08	tsan: Return for the owner before the SHARED gather
+5dffec7c2f4b	new	2026-09-24	tsan: Record how handed-over heap arrives, and what fast-path hits repeat
+5e02a59a07f9	new	2026-10-06	tsan: Order a descriptor number's free before its reuse
+5e34fc2ef069	new	2026-10-07	tsan: Attribute records written during a reset to their writers
+5e944dac269e	new	2026-09-29	tsan: Census the deadlock detector's work by lock class
+5eca63015f63	new	2026-09-03	[TSan] Runtime: count shadow-cell evictions, and the ones that can hide a race
+5fb6c13bcd60	new	2026-10-07	tsan: Add shadow ownership markers for EVCONF-CHECKED
+5fe77ced8ec7	equiv	2026-09-14	Repair the runtime and test builds; make the suite runnable per analysis configuration
+604220281c74	equiv	2026-09-30	tsan: Skip the inline hit test in single mode
+612144154360	equiv	2026-09-27	tsan: Skip the inline hit test in single mode
+61470609d2ee	new	2026-09-30	tsan: Skip the pre-lock detector hook when it would change nothing
+6160b102930f	new	2026-09-28	tsan: Profile accesses to own unpublished blocks (measurement)
+61af8477c754	new	2026-09-30	tsan: Keep the token counter out of the eviction statistics
+625f0d293490	new	2026-09-25	tsan: Test dynstc_rt next to the ignore bit, not at the entries
+6286bf74879c	equiv	2026-09-25	tsan: Count the times the runtime drops shadow records
+63930d3b7adb	new	2026-09-28	tsan: Add light runtime entries for compare calls
+63bf53262de7	new	2026-09-24	tsan: Skip plain checks at run time while one thread remains
+63f45dee92ef	equiv	2026-09-03	[TSan] Third review: the sound flow-sensitive elision rule, lock identity, fail-closed library tables
+64055f16a402	equiv	2026-09-23	Third review: the sound flow-sensitive elision rule, lock identity, fail-closed library tables
+664aa4376bdb	new	2026-10-09	tsan: Remember the release key a thread is ordered after
+669e8c0e4d30	new	2026-10-08	tsan: Build the Go runtime again after the lock markers' unlock check
+6740efb09a41	equiv	2026-09-02	[TSan] Guard the ReX lockset bookkeeping so the baseline stops paying for it
+678772ba2849	new	2026-10-06	tsan: Add OWNER-RT, a run-time owner word per object
+67ba5b366067	new	2026-10-05	tsan: Model descriptor reuse only in programs with EVCONF
+67cbacb6e6f1	equiv	2026-09-03	Guard REX filtering
+6815ac749368	new	2026-10-06	tsan: Test the main thread's done check in its window
+68b50a30e373	new	2026-10-08	tsan: Check unheld accesses to lock-derived fields at run time
+68d2a4cf843d	equiv	2026-09-03	Repair the runtime and test builds; make the suite runnable per analysis configuration
+691c6b572dbd	new	2026-09-07	Pass, runtime: the interceptor toggle for the whole string table
+6929b62111a7	new	2026-10-08	tsan: Void a mark over another key's unordered release
+692adeecce5e	new	2026-10-08	Revert "tsan: Return for the owner before the SHARED gather"
+69313fbf7170	new	2026-10-08	tsan: Check carved sub-arrays at run time (lock spec `carve`)
+69884a2780a7	new	2026-09-24	tsan: Tell whether a fast-path hit's witness dominates it
+69a2c41c5031	new	2026-09-26	tsan: Let a covering record of the same epoch satisfy an access
+6a1b9a0faf05	new	2026-09-28	tsan: Tail-call the interceptor from light entries
+6a2e3c26b694	equiv	2026-10-02	tsan: Add the phase guard's spec checks and quiet words
+6d43e86ea0a0	new	2026-09-26	tsan: Test for covering records inline with -tsan-inline-subsumption
+6d587e8d6877	new	2026-09-29	tsan: Cite the design notes by name, not by path
+6e113eea4899	equiv	2026-09-30	tsan: Fence G-EA's frees from a flag set before threads start
+6e92679bf9db	new	2026-10-02	tsan: Add an unsound front-skip oracle for the main thread
+7017a5f8266f	new	2026-10-07	tmp: count phase hook calls before and after the first thread creation (measurement only, not for merging)
+70488e843e01	new	2026-10-08	tsan: State and check the marker gate's premise on owned_marker
+7098a6b3b2e0	equiv	2026-10-02	tsan: Add the phase guard's single-bit input and entries
+7291cda16437	new	2026-10-08	tsan: Check a variable index into a listed member array
+72b1f83fdae5	equiv	2026-10-03	tsan: Fix quiet mode's wakes and its ignore-region trap
+759e38a958bb	new	2026-09-27	tsan: Check the sharing layout over a table of regions
+75bf725c0b90	new	2026-10-09	tsan: Remember the release key a thread is ordered after
+76b9e2219989	new	2026-09-24	Runtime: counters for executed accesses, fast-path hits and function entries
+7703f11f9c96	new	2026-10-05	tsan: Merge the descriptor-reuse gate into the candidate
+770e8544a78f	new	2026-09-25	tsan: Let a covering record of the same epoch satisfy an access
+77d7fd088b2f	equiv	2026-09-29	tsan: Report a G-EA second thread only for objects it did not allocate
+78fee75ba768	equiv	2026-09-30	tsan: Read the single-mode skip from the fast state
+7a9770de15d7	new	2026-09-24	tsan: Export what an inline hit test needs
+7ad8d3c7e668	new	2026-10-05	tsan: Address the phase runtime audit's cost self-off findings
+7b84f439117b	equiv	2026-09-24	tsan: drop the active-thread count only after the join acquired (shape 36)
+7c0a7c968e2e	new	2026-09-29	tsan: Cite the design notes by name, not by path
+7dc26fa73c71	equiv	2026-09-03	Second review: lock ownership, thread creation, the dynamic guard, post-dominance, intrinsics
+7e9172350922	equiv	2026-09-05	Runtime: the shadow-eviction counters behind a build option, per thread when on
+7f1c1ab994d9	equiv	2026-09-03	Remove debug print from `ThreadCreate` in ThreadSanitizer.
+7f6d4e95e039	new	2026-09-28	tsan: Count entries through the inline test's miss path
+7f95491d958e	new	2026-10-08	tsan: Check a variable index into a listed member array
+804579ca2c9a	new	2026-10-02	tsan: Close the FE-PM audit's low findings
+80713d33678e	equiv	2026-10-05	tsan: Hide the runtime's thread-locals on 1738 (measurement)
+81144cb9c1c8	new	2026-09-29	tsan: Count LO-OBJ-G and OWN-HANDOFF tests and skipped checks (measurement)
+81db35939cc1	new	2026-09-29	tsan: Cite the design notes by name, not by path
+8308839a4989	new	2026-09-29	tsan: Cite the design notes by name, not by path
+8334a0595bd6	equiv	2026-09-24	tsan: Count one thread in the child of a multi-threaded fork
+83bb354e281c	new	2026-10-06	tsan: Address the descriptor-reuse delta audit
+8403f662d7f7	new	2026-10-06	tsan: Address the descriptor-reuse audit
+84ab43409f54	new	2026-10-05	tsan: Turn the phase guard off when it pays nothing
+858a9e9ea754	new	2026-09-24	Runtime: counters for executed accesses, fast-path hits and function entries
+85b7db8ad545	new	2026-10-06	tsan: Address the OWNER-RT code audit's runtime lows
+85da4f428863	new	2026-09-30	tsan: Clamp the oracle's touched depth at every entry
+85fa5d3ba554	new	2026-10-06	tsan: Report a descriptor reused after an unseen free
+88406f180568	new	2026-09-25	tsan: Test for covering records inline with -tsan-inline-subsumption
+88d09d4ba1d4	equiv	2026-09-14	Runtime: eviction counters and a per-granule watch; the ReX filter behind a CMake option
+892ae58f8bc6	equiv	2026-10-06	tsan: Cover a check on every path
+8b00d963bea9	new	2026-09-24	tsan: Count plain entries the dynstc_rt flag skips
+8b5653e84bb0	new	2026-09-30	tsan: Count alias-hit and lazy-epoch candidates in the census
+8cd6e6ae71b3	new	2026-10-09	tsan: Count the lock markers' work per root type
+8da03e66facc	new	2026-09-30	tsan: Count range checks by origin and cell class
+8dd92af40df8	equiv	2026-10-03	tsan: Say what a phase-guard violation may have cost
+8ed89bd730ff	new	2026-10-08	tsan: Keep the marker checks out of CheckRaces' hot copy
+8f6899f5c5ff	equiv	2026-09-03	Third review: the sound flow-sensitive elision rule, lock identity, fail-closed library tables
+8ff877028c4a	new	2026-10-01	Runtime: counters for executed accesses, fast-path hits and function entries
+9089aef16c05	new	2026-09-26	tsan: Recycle the oracle's nodes when a lifetime ends (measurement)
+90a627b9029f	equiv	2026-09-29	tsan: Treat a never-published LO-OBJ-G owner as private
+92ea52985016	new	2026-09-24	tsan: Add a sampled per-location lockset to the LO-W counters
+92f2e518eed6	new	2026-09-25	Runtime: counters for executed accesses, fast-path hits and function entries
+94cd9dcec4e8	equiv	2026-09-27	tsan: Add memcpy entries without the source check
+95b13077287d	new	2026-10-01	tsan: Export the relaxed-atomics premise check
+9644baacef48	equiv	2026-09-24	tsan: Count the times the runtime drops shadow records
+96b64d302de7	new	2026-09-25	tsan: Skip plain checks at run time while one thread remains
+96e1b3fae855	new	2026-09-28	tsan: Enter the interceptor's scope when it can ignore reads
+970d2adfc4e6	new	2026-10-09	tsan: Keep a retired tail beside another range; a key per release
+972983bb7a3a	equiv	2026-10-03	tsan: Name the access in a phase-guard violation report
+9773f3e32355	new	2026-10-08	tsan: Or the raw flag bytes in the free hook's gate
+97ef0522181c	new	2026-10-08	tsan: Cache the lock markers' "no" per thread
+989a8e8ea21e	equiv	2026-09-23	Second review: lock ownership, thread creation, the dynamic guard, post-dominance, intrinsics
+9960fb1fc5cb	new	2026-09-29	tsan: Cite the design notes by name, not by path
+9994bcac675e	new	2026-10-05	tsan: Turn the hooks off on any latch the main thread never skipped
+99c5a4a11a7e	new	2026-10-06	tsan: Add OWNER-RT, a run-time owner word per object
+9bb17ddf7fed	equiv	2026-09-29	tsan: Tie a G-EA answer to an owner and root from one thread
+9be497ac4fa7	new	2026-10-07	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+9c6d368bf720	equiv	2026-09-03	[TSan] First review: soundness defects in dominance, main's classification, SWMR, lock ownership and the runtime
+9c8cd13398c3	new	2026-10-08	tsan: Check unheld accesses to lock-derived fields at run time
+9cf1d7ba990f	new	2026-09-25	tsan: Test dynstc_rt next to the ignore bit, not at the entries
+9d1ac06c6a59	new	2026-09-28	tsan: Profile the thread-local oracle (measurement)
+9da019606842	new	2026-10-08	tsan: Read a stale lock field as no lock in path B
+9dbd02c7cfac	new	2026-10-10	tsan: Let an ALS load skip the join with an empty clock
+9f57ff90206c	new	2026-09-25	tsan: Let a covering record of the same epoch satisfy an access
+9f65919f1a10	new	2026-10-05	tsan: Merge the descriptor-reuse delta audit fixes into the candidate
+a0480e35cfee	new	2026-10-07	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+a164241e1e0a	new	2026-10-08	tsan: Give a root's first granule its own form of the lock marker
+a223180ecc00	equiv	2026-09-24	tsan: drop the active-thread count only after the join acquired (shape 36)
+a2312f52ef86	new	2026-09-29	tsan: Restart hand-off chains at resets, recycle profile nodes
+a239f64958f9	new	2026-10-09	tsan: Count LO-MARK's guard calls per thread
+a2a7387e90aa	new	2026-09-30	tsan: Offer the deadlock detector a larger node table
+a2ec7a336d77	new	2026-10-08	tsan: Close the carve check's gaps found by audit A73
+a3ba1046decd	new	2026-10-04	tsan: Profile the thread-local oracle (measurement)
+a442f255367d	new	2026-10-08	tsan: Add lock markers to the runtime (LO-MARK)
+a5307a41f662	new	2026-10-08	tsan: Check carve reads by address, per thread and without a lock
+a5327211b2e3	new	2026-10-08	tsan: Or the raw flag bytes in the free hook's gate
+a67b9526636e	new	2026-10-02	tsan: Add an own-stack oracle for measurement
+a6950e28598a	new	2026-10-05	tsan: Merge the descriptor-reuse edge into the candidate
+a6b56afd5de3	new	2026-09-24	tsan: Attribute LO-W lifetimes to allocation sites; find stack-like heap
+a71eb3cc8730	equiv	2026-10-01	tsan: Close audit A38's gaps in removal-mode DE
+a8073ff0bd3b	new	2026-10-01	tsan: Keep the pre-lock's SyncVar; state what the large table misses
+a873338b1baa	new	2026-10-05	tsan: Address the low findings of the phase runtime audit
+aa70adc48327	new	2026-10-05	tsan: Address the descriptor-reuse audit
+aa91b3bebafa	new	2026-10-06	tsan: Address the OWNER-RT code audit's runtime lows
+aae3a1d80ea7	new	2026-09-30	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+ab09f05b15c6	equiv	2026-09-24	tsan: range entries that check every granule (__tsan_*_range_all)
+ab37a3e5a204	new	2026-10-06	tsan: Count lock operations per mutex for a census
+abaf46609599	new	2025-06-26	Fix signatures and add prints for 16-byte read/write
+abffbfc53c9c	equiv	2026-09-03	[TSan] Repair the runtime and test builds; make the suite runnable per analysis configuration
+acafe5d32fc7	equiv	2026-09-25	tsan: Count one thread in the child of a multi-threaded fork
+add8aa7bfe27	new	2026-09-30	tsan: Merge exactly under verified removal, subsuming only in groups
+ae54373d3f6a	equiv	2026-10-03	tsan: Count a sync handler on a skipping main thread as a violation
+b032815698a0	new	2026-10-07	tsan: Check accesses against pushed free-list blocks
+b1317b19a6e4	new	2026-09-30	tsan: Count G-EA's tests, cache hits and runtime answers (measurement)
+b194dc8b9f3b	new	2026-09-27	tsan: Check the region layout that shadow sharing needs
+b1d5be0c48bc	new	2026-10-04	tsan: Profile the lockset oracle (measurement)
+b26d7c6eded2	new	2026-09-26	tsan: Count entries through the inline test's miss path
+b2c356018845	new	2026-10-07	tsan: Turn a latched run's hooks off at a thread creation
+b3a013891367	new	2026-09-25	tsan: Let a covering record of the same epoch satisfy an access
+b55911d84e62	new	2026-09-29	tsan: Cite the design notes by name, not by path
+b563979163a3	new	2026-10-09	tsan: Make every copy of an ownercheck function end in a test
+b569f359339b	new	2025-06-26	Add trace prints for TSan interceptors
+b66bdad3cfd3	new	2026-10-06	tsan: Skip phase checks in runtime entries
+b6884c96d067	new	2026-10-05	tsan: Report a descriptor reused after an unseen free
+b6a0a80cfbcd	new	2026-09-25	tsan: Exempt O2's exclusive phase only when it was published
+b7baa85b64ee	new	2026-10-08	tsan: Check carve reads by address, per thread and without a lock
+b851103b4563	new	2026-09-24	tsan: Record per site what class of location each access touched
+b9e967613a16	equiv	2026-09-03	Guard REX filtering
+b9fce42bfddc	new	2026-10-08	tsan: Close audit A77's loss traces in the lock markers
+ba755bbb6fb8	new	2026-10-07	tsan: Hold the next chunk to check_block's terms at a cursor's end
+bac215a62656	new	2026-10-06	tsan: Test the split's phase-guard latch, with a mutant
+bb54fcdec403	new	2026-10-10	tsan: Note the order of ALS's version and slot reads
+bb6f40d9905b	equiv	2026-10-03	tsan: Move the phase guard to the quiet-thread runtime
+bba89309ba8a	new	2026-10-07	tsan: Close the EVCONF-CHECKED windows the code audit found
+bc0328c34b31	new	2026-10-06	tsan: Let the descriptor model latch the phase guard off
+bc2ce619c508	new	2026-09-29	Runtime: counters for executed accesses, fast-path hits and function entries
+bc865269aa75	new	2026-09-25	tsan: Count the returns at the dynstc_rt flag
+be70a267cfe1	new	2026-09-25	tsan: Add batch check entries
+bf5508084dfa	new	2026-10-06	tsan: Model descriptor reuse only in programs with EVCONF
+c0b460e0dd30	equiv	2026-10-02	tsan: Say what a phase-guard violation may have cost
+c0e2ef0d0e6c	new	2026-09-26	tsan: Let a covering record of the same epoch satisfy an access
+c0f33247f076	equiv	2026-09-14	Third review: the sound flow-sensitive elision rule, lock identity, fail-closed library tables
+c15e136e6771	new	2026-09-28	Runtime: count what slot turnover costs (TSAN_ACCESS_STATS)
+c2403fadcb79	new	2026-09-25	tsan: Add preserve_most access entries
+c32c5562cb16	new	2026-09-27	tsan: Export the relaxed-atomics premise check
+c465a133e44d	new	2026-09-26	tsan: Test for covering records inline with -tsan-inline-subsumption
+c4fa7a48e175	new	2026-09-24	Runtime counters: count the loop range entries with the range calls (measurement)
+c5dd8da0b105	new	2026-10-07	tsan: Verify held keys before a reset's wipe; check slots by key
+c728a705c063	new	2026-10-06	tsan: Print the descriptor model in the phase guard's stats
+c756a37868d9	equiv	2026-09-02	[TSan] Export __tsan_active_thread_count so instrumented libraries can link
+c7ad02e485ef	equiv	2026-09-30	tsan: Tighten G-EA's cached answers and report dedup
+c7af5ad2fb7e	new	2026-10-02	tsan: Merge the LO-W counters onto the integration tip
+c88b5cd8dcc2	new	2026-09-25	Runtime: counters for executed accesses, fast-path hits and function entries
+c8f04181f253	new	2026-09-25	tsan: Count the synchronisation path's events (measurement)
+c911b1f1ff67	new	2026-10-10	tsan: Make the size of ALS's per-thread cache a flag
+c990208ce723	equiv	2026-09-29	tsan: Check at run time that a G-EA owner has one thread
+c9e5cf770b9b	new	2026-09-26	tsan: Record nothing in a range-all check while the thread is alone
+cab7bcaa6802	equiv	2026-10-03	tsan: Let only kinds 1-3 keep a quiet thread quiet
+cabc1ce1709a	equiv	2026-09-14	First review: soundness defects in dominance, main's classification, SWMR, lock ownership and the runtime
+cbf2270c12ae	new	2026-10-08	tsan: Keep a lock marker until a full write replaces it
+cc530c49fb6d	new	2026-10-09	tsan: Count threads still running into LO-MARK's census
+cc7f11d25d9c	new	2026-09-26	tsan: Mark sites the oracle tables lose as O2-unsafe (measurement)
+cc80e53235b8	new	2026-09-30	tsan: Allocate all of the oracle's memory when the process starts
+ccd152e8324e	new	2026-10-07	tsan: Attribute reset-window records by the slot journals
+d08491e24da5	new	2026-10-06	tsan: Add OWNER-RT, a run-time owner word per object
+d1766d2710fc	new	2026-09-25	tsan: Add batch check entries
+d1b977fa997f	new	2026-09-25	tsan: Count the returns at the dynstc_rt flag
+d200b6a62dc6	new	2026-09-25	tsan: Profile the lockset oracle (measurement)
+d2b437a7cdb9	new	2026-10-01	tsan: Count detector flushes and skipped pre-locks
+d2ef10a450dd	new	2026-10-06	evconf: Check a re-arm on c->thread->base at run time
+d465a1f47515	new	2026-10-08	tsan: Let only a full write replace an ownership marker
+d59436526459	new	2026-09-30	tsan: Dump the oracle's counts every two minutes
+d62630ad0e69	new	2026-10-05	tsan: Order a descriptor number's free before its reuse
+d67315ea31f5	new	2026-10-01	tsan: Count inline hit tests per placement (measurement)
+d73e071a2065	new	2026-09-29	tsan: Cite the design notes by name, not by path
+d7e0ec71df33	new	2026-09-28	tsan: Test FE-SINK's exits, loops and miss entries further
+d80253bbf55a	equiv	2026-09-03	First review: soundness defects in dominance, main's classification, SWMR, lock ownership and the runtime
+d89ba012ae34	new	2026-10-10	tsan: Refuse an ALS hit to a thread that lost its slot
+d9a9637108b7	new	2026-10-05	tsan: Take the reuse edge at every new descriptor number
+d9f253bdd65c	new	2026-09-28	Runtime: counters for executed accesses, fast-path hits and function entries
+da67beb88691	new	2026-09-26	tsan: Let a covering record of the same epoch satisfy an access
+dbecd0ab7791	new	2026-10-02	tsan: Add an unsound main-thread oracle for Redis
+dcdae7a6fdd0	new	2026-09-28	tsan: Profile single-threaded periods and SWMR writes (measurement)
+dee7a8684f98	new	2026-09-27	tsan: Test the single-mode flag in range-all too
+e022cce2c032	new	2026-09-25	tsan: Profile the thread-local oracle (measurement)
+e03e517726c2	new	2026-09-28	Runtime: count uniform cells in range calls (TSAN_ACCESS_STATS)
+e24138606f33	new	2026-09-25	tsan: Add preserve_most access entries
+e2a16ba031e1	new	2026-10-03	tsan: Count same-frame pair hits with no acquire between
+e3e4762aa6a6	new	2026-09-25	tsan: Profile the thread-local oracle (measurement)
+e3e5c0a01e76	new	2026-09-30	tsan: Include the file API for the range census dump
+e42bf4ea17ca	new	2026-10-06	tsan: Prove config-table confinement; extend EVCONF
+e52106ee6ee1	new	2026-10-06	tsan: Test the split and the A64b fixes of the reuse model
+e6223abe8cbf	new	2026-10-08	tsan: Check a variable index into a listed member array
+e69ab07b8b32	new	2026-10-08	tsan: Leave the range loop on a concurrent granule
+e6c29294fe61	equiv	2026-09-01	Repair the TSan runtime and test builds
+e6c585820dd9	equiv	2026-09-23	Repair the runtime and test builds; make the suite runnable per analysis configuration
+e6eb247bf6d8	new	2026-10-08	tsan: Pin the race_mask guard of the SHARED owner return
+e735b140ff6b	equiv	2026-09-24	tsan: drop the active-thread count only after the join acquired (shape 36)
+e78ef4383895	new	2026-09-26	tsan: Record nothing in a range-all check while the thread is alone
+e8045ae0b5e9	new	2026-10-06	tsan: Take the reuse edge at every new descriptor number
+e98017f2ab5c	equiv	2026-09-02	[TSan] Export __tsan_active_thread_count so instrumented libraries can link
+e99a4e156135	new	2026-10-08	tsan: Close the lock markers' unlock, misuse and rebind paths
+e9da26dddd33	new	2026-10-01	tsan: Add preserve_most function entry and exit
+ea791e96cba6	new	2026-09-30	tsan: Skip an acquire load's join when nothing was released
+ea9a7c6191f9	equiv	2026-09-23	Runtime: the shadow-eviction counters behind a build option, per thread when on
+eb8191c4fc20	equiv	2026-09-27	tsan: Mirror stock's memcpy body in the _nosrc entries
+ebc80f4b5ec4	equiv	2026-09-28	tsan: Add run-time queries of the mutexes a thread holds
+ec0855d10f8a	new	2026-03-10	Guard REX filtering
+ec2d2fe12d13	new	2026-10-07	tmp: Count OWNER-RT and marker calls for the EVCONF-CHECKED census
+ec3addd031b9	new	2026-10-09	tsan: Add an explicit release to the lock markers
+ec4dca12d7e6	new	2026-09-27	tsan: Deliver pending signals before an atomic hit
+ec84711973ed	new	2026-09-27	tsan: Ignore dynstc_rt on Apple platforms
+ecc3e42dd8f8	new	2026-09-24	tsan: Stop dynstc_rt for good once a thread's clock is dropped
+ed09a8d5abf5	new	2026-10-02	tsan: Add lock-scoped accesses and count violations by cause
+edad55d5b02d	new	2026-09-30	tsan: Run FE-LAZY in runtime tests and check trace_top
+ee660cd989bf	new	2026-10-04	tsan: Count checks and misses per caller pc (measurement)
+eece0eea7c77	new	2026-09-28	Runtime: count slot attaches, preemptions and re-locks
+eee8e8455ebe	equiv	2026-10-03	tsan: Let the skipping main thread skip its range checks too
+ef600f74b644	new	2026-10-09	tsan: Read a released root under the lock; census behind a flag
+ef6e0298e997	new	2026-09-25	tsan: Record nothing in a range-all check while the thread is alone
+f020d63c2a38	new	2026-10-08	tsan: Close the carve check's gaps found by audit A73
+f1d5b8b434d1	new	2026-10-05	tsan: Keep the phase guard off the sync and range paths
+f28aa8b2fb85	new	2026-10-01	tsan: Inline the hit test of relaxed atomics
+f2e03eb08f61	new	2026-09-24	tsan: Fix three LO-W readers found wrong on the first full run
+f464f473f7ed	new	2026-10-09	tsan: Test the owner of an object read from a holder (fieldcheck lines)
+f4b7f991b0b7	equiv	2026-09-01	[TSan] Make InterceptorEnabled per-thread and decrement the thread count at join
+f4ef684205dd	new	2026-10-01	tsan: Count runtime checks and hits by entry kind
+f524db2e1f25	new	2026-10-09	tsan: Count LO-MARK's guard calls per thread
+f692df0c2870	equiv	2026-09-23	First review: soundness defects in dominance, main's classification, SWMR, lock ownership and the runtime
+f6b15fd610c3	new	2026-09-24	tsan: Split LO-W's own heap by who frees it
+f8061e814c0e	equiv	2026-10-02	tsan: Name the access in a phase-guard violation report
+f822354eb141	new	2026-10-08	tsan: Return for the owner before the SHARED gather
+f966adb70fba	new	2026-10-06	tsan: Take the reuse edge at every new descriptor number
+f9c6e72bcc5e	new	2026-10-06	tsan: Stop calling settled threads' phase hooks
+fa5e8c5cd27b	new	2026-09-24	tsan: Track LO-W locations per lifetime and record their origin
+fa67531a660e	new	2026-09-25	tsan: Record nothing in a range-all check while the thread is alone
+fa9a89069faa	new	2026-09-25	tsan: Test for covering records inline with -tsan-inline-subsumption
+faca717dba1a	equiv	2026-10-03	tsan: Add __tsan_phase_quiet_end and end quiet at a handler longjmp
+fb07d250ca05	new	2026-10-06	tsan: Refine dominance elimination
+fc18250b11e3	equiv	2026-09-28	tsan: Let a sunk entry's miss call push the frame itself
+fc762f401f92	equiv	2026-09-29	tsan: Cite the design notes by name, not by path
+fdc66a81cca6	new	2026-10-01	tsan: Count LO-OBJ-G tests and skipped checks (measurement)
+fe1e4f609675	equiv	2026-09-03	Runtime: eviction counters and a per-granule watch; the ReX filter behind a CMake option
+fe6ba27ec3b9	new	2026-10-09	tsan: Test a producer's skipped owner store (ownercheck lines)
+fe74ac99e8f5	new	2026-10-03	tsan: Count how often every other thread is quiet (measurement)
+feee39f615ae	new	2026-10-08	Revert "tsan: Return the owner's marked granule inside the range loop"
+ff6099a7e430	new	2026-09-30	tsan: Exclude only the bytes a merged field pointer reaches
+ff801048f043	new	2026-09-28	tsan: Profile hand-off per granule over app lifetimes (measurement)
+ffbc373ee4d1	new	2026-03-10	Add trace, based on MemoryAccess() and MemoryAccessRange()
