@@ -1,7 +1,7 @@
 # Upstream PR measurements
 
-> Speed-up over stock TSan, **>1 = faster**. State of 26 Oct 2026: every Intel timing is done except Chromium (stopped,
-> see Open items); the AMD check waits for a window on apollo.
+> Speed-up over stock TSan, **>1 = faster**. State of 26 Oct 2026: every Intel timing is done except Chromium (moving to a
+> current tree, see Open items); the AMD check waits for a window on apollo.
 
 | Column | What it is | Upstream PR |
 |---|---|---|
@@ -163,7 +163,7 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 | Item | State |
 |---|---|
 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏸ stopped at the build: clang 24 rejects code in the Aug-2024 tree. skia's missing builtin is avoided with skcms's portable path (-DSKCMS_DISABLE_HSW, both arms); the static_assert in base's enum-histogram macro (2 call sites) needs a source edit. In libbase.so DE + EA removes 1.74 % of read/write call sites |
+| Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏳ moving to a current Chromium tree (newest Stable) with a matching clang 24 + lld; the Aug-2024 tree (127) does not build with clang 24 without source edits. In that tree's libbase.so, DE + EA removes 1.74 % of read/write call sites |
 
 Done 20-26 Oct: the applications at -O0 and -O2, the eight real applications, the kernels, the llvm-test-suite and
 Abseil programs, the RocksDB re-time, compile time and race preservation.
