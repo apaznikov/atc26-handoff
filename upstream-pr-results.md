@@ -173,13 +173,14 @@ Removing only reads would also close the gap, but it costs much of DE's gain whe
 ## Compile time
 
 CPU time of the compiler (user + sys summed over every source compile, configure probes excluded), -O2, 40 jobs,
-change against stock in %. Stock varies by 0.2-0.6 % between builds. DE + runtime fix compiles as DE.
+change against stock in %. "Source files compiled" counts the compiler invocations that compile a source file (SQLite is
+one amalgamated file, sqlite3.c). Stock varies by 0.2-0.6 % between builds. DE + runtime fix compiles as DE.
 
-| Program | Compiles | Stock, CPU time | EA, % | DE, % | DE + EA, % |
+| Program | Source files compiled | Stock: compiler CPU time | EA, % | DE, % | DE + EA, % |
 |---|--:|--:|:-:|:-:|:-:|
 | SQLite | 1 | 16.4 s | +0.6 | +0.3 | +0.6 |
 | memcached | 61 | 7.8 s | +0.7 | +1.3 | +2.6 |
-| Redis | — | 28.5 s | −0.3 | +0.5 | −0.2 |
+| Redis | 140 | 28.5 s | −0.3 | +0.5 | −0.2 |
 | FFmpeg | 1,936 | 350 s | −0.1 | +0.3 | +0.3 |
 | MySQL | 3,662 | 4,270 s | 0.0 | +0.2 | +0.1 |
 
