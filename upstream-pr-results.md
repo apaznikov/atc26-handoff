@@ -1,6 +1,6 @@
 # Upstream PR measurements
 
-> Speed-up over stock TSan, **>1 = faster**. State of 25 Oct 2026: complete; RocksDB re-timed (⁵).
+> Speed-up over stock TSan, **>1 = faster**. State of 26 Oct 2026: complete; RocksDB re-timed (⁵); Chromium in progress.
 
 | Column | What it is | Upstream PR |
 |---|---|---|
@@ -83,6 +83,24 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | | 1 | ⚪ 0.999 | ⚪ 0.999 | ⚪ 0.996 | ⚪ 0.998 |
 | Rodinia particlefilter | 8 | 🟰 1.000 | 🟡 1.039 | 🟡 1.045 | 🟡 1.049 |
 | | 1 | 🟰 1.000 | ⚪ 1.000 | ⚪ 1.002 | ⚪ 0.996 |
+| **llvm-test-suite, the remaining programs with a DE share of accesses ≥ 5 %** (schedule row 14; -O2, 1 thread, A/A within ±0.6 %) | | | | | |
+| consumer-typeset | 1 | 🟰 1.000 | 🟢 **1.155** | 🟢 **1.089** | 🟰 1.155 |
+| LoopRestructuring-flt | 1 | 🟰 1.000 | 🟢 **1.112** | 🟰 1.112 | 🟰 1.112 |
+| uuencode | 1 | 🟰 1.000 | 🟢 **1.091** | 🟰 1.091 | 🟰 1.091 |
+| uudecode | 1 | 🟰 1.000 | 🟢 **1.060** | 🟰 1.060 | 🟰 1.060 |
+| Olden voronoi | 1 | 🟰 1.000 | 🟢 **1.056** | 🟰 1.056 | 🟰 1.056 |
+| espresso | 1 | 🟰 1.000 | 🟢 **1.054** | 🟢 **1.038** | 🟰 1.054 |
+| Olden bisort | 1 | 🟰 1.000 | 🟢 **1.044** | 🟰 1.044 | 🟰 1.044 |
+| oggenc | 1 | ⚪ 1.000 | 🟢 **1.041** | 🟢 **1.047** | 🟢 **1.043** |
+| CoMD | 1 | 🟰 1.000 | 🟢 **1.038** | 🟢 **1.039** | 🟰 1.038 |
+| LoopRestructuring-dbl | 1 | 🟰 1.000 | 🟢 **1.037** | 🟰 1.037 | 🟰 1.037 |
+| Obsequi | 1 | 🟰 1.000 | 🟢 **1.034** | 🟢 **1.023** | 🟰 1.034 |
+| g721encode | 1 | 🟰 1.000 | 🟢 **1.024** | 🟰 1.024 | 🟰 1.024 |
+| Olden power | 1 | 🟰 1.000 | 🟢 **1.024** | 🟢 **1.023** | 🟰 1.024 |
+| RSBench | 1 | 🟰 1.000 | 🟢 **1.020** | 🟢 **1.021** | 🟰 1.020 |
+| mpeg2decode | 1 | 🟰 1.000 | 🟢 **1.013** | 🟢 **1.013** | 🟰 1.013 |
+| fourinarow | 1 | 🟰 1.000 | ⚪ 1.001 | 🟰 1.001 | 🟰 1.001 |
+| pcompress2 | 1 | 🟰 1.000 | ⚪ 1.000 | ⚪ 0.999 | 🟰 1.000 |
 
 ¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
 
@@ -104,8 +122,11 @@ reads only 1.065 [1.010, 1.110], both still 🟡. -O0: A/A 0.977 [0.955, 1.006],
 In every column, EA means the two EA PRs (capture limit + local slots); the paper's broader escape analysis is not used.
 
 Screening: 254 programs were ranked by the share of checks DE removes. Kernels below ~3 % were not timed (NPB
-IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, CoMD, miniFE, XSBench, RSBench, Rodinia
-others); the eight real applications were timed regardless.
+IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, miniFE, XSBench, Rodinia
+others); the eight real applications were timed regardless. CoMD and RSBench, below 3 % of checks, were timed in
+row 14 for their share of executed accesses. On those 17 programs the share of accesses DE removes predicts the
+direction but not the size: consumer-typeset 19.7 % of accesses gives +15.5 %, uuencode 29.4 % gives +9.1 %,
+fourinarow 30.7 % gives nothing.
 
 ## Compile time
 
@@ -160,8 +181,8 @@ stock, not with each other.
 | 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ✅ done (26 Oct) |
 | 12 | Compile time: 5 applications at -O2, every arm, compile step only (CPU time summed over the compiler invocations) | ✅ done (26 Oct, 05:11) |
 | 13 | 1-thread legs: SPLASH-2x raytrace, Rodinia particlefilter, barnes | ✅ done (26 Oct) |
-| 14 | 17 more llvm-test-suite programs with a DE share of accesses ≥ 5 %, 1 thread | ⏳ running on focs, ~5-6 h |
-| 15 | Chromium (Intel): stock against DE + EA, Speedometer 3 and two blink_perf panels | ⏳ after row 14 |
+| 14 | 17 more llvm-test-suite programs with a DE share of accesses ≥ 5 %, 1 thread | ✅ done (26 Oct): DE faster on 15 of 17 |
+| 15 | Chromium (Intel): stock against DE + EA, Speedometer 3 and two blink_perf panels | ⏳ trial build running on focs |
 
 Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
 
@@ -173,6 +194,9 @@ Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU
   single-threaded) and 7zip +1.1 % (+1.7 % with EA). The threaded SPLASH-2x/PARSEC/Rodinia programs vary too much
   at 8 threads to separate (barnes, freqmine, raytrace, particlefilter); radiosity is unchanged. At 1 thread DE
   gives barnes +4.9 % (from write elimination: reads only gains nothing); raytrace and particlefilter stay unchanged.
+- 🟢 **On the 17 remaining llvm-test-suite programs (1 thread), DE is faster on 15:** +1.3 % to +15.5 %
+  (consumer-typeset 1.155×, LoopRestructuring-flt 1.112×, uuencode 1.091×), median +3.8 % over all 17; fourinarow and
+  pcompress2 are unchanged. EA alone changes the code of oggenc only, without effect.
 - **Race preservation (N = 10, every arm): no race site lost** on SQLite, memcached and MySQL at -O0 and -O2
   (MySQL: 251 and 226 sites kept). Redis and FFmpeg cannot test it: no build, stock included, reports a race
   under their workloads.
