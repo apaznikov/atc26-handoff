@@ -51,7 +51,7 @@ census runs on a-p13, so the changed runtime code never runs · — not measured
 | Redis | 8 | = | = | ⏳ | = |
 | MySQL | 8 | = | = | ⏳ | = |
 | **Applications, -O2** | | | | | |
-| SQLite² † | 8 | 🟰 | = | ⏳ | 🟰 |
+| SQLite² † | 8 | 🟰 | = | = | 🟰 |
 | FFmpeg | 8 | = | = | ⏳ | = |
 | memcached † | 8 | 🟰 | = | ⏳ | 🟰 |
 | Redis⁶ | 8 | 🟰 | = | ⏳ | 🟰 |
@@ -111,8 +111,9 @@ walthread1 🟢 **+4.3** (DE +7.1; intervals overlap). The DE and DE + EA figure
 leg whose A/A for that test is itself off zero (+0.9 [+0.2, +1.5]); by the registered rule such a test is reported but
 not called, although the effect is 70 times that offset.
 
-² SQLite -O2: no single test separates from noise for DE (walthread1 +4 lies inside A/A); checkpoint_starvation_1
-gains nothing at -O2.
+² SQLite -O2: in the 22 Oct leg no single test separates from noise for DE (walthread1 +4 lies inside A/A). In the
+27 Oct leg walthread1 is 🟢 +3.6 with DE and 🟡 +5.6 with DE + runtime fix (its lower bound equals A/A's upper bound;
+quiet re-check queued). checkpoint_starvation_1 gains nothing at -O2.
 
 ³ RocksDB varies by ±3-5 % between runs at 8 threads. A re-time on 25 Oct with twice the runs (N = 8 per layout) did not
 narrow it: -O2 A/A +2.5 [−2.2, +6.5], DE +5.5 [+1.0, +10.1]; -O0 every arm within A/A −2.3 [−4.5, +0.6]. The table
@@ -202,8 +203,8 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 |---|:-:|:-:|:-:|:-:|:-:|---|
 | SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | 4 sites kept; walIndexRecover undetermined (stock 1/10) |
 | SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | 2 sites kept; walIndexRecover undetermined (stock 1/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
-| memcached | -O0 | 0 lost | 0 lost | ⏳ | 0 lost | 4 sites kept at 10/10; the scheduling-dependent conn_new/conn_close family (7 sites) is undetermined (stock 2/10) |
-| memcached | -O2 | 0 lost | 0 lost | ⏳ | 0 lost | all 11 sites kept: 4 at 10/10, the conn_new/conn_close family 2-3/10 in every arm, stock included |
+| memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | 4 sites kept at 10/10; the scheduling-dependent conn_new/conn_close family (7 sites) is undetermined (stock 2/10) |
+| memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | all 11 sites kept: 4 at 10/10, the conn_new/conn_close family 2-3/10 in every arm, stock included |
 | MySQL | -O0 | 0 lost | 0 lost | ⏳ | 0 lost | ~12,100 reports per run in every arm; 251 sites kept; 13 undetermined |
 | MySQL | -O2 | 0 lost | 0 lost | ⏳ | 0 lost | ~12,000 reports per run; 226 sites kept; 26 undetermined. Closest case: dict_stats_set_persistent, stock 4/10, DE 0/10, but DE + EA, which removes every check DE removes, sees it (1/10), so DE's 0/10 is detection noise |
 | Redis, FFmpeg | -O0 | — | — | — | — | no test: no build, stock included, reports any race under these workloads (0 reports in 50 runs each); -O2 skipped |
