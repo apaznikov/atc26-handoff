@@ -15,9 +15,7 @@ the AMD check are pending ([Open items](#open-items)).
   ocean_ncp; EA gives BT +8.5 %, DE + EA +109 %. At 1 thread DE gives barnes +4.9 %, srad +7 %, hotspot +10 %,
   water_nsquared and water_spatial +26 % (barnes, srad and water are unresolved or unchanged at 8 threads); raytrace and particlefilter
   stay unchanged.
-- 🟢 **llvm-test-suite: DE is faster on 18 of 21 programs**, +1.1 % to +15.5 % (consumer-typeset +15.5 %, SIBsim4 +15.1 %,
-  LoopRestructuring-flt +11.2 %, uuencode +9.1 %), median +3.8 %; enc-pc1 is unresolved, fourinarow and pcompress2
-  unchanged. EA alone changes the code of 7zip and oggenc only, without a measurable effect.
+- **7-Zip benchmark** (multi-threaded): DE +1.1 %, DE + EA +1.7 %.
 - **DE + runtime fix keeps DE's machine code,** so its speed should equal DE's except where race reports are frequent
   (SQLite, memcached and MySQL report races, MySQL ~12,000 per run); [why it is needed](#why-de-needs-a-runtime-fix).
 - **No arm adds measurable compile time:** at most +0.4 % on FFmpeg and MySQL; memcached's +2.6 % is 0.2 s.
@@ -96,31 +94,7 @@ the point estimate) · 🔴 slower ·
 | | 1 | = | = | ⏳ | = |
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
 | PARSEC fluidanimate | 8 | 🟰 | = | ⏳ | 🟰 |
-| **llvm-test-suite**: LLVM's own benchmark suite, used by LLVM reviewers for performance claims. Sequential C/C++ programs (7zip is multi-threaded); TSan still checks every access, so they measure the per-check saving | | | | | |
-| consumer-typeset | 1 | 🟰 | 🟢 **+15.5** | ⏳ | 🟰 |
-| SIBsim4 | 1 | 🟰 | 🟢 **+15.1** | ⏳ | 🟰 |
-| LoopRestructuring-flt | 1 | 🟰 | 🟢 **+11.2** | ⏳ | 🟰 |
-| uuencode | 1 | 🟰 | 🟢 **+9.1** | ⏳ | 🟰 |
-| uudecode | 1 | 🟰 | 🟢 **+6.0** | ⏳ | 🟰 |
-| Olden voronoi | 1 | 🟰 | 🟢 **+5.6** | ⏳ | 🟰 |
-| CLAMR | 1 | 🟰 | 🟢 **+5.5** | ⏳ | 🟰 |
-| espresso | 1 | 🟰 | 🟢 **+5.4** | ⏳ | 🟰 |
-| Olden bisort | 1 | 🟰 | 🟢 **+4.4** | ⏳ | 🟰 |
-| oggenc | 1 | = | 🟢 **+4.1** | ⏳ | 🟢 **+4.3** |
-| CoMD | 1 | 🟰 | 🟢 **+3.8** | ⏳ | 🟰 |
-| LoopRestructuring-dbl | 1 | 🟰 | 🟢 **+3.7** | ⏳ | 🟰 |
-| Obsequi | 1 | 🟰 | 🟢 **+3.4** | ⏳ | 🟰 |
-| enc-pc1 | 1 | 🟰 | 🟡 +2.5 | ⏳ | 🟰 |
-| g721encode | 1 | 🟰 | 🟢 **+2.4** | ⏳ | 🟰 |
-| Olden power | 1 | 🟰 | 🟢 **+2.4** | ⏳ | 🟰 |
-| RSBench | 1 | 🟰 | 🟢 **+2.0** | ⏳ | 🟰 |
-| mpeg2decode | 1 | 🟰 | 🟢 **+1.3** | ⏳ | 🟰 |
-| 7zip-benchmark | auto | 🟡 +0.4 | 🟢 **+1.1** | ⏳ | 🟢 **+1.7** |
-| fourinarow | 1 | 🟰 | = | ⏳ | 🟰 |
-| pcompress2 | 1 | 🟰 | = | ⏳ | 🟰 |
-| **Abseil benchmarks** | | | | | |
-| graphcycles_benchmark | 1 | 🟰 | 🟡 +0.9 | ⏳ | 🟰 |
-| str_join_benchmark | 1 | 🟰 | 🟡 −1.6 | ⏳ | 🟰 |
+| 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | ⏳ | 🟢 **+1.7** |
 
 ¹ SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 90 % between runs), but
 single tests do: checkpoint_starvation_1 EA 🟢 **+77**, DE 🟢 **+67**, DE + EA 🟢 **+78**; walthread1 EA and DE + EA
@@ -137,11 +111,11 @@ keeps the first leg.
 points to a shared build or layout effect rather than to the checks; not called slower.
 
 **Selection.** 254 programs were screened by the share of checks DE removes, and the candidates then by the share of
-executed accesses it removes. The real applications were timed regardless; kernels and llvm-test-suite programs were
-timed above ~3 % of checks or ~4-5 % of accesses. Not timed: NPB IS/SP/FT/CG/MG/EP, GAP, the other PARSEC, SPLASH-2x
+executed accesses it removes. The real applications were timed regardless; kernels were timed above ~3 % of checks or
+~4-5 % of accesses. Single-threaded programs (most of llvm-test-suite, the Abseil benchmarks) were timed too but are not
+reported: a race detector is not run on single-threaded programs in practice. Not timed: NPB IS/SP/FT/CG/MG/EP, GAP, the other PARSEC, SPLASH-2x
 and Rodinia kernels, pbbs, LULESH, HPCCG, miniFE, XSBench. In threaded programs, spin loops make the access count vary
-by 13-129 % between runs. The share of accesses predicts the direction but not the size: consumer-typeset 19.7 % gives
-+15.5 %, uuencode 29.4 % gives +9.1 %, fourinarow 30.7 % gives nothing.
+by 13-129 % between runs.
 
 ## Why DE needs a runtime fix
 
@@ -169,7 +143,7 @@ The paper's argument allows reporting A–C2 instead of B–C2 (B's race is domi
 The paper's runtime has this fix (`__tsan_write*_keep` for covering writes). Checked on 26 Oct with the paper's
 regression test for this case: the paper compiler with DE reports 2 races, the PR compiler with DE reports 1.
 Removing only reads would also close the gap, but it costs much of DE's gain where the removed writes matter
-(BT +47 instead of +76, consumer-typeset +8.9 instead of +15.5).
+(NPB BT +47 instead of +76).
 
 ## Compile time
 
@@ -209,8 +183,8 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 | DE + runtime fix: compiler-rt PR (port of the paper runtime's keep-the-racing-write step), then timing and race preservation | ⏳ in preparation |
 | Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏳ current tree Chromium 156.0.8078.47 (Stable; pins clang 24, so no overrides), lld from the same LLVM commit; sync from 26 Oct 13:32, results expected 27 Oct ~01:00-03:00; the Aug-2024 tree (127) does not build with clang 24 without source edits. In that tree's libbase.so, DE + EA removes 1.74 % of read/write call sites |
 
-Done 20-26 Oct: the applications at -O0 and -O2, the eight real applications, the kernels, the llvm-test-suite and
-Abseil programs, the RocksDB re-time, compile time and race preservation.
+Done 20-26 Oct: the applications at -O0 and -O2, the eight real applications, the kernels, the corpus
+programs, the RocksDB re-time, compile time and race preservation.
 
 ## Method
 
@@ -219,7 +193,7 @@ Abseil programs, the RocksDB re-time, compile time and race preservation.
   is discarded if the other half is busy. Every arm is timed in 2-4 code layouts and the results pooled.
 - From 22 Oct on, one compiler carries all three PRs, so the arms differ only by flags. On the kernels, DE + EA and DE
   come from different legs: compare each with stock, not with each other.
-- The corpus programs timed from 25 Oct (barnes, freqmine, particlefilter, radiosity, raytrace, llvm-test-suite, Abseil) are built at -O2.
+- The corpus programs timed from 25 Oct (barnes, freqmine, particlefilter, radiosity, raytrace, 7-Zip) are built at -O2.
 - DE and DE + EA are the PRs as they stand, without the runtime fix. DE + runtime fix compiles to DE's code; only the
   runtime differs, and only after a race report.
 - Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are not timings.
