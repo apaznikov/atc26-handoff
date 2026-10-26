@@ -1,41 +1,47 @@
 # Upstream PR measurements
 
-> Speed-up over stock TSan, **>1 = faster**. State of 26 Oct 2026: complete; RocksDB re-timed (⁵); Chromium in progress.
+> Speed-up over stock TSan, **>1 = faster**. State of 26 Oct 2026: every Intel timing is done except Chromium (stopped,
+> see Open items); the AMD check waits for a window on apollo.
 
 | Column | What it is | Upstream PR |
 |---|---|---|
-| **EA** | Escape analysis: capture-tracking limit + escape through local slots | [llvm#192945](https://github.com/llvm/llvm-project/pull/192945) + [llvm#169896](https://github.com/llvm/llvm-project/pull/169896) |
+| **EA** | Escape analysis: capture-tracking limit + escape through local slots (not the paper's broader escape analysis) | [llvm#192945](https://github.com/llvm/llvm-project/pull/192945) + [llvm#169896](https://github.com/llvm/llvm-project/pull/169896) |
 | **DE** | Dominance-based elimination, reads and writes | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) |
 | **DE, reads only** | DE that keeps every write checked (fix for the write-after-report gap) | [llvm#169897](https://github.com/llvm/llvm-project/pull/169897) with F1 |
 | **DE + EA** | DE + capture limit + local slots | all three |
 
-🟢 faster  ·  ⚪ no change  ·  🟡 unresolved (noise)  ·  🔴 slower  ·  🟰 identical code (EA: to stock; DE + EA: to DE), not timed  ·  — not measured  ·  ⏳ in progress
+🟢 faster (the arm's interval lies above that of A/A, stock timed against itself)  ·  ⚪ no change  ·  🟡 unresolved
+(noise)  ·  🔴 slower  ·  🟰 identical code (EA: to stock; DE, reads only and DE + EA: to DE), not timed  ·  — not
+measured  ·  ⏳ in progress  ·  ⏸ stopped
 
-## Machine
+## Method
 
-All timings: **focs**, Intel Xeon w9-3495X (56 cores, 112 threads, max 4.8 GHz), 250 GB RAM, Linux 6.8.
-Each run is pinned to one half of the machine (CPUs 4-27, 60-83; 8-thread runs use 4-11, 1-thread runs CPU 4); a
-run is discarded if the other half is busy. Every arm is timed in 2-4 code layouts and the results pooled.
-Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are not timings.
+- All timings: **focs**, Intel Xeon w9-3495X (56 cores, 112 threads, max 4.8 GHz), 250 GB RAM, Linux 6.8.
+- Each run is pinned to one half of the machine (CPUs 4-27, 60-83; 8-thread runs use 4-11, 1-thread runs CPU 4); a run
+  is discarded if the other half is busy. Every arm is timed in 2-4 code layouts and the results pooled.
+- From 22 Oct on, one compiler carries all three PRs, so the arms differ only by flags. On the kernels, DE + EA and DE
+  come from different legs: compare each with stock, not with each other.
+- The corpus programs timed from 25 Oct (barnes, freqmine, particlefilter, radiosity, raytrace, llvm-test-suite, Abseil) are built at -O2.
+- Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are not timings.
 
 ## Results
 
 | Program | Threads | EA | DE | DE, reads only | DE + EA |
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
-| SQLite | 8 | ⚪ 1.08¹ | 🟡 1.08² | 🟡 1.05² | 🟡 1.13² |
+| SQLite¹ | 8 | 🟡 1.08 | 🟡 1.08 | 🟡 1.05 | 🟡 1.13 |
 | FFmpeg | 8 | 🟢 **1.004** | ⚪ 1.002 | ⚪ 1.003 | ⚪ 1.002 |
 | memcached | 8 | ⚪ 0.99 | ⚪ 1.004 | ⚪ 1.010 | ⚪ 1.007 |
 | Redis | 8 | ⚪ 0.996 | ⚪ 1.007 | ⚪ 1.003 | ⚪ 1.009 |
 | MySQL | 8 | ⚪ 0.999 | ⚪ 0.998 | ⚪ 0.998 | ⚪ 0.997 |
 | **Applications, -O2** | | | | | |
-| SQLite | 8 | 🟰 1.000 | ⚪ 0.98³ | ⚪ 0.98³ | 🟰 0.98 |
+| SQLite² | 8 | 🟰 1.000 | ⚪ 0.98 | ⚪ 0.98 | 🟰 0.98 |
 | FFmpeg | 8 | ⚪ 0.993 | ⚪ 0.994 | ⚪ 0.996 | ⚪ 1.000 |
 | memcached | 8 | 🟰 1.000 | ⚪ 0.98 | ⚪ 0.99 | 🟰 0.98 |
 | Redis | 8 | 🟰 1.000 | ⚪ 0.997 | ⚪ 0.997 | 🟰 0.997 |
 | MySQL | 8 | ⚪ 0.997 | ⚪ 0.998 | ⚪ 1.002 | ⚪ 1.003 |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
-| RocksDB db_bench⁵ | 8 | 🟰 1.000 | 🟡 1.01 | 🟡 1.02 | 🟰 1.01 |
+| RocksDB db_bench³ | 8 | 🟰 1.000 | 🟡 1.01 | 🟡 1.02 | 🟰 1.01 |
 | LevelDB db_bench | 8 | 🟰 1.000 | ⚪ 0.998 | ⚪ 0.995 | 🟰 0.998 |
 | DuckDB TPC-H | 8 | ⚪ 1.001 | ⚪ 1.002 | ⚪ 0.995 | ⚪ 0.999 |
 | zstd | 8 | ⚪ 1.000 | ⚪ 1.003 | ⚪ 0.998 | ⚪ 1.000 |
@@ -44,15 +50,15 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | brotli | 8 | 🟰 1.000 | ⚪ 1.005 | ⚪ 0.993 | 🟰 1.005 |
 | OpenSSL | 8 | ⚪ 1.008 | ⚪ 1.005 | ⚪ 1.001 | ⚪ 0.998 |
 | **Real applications, -O0** | | | | | |
-| RocksDB db_bench⁵ | 8 | 🟡 1.02 | 🟡 1.01 | 🟡 1.06 | 🟡 1.01 |
+| RocksDB db_bench³ | 8 | 🟡 1.02 | 🟡 1.01 | 🟡 1.06 | 🟡 1.01 |
 | LevelDB db_bench | 8 | ⚪ 1.000 | ⚪ 1.008 | ⚪ 1.010 | ⚪ 1.006 |
 | DuckDB TPC-H | 8 | ⚪ 0.997 | ⚪ 1.001 | ⚪ 1.003 | ⚪ 1.003 |
 | zstd | 8 | ⚪ 0.987 | ⚪ 1.004 | ⚪ 1.002 | ⚪ 1.006 |
 | xz | 8 | ⚪ 1.005 | 🟢 **1.006** | ⚪ 1.003 | 🟢 **1.006** |
-| pigz | 8 | ⚪ 0.98⁴ | ⚪ 0.98⁴ | ⚪ 0.98⁴ | ⚪ 0.98⁴ |
-| brotli | 8 | ⚪ 1.018 | ⚪ 0.999 | ⚪ 0.997 | 🟢 **1.018** |
+| pigz⁴ | 8 | ⚪ 0.98 | ⚪ 0.98 | ⚪ 0.98 | ⚪ 0.98 |
+| brotli | 8 | 🟡 1.018 | ⚪ 0.999 | ⚪ 0.997 | 🟢 **1.018** |
 | OpenSSL | 8 | ⚪ 0.996 | ⚪ 0.998 | ⚪ 0.998 | ⚪ 1.000 |
-| **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm, not applications) | | | | | |
+| **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
 | Rodinia hotspot | 8 | 🟰 1.000 | 🟢 **3.05** | 🟢 **3.21** | 🟰 3.05 |
 | | 1 | 🟰 1.000 | 🟢 **1.10** | 🟢 **1.10** | 🟰 1.10 |
 | NPB LU, class A | 8 | — | 🟢 **2.27** | 🟢 **2.24** | — |
@@ -65,68 +71,63 @@ Removed-check counts (screening) were taken on apollo (AMD EPYC 9115) and are no
 | | 1 | 🟰 1.000 | 🟢 **1.26** | 🟢 **1.26** | 🟰 1.26 |
 | Rodinia srad | 8 | 🟰 1.000 | ⚪ 1.02 | ⚪ 1.00 | 🟰 1.02 |
 | | 1 | 🟰 1.000 | 🟢 **1.07** | 🟢 **1.04** | 🟰 1.07 |
-| PARSEC streamcluster | 8 | 🟰 1.000 | ⚪ 0.98 | ⚪ 0.98 | 🟰 0.98 |
-| PARSEC fluidanimate | 8 | 🟰 1.000 | ⚪ 0.99 | ⚪ 1.00 | 🟰 0.99 |
 | Rodinia lavaMD | 8 | 🟰 1.000 | 🟡 ~1.1 | 🟡 ~1.1 | 🟰 ~1.1 |
-| **Corpus programs timed from 26 Oct** (schedule row 11; -O2) | | | | | |
 | SPLASH-2x barnes | 8 | 🟰 1.000 | 🟡 1.08 | 🟡 1.07 | 🟰 1.08 |
 | | 1 | 🟰 1.000 | 🟢 **1.049** | 🟡 1.003 | 🟰 1.049 |
-| SPLASH-2x radiosity | 8 | 🟰 1.000 | ⚪ 1.002 | ⚪ 1.002 | 🟰 1.002 |
 | PARSEC freqmine | 8 | 🟰 1.000 | 🟡 1.05 | 🟡 1.08 | 🟰 1.05 |
-| llvm-test-suite SIBsim4 (single-threaded) | 1 | 🟰 1.000 | 🟢 **1.151** | 🟢 **1.154** | 🟰 1.151 |
-| Abseil graphcycles_benchmark | 1 | 🟰 1.000 | 🟡 1.009 | 🟡 1.009 | 🟰 1.009 |
-| Abseil str_join_benchmark | 1 | 🟰 1.000 | 🟡 0.984 | 🟡 0.990 | 🟰 0.984 |
-| llvm-test-suite CLAMR (single-threaded) | 1 | 🟰 1.000 | 🟢 **1.055** | 🟢 **1.057** | 🟰 1.055 |
-| llvm-test-suite 7zip-benchmark | auto | 🟡 1.004 | 🟢 **1.011** | 🟢 **1.016** | 🟢 **1.017** |
-| llvm-test-suite enc-pc1 (single-threaded) | 1 | 🟰 1.000 | 🟡 1.025 | ⚪ 0.999 | 🟰 1.025 |
-| SPLASH-2x raytrace | 8 | 🟡 1.02 | 🟡 0.91 | 🟡 0.99 | 🟡 0.93 |
-| | 1 | ⚪ 0.999 | ⚪ 0.999 | ⚪ 0.996 | ⚪ 0.998 |
 | Rodinia particlefilter | 8 | 🟰 1.000 | 🟡 1.039 | 🟡 1.045 | 🟡 1.049 |
 | | 1 | 🟰 1.000 | ⚪ 1.000 | ⚪ 1.002 | ⚪ 0.996 |
-| **llvm-test-suite, the remaining programs with a DE share of accesses ≥ 5 %** (schedule row 14; -O2, 1 thread, A/A within ±0.6 %) | | | | | |
+| SPLASH-2x radiosity | 8 | 🟰 1.000 | ⚪ 1.002 | ⚪ 1.002 | 🟰 1.002 |
+| SPLASH-2x raytrace | 8 | 🟡 1.02 | 🟡 0.91 | 🟡 0.99 | 🟡 0.93 |
+| | 1 | ⚪ 0.999 | ⚪ 0.999 | ⚪ 0.996 | ⚪ 0.998 |
+| PARSEC streamcluster | 8 | 🟰 1.000 | ⚪ 0.98 | ⚪ 0.98 | 🟰 0.98 |
+| PARSEC fluidanimate | 8 | 🟰 1.000 | ⚪ 0.99 | ⚪ 1.00 | 🟰 0.99 |
+| **llvm-test-suite** (single-threaded except 7zip) | | | | | |
 | consumer-typeset | 1 | 🟰 1.000 | 🟢 **1.155** | 🟢 **1.089** | 🟰 1.155 |
+| SIBsim4 | 1 | 🟰 1.000 | 🟢 **1.151** | 🟢 **1.154** | 🟰 1.151 |
 | LoopRestructuring-flt | 1 | 🟰 1.000 | 🟢 **1.112** | 🟰 1.112 | 🟰 1.112 |
 | uuencode | 1 | 🟰 1.000 | 🟢 **1.091** | 🟰 1.091 | 🟰 1.091 |
 | uudecode | 1 | 🟰 1.000 | 🟢 **1.060** | 🟰 1.060 | 🟰 1.060 |
 | Olden voronoi | 1 | 🟰 1.000 | 🟢 **1.056** | 🟰 1.056 | 🟰 1.056 |
+| CLAMR | 1 | 🟰 1.000 | 🟢 **1.055** | 🟢 **1.057** | 🟰 1.055 |
 | espresso | 1 | 🟰 1.000 | 🟢 **1.054** | 🟢 **1.038** | 🟰 1.054 |
 | Olden bisort | 1 | 🟰 1.000 | 🟢 **1.044** | 🟰 1.044 | 🟰 1.044 |
 | oggenc | 1 | ⚪ 1.000 | 🟢 **1.041** | 🟢 **1.047** | 🟢 **1.043** |
 | CoMD | 1 | 🟰 1.000 | 🟢 **1.038** | 🟢 **1.039** | 🟰 1.038 |
 | LoopRestructuring-dbl | 1 | 🟰 1.000 | 🟢 **1.037** | 🟰 1.037 | 🟰 1.037 |
 | Obsequi | 1 | 🟰 1.000 | 🟢 **1.034** | 🟢 **1.023** | 🟰 1.034 |
+| enc-pc1 | 1 | 🟰 1.000 | 🟡 1.025 | ⚪ 0.999 | 🟰 1.025 |
 | g721encode | 1 | 🟰 1.000 | 🟢 **1.024** | 🟰 1.024 | 🟰 1.024 |
 | Olden power | 1 | 🟰 1.000 | 🟢 **1.024** | 🟢 **1.023** | 🟰 1.024 |
 | RSBench | 1 | 🟰 1.000 | 🟢 **1.020** | 🟢 **1.021** | 🟰 1.020 |
 | mpeg2decode | 1 | 🟰 1.000 | 🟢 **1.013** | 🟢 **1.013** | 🟰 1.013 |
+| 7zip-benchmark | auto | 🟡 1.004 | 🟢 **1.011** | 🟢 **1.016** | 🟢 **1.017** |
 | fourinarow | 1 | 🟰 1.000 | ⚪ 1.001 | 🟰 1.001 | 🟰 1.001 |
 | pcompress2 | 1 | 🟰 1.000 | ⚪ 1.000 | ⚪ 0.999 | 🟰 1.000 |
+| **Abseil benchmarks** | | | | | |
+| graphcycles_benchmark | 1 | 🟰 1.000 | 🟡 1.009 | 🟡 1.009 | 🟰 1.009 |
+| str_join_benchmark | 1 | 🟰 1.000 | 🟡 0.984 | 🟡 0.990 | 🟰 0.984 |
 
-¹ SQLite -O0 as a whole shows no change, but two tests do: checkpoint_starvation_1 🟢 **1.77×**, walthread1 🟢 **1.07×**.
+¹ SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 1.9× between runs), but
+single tests do: checkpoint_starvation_1 EA 🟢 **1.77×**, DE 🟢 **1.67×**, reads only 🟢 **1.35×**, DE + EA 🟢 **1.78×**;
+walthread1 EA and DE + EA 🟢 **1.07×**; walthread2 DE + EA 🟢 **1.03×**.
 
-² SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 1.9× between runs), but
-three tests do: checkpoint_starvation_1 DE 🟢 **1.67×**, reads only 🟢 **1.35×**, DE + EA 🟢 **1.78×**;
-walthread1 DE + EA 🟢 **1.07×**; walthread2 DE + EA 🟢 **1.03×**.
-
-³ SQLite -O2: only walthread1 separates from noise, DE reads only 🟢 **1.06×** (DE 1.04×, unresolved);
+² SQLite -O2: only walthread1 separates from noise, DE reads only 🟢 **1.06×** (DE 1.04×, unresolved);
 checkpoint_starvation_1 gains nothing at -O2.
 
-⁴ pigz -O0: all four non-stock builds are 2 % slower in both code layouts, by the same amount whatever they
-remove, which points to a shared build or layout effect rather than to the checks; not called slower.
+³ RocksDB varies by ±3-5 % between runs at 8 threads. A re-time on 25 Oct with twice the runs (N = 8 per layout) did not
+narrow it: -O2 A/A 1.025 [0.978, 1.065], DE 1.055 [1.010, 1.101], reads only 1.065 [1.010, 1.110]; -O0 every arm within
+A/A 0.977 [0.955, 1.006]. The table keeps the first leg.
 
-⁵ RocksDB re-timed on 25 Oct with twice the runs (N = 8 per layout, none discarded); the spread did not narrow,
-since RocksDB varies by ±3-5 % between runs at 8 threads. -O2: A/A 1.025 [0.978, 1.065], DE 1.055 [1.010, 1.101],
-reads only 1.065 [1.010, 1.110], both still 🟡. -O0: A/A 0.977 [0.955, 1.006], EA 1.005, DE 0.979, reads only
-1.007, DE + EA 0.995, all within A/A. The table keeps the first leg; neither leg separates any arm from noise.
+⁴ pigz -O0: all four non-stock builds are 2 % slower in both code layouts, by the same amount whatever they remove, which
+points to a shared build or layout effect rather than to the checks; not called slower.
 
-In every column, EA means the two EA PRs (capture limit + local slots); the paper's broader escape analysis is not used.
-
-Screening: 254 programs were ranked by the share of checks DE removes. Kernels below ~3 % were not timed (NPB
-IS/SP/FT/CG/MG/EP, GAP, PARSEC/SPLASH-2x others, pbbs, LULESH, HPCCG, miniFE, XSBench, Rodinia
-others); the eight real applications were timed regardless. CoMD and RSBench, below 3 % of checks, were timed in
-row 14 for their share of executed accesses. On those 17 programs the share of accesses DE removes predicts the
-direction but not the size: consumer-typeset 19.7 % of accesses gives +15.5 %, uuencode 29.4 % gives +9.1 %,
-fourinarow 30.7 % gives nothing.
+**Selection.** 254 programs were screened by the share of checks DE removes, and the candidates then by the share of
+executed accesses it removes. The real applications were timed regardless; kernels and llvm-test-suite programs were
+timed above ~3 % of checks or ~4-5 % of accesses. Not timed: NPB IS/SP/FT/CG/MG/EP, GAP, the other PARSEC, SPLASH-2x
+and Rodinia kernels, pbbs, LULESH, HPCCG, miniFE, XSBench. In threaded programs, spin loops make the access count vary
+by 13-129 % between runs. The share of accesses predicts the direction but not the size: consumer-typeset 19.7 % gives
++15.5 %, uuencode 29.4 % gives +9.1 %, fourinarow 30.7 % gives nothing.
 
 ## Compile time
 
@@ -141,71 +142,47 @@ relative to stock. Stock varies by 0.2-0.6 % between builds.
 | FFmpeg | 1,936 | 350 s | 0.999 | 1.003 | 1.004 | 1.003 |
 | MySQL | 3,662 | 4,270 s | 1.000 | 1.002 | 1.001 | 1.001 |
 
-No arm adds measurable compile time: at most +0.4 % on FFmpeg and MySQL; memcached's +2.6 % is 0.2 s.
-
 ## Race preservation
 
-Each arm is run N = 10 times beside its own stock arm (the five arms in parallel) and compared race site by race
-site (location and writer site). Kept = the arm reports a site that stock reports; undetermined = stock reports the
-site in too few runs (here 1 of 10) for an absence in the arm to mean anything.
+Each arm is run N = 10 times beside its own stock arm (the five arms in parallel; CPU sets rotated across runs from memcached -O2 on, and in a re-run of memcached -O0) and
+compared race site by race site (location and writer site). Kept = the arm reports a site that stock reports;
+undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absence in the arm to mean anything.
 
 | Program | Level | EA | DE | DE, reads only | DE + EA | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|---|
-| SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept in every arm (6-10/10 runs, as stock); undetermined: walIndexRecover (stock 1/10, every arm 0/10) |
-| SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 8/10 runs; 2 sites kept in every arm (stock 7-8/10, arms 5-10/10); undetermined: walIndexRecover (stock 1/10, arms 0-4/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
-| memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs; 4 sites kept at 10/10 in every arm (clock_handler, do_item_link, do_item_unlink ×2); the scheduling-dependent conn_new/conn_close family (7 sites) appears only in EA, DE and reads only (5-7/10), not in stock or DE + EA: an artefact of each arm keeping one CPU set. Re-run with rotated sets: 4 sites kept at 10/10; the conn family is rare in every arm (stock 2/10, arms 0-2/10), undetermined |
-| memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | CPU sets rotated across runs from here on; stock reports races in 10/10 runs; all 11 sites kept: 4 at 10/10 in every arm, the conn_new/conn_close family 2-3/10 in every arm, stock included |
-| Redis | -O0 | — | — | — | — | no test: no build reports any race under this workload (0 reports in 50 runs, stock included); -O2 skipped for the same reason |
-| FFmpeg | -O0 | — | — | — | — | no test: 0 reports in 50 runs, stock included (as in 30 runs in September; the encoders are uninstrumented system libraries); -O2 skipped |
-| MySQL | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs (~12,100 reports per run in every arm); 251 sites kept; 13 undetermined (stock ≤ 2/10 each) |
-| MySQL | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | stock reports races in 10/10 runs (~12,000 reports per run in every arm); 226 sites kept; 26 undetermined, 15 of them seen only in arms; the closest case, dict_stats_set_persistent (stock 4/10, DE 0/10), is seen by DE + EA (1/10), which removes every check DE removes, so DE's 0/10 is detection noise |
+| SQLite | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | 4 sites kept; walIndexRecover undetermined (stock 1/10) |
+| SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | 2 sites kept; walIndexRecover undetermined (stock 1/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
+| memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | 4 sites kept at 10/10; the scheduling-dependent conn_new/conn_close family (7 sites) is undetermined (stock 2/10) |
+| memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | all 11 sites kept: 4 at 10/10, the conn_new/conn_close family 2-3/10 in every arm, stock included |
+| MySQL | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | ~12,100 reports per run in every arm; 251 sites kept; 13 undetermined |
+| MySQL | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | ~12,000 reports per run; 226 sites kept; 26 undetermined. Closest case: dict_stats_set_persistent, stock 4/10, DE 0/10, but DE + EA, which removes every check DE removes, sees it (1/10), so DE's 0/10 is detection noise |
+| Redis, FFmpeg | -O0 | — | — | — | — | no test: no build, stock included, reports any race under these workloads (0 reports in 50 runs each); -O2 skipped |
 
-## Schedule
+## Open items
 
-All cells from 22 Oct on were timed with one compiler that carries all three PRs, so the arms differ only by flags:
-stock, EA, DE, DE reads only, DE + EA. DE + EA and DE come from different legs on the kernels; compare each with
-stock, not with each other.
+| Item | State |
+|---|---|
+| AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
+| Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏸ stopped at the build: clang 24 rejects code in the Aug-2024 tree. skia's missing builtin is avoided with skcms's portable path (-DSKCMS_DISABLE_HSW, both arms); the static_assert in base's enum-histogram macro (2 call sites) needs a source edit. In libbase.so DE + EA removes 1.74 % of read/write call sites |
 
-| # | Cells | When |
-|---|---|---|
-| 1 | MySQL -O2: EA | ✅ done |
-| 2 | memcached -O0: EA, four code layouts | ✅ done |
-| 3 | Redis -O2: DE, DE reads only | ✅ done |
-| 4 | Compiler with all three PRs; builds and relinks of every program; identical-code check | ✅ done (22 Oct) |
-| 5 | Applications, -O0 and -O2: DE, DE reads only, DE + EA (Redis -O2 needs no leg) | ✅ done (23 Oct) |
-| 6 | Real applications from the screen: RocksDB, LevelDB, DuckDB, zstd, xz, pigz, brotli, OpenSSL; all arms, -O0 and -O2 | ✅ done (24 Oct) |
-| 7 | Benchmark kernels: EA and DE + EA for NPB LU and BT (the other kernels have identical code) | ✅ done (24 Oct) |
-| 8 | RocksDB -O0 and -O2, all arms, twice the runs | ✅ done (25 Oct, 14:39) |
-| 9 | Race preservation: 5 applications, -O0 and -O2, all arms, N = 10 | ✅ done (26 Oct, 01:15): no site lost; Redis and FFmpeg untestable (no build reports a race) |
-| 10 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
-| 11 | Corpus programs not yet timed with a DE share of accesses above ~4 % in at least one count run (SPLASH-2x barnes, radiosity, raytrace; PARSEC freqmine; Rodinia particlefilter; Abseil str_join, graphcycles; llvm-test-suite SIBsim4, CLAMR, 7zip, enc-pc1). Only raytrace resolves over 3 count runs (4.4 %); in the threaded others, spin loops make the count vary by 13-129 % | ✅ done (26 Oct) |
-| 12 | Compile time: 5 applications at -O2, every arm, compile step only (CPU time summed over the compiler invocations) | ✅ done (26 Oct, 05:11) |
-| 13 | 1-thread legs: SPLASH-2x raytrace, Rodinia particlefilter, barnes | ✅ done (26 Oct) |
-| 14 | 17 more llvm-test-suite programs with a DE share of accesses ≥ 5 %, 1 thread | ✅ done (26 Oct): DE faster on 15 of 17 |
-| 15 | Chromium (Intel): stock against DE + EA, Speedometer 3 and two blink_perf panels | ⏳ trial passed (libbase.so: 1.74 % of read/write call sites removed); the full build hit a builtin that clang 24 lacks (skia skcms); rebuilding both arms with skcms's portable path (-DSKCMS_DISABLE_HSW), after a survey of further errors |
-
-Rows 1-7 finished **24 Oct 2026, 04:55**; rows 8-10 were added on 25 Oct. NPB LU class A was not timed with EA and DE + EA (one LU input suffices).
+Done 20-26 Oct: the applications at -O0 and -O2, the eight real applications, the kernels, the llvm-test-suite and
+Abseil programs, the RocksDB re-time, compile time and race preservation.
 
 ## Takeaways
 
-- 🟢 **DE gives 1.8-3× on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on ocean_ncp; no change
-  elsewhere.
-- 🟢 **Among the corpus programs timed on 26 Oct, DE speeds up three:** SIBsim4 1.15×, CLAMR 1.055× (both
-  single-threaded) and 7zip +1.1 % (+1.7 % with EA). The threaded SPLASH-2x/PARSEC/Rodinia programs vary too much
-  at 8 threads to separate (barnes, freqmine, raytrace, particlefilter); radiosity is unchanged. At 1 thread DE
-  gives barnes +4.9 % (from write elimination: reads only gains nothing); raytrace and particlefilter stay unchanged.
-- 🟢 **On the 17 remaining llvm-test-suite programs (1 thread), DE is faster on 15:** +1.3 % to +15.5 %
-  (consumer-typeset 1.155×, LoopRestructuring-flt 1.112×, uuencode 1.091×), median +3.8 % over all 17; fourinarow and
-  pcompress2 are unchanged. EA alone changes the code of oggenc only, without effect.
-- **Race preservation (N = 10, every arm): no race site lost** on SQLite, memcached and MySQL at -O0 and -O2
-  (MySQL: 251 and 226 sites kept). Redis and FFmpeg cannot test it: no build, stock included, reports a race
-  under their workloads.
-- **On the 13 applications DE helps only SQLite at -O0** (checkpoint_starvation_1 1.67×, with EA 1.78×) and xz at
-  -O0 (+0.6 %); everything else is within ±2 % of stock.
-- **EA is measurable on applications only at -O0** (SQLite on some tests, FFmpeg +0.4-0.9 %, brotli +1.8 % with
-  DE); at -O2 the code is mostly identical or the speed unchanged. On kernels EA gives NPB BT +8.5 %, and DE + EA
-  2.09× there.
-- With one thread the saving is 7-26 %; the larger 8-thread gains are consistent with less cross-core traffic on
-  TSan shadow memory (not confirmed at cache-line level).
-- **DE, reads only** costs speed only where it removes fewer checks than DE: BT (0.83× of DE) and srad at 1 thread
-  (0.97×).
+- **On the 13 applications the PRs change nothing measurable:** everything is within ±2 % of stock, except SQLite -O0
+  on single tests (checkpoint_starvation_1 DE 1.67×, DE + EA 1.78×), xz -O0 +0.6 %, brotli -O0 DE + EA +1.8 % and
+  FFmpeg -O0 EA +0.4 %.
+- 🟢 **Kernels: DE gives 1.8-3× on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on ocean_ncp; EA
+  gives BT +8.5 %, DE + EA 2.09×. At 1 thread DE gives barnes +4.9 %, srad +7 %, hotspot +10 %, water_nsquared and
+  water_spatial +26 % (barnes, srad and water are unresolved or unchanged at 8 threads); raytrace and particlefilter
+  stay unchanged.
+- 🟢 **llvm-test-suite: DE is faster on 18 of 21 programs**, +1.1 % to +15.5 % (consumer-typeset 1.155×, SIBsim4 1.151×,
+  LoopRestructuring-flt 1.112×, uuencode 1.091×), median +3.8 %; enc-pc1 is unresolved, fourinarow and pcompress2
+  unchanged. EA alone changes the code of 7zip and oggenc only, without a measurable effect.
+- **DE, reads only loses part of DE's gain where the removed writes matter:** BT 1.47× against 1.76×, consumer-typeset
+  1.089× against 1.155×, barnes at 1 thread 1.003× against 1.049×, enc-pc1, espresso, Obsequi, srad at 1 thread;
+  elsewhere it equals DE.
+- **No arm adds measurable compile time:** at most +0.4 % on FFmpeg and MySQL; memcached's +2.6 % is 0.2 s.
+- **Race preservation (N = 10, every arm): no race site lost** on SQLite, memcached and MySQL at -O0 and -O2. Redis and
+  FFmpeg cannot test it: no build reports a race under their workloads.
