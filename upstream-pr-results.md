@@ -8,20 +8,21 @@ the AMD check are pending ([Open items](#open-items)).
 
 ## Takeaways
 
-- **On the 13 applications the PRs change nothing measurable:** everything is within ±2 % of stock, except SQLite -O0
-  on single tests (checkpoint_starvation_1 DE +67 %, DE + EA +78 %), xz -O0 +0.6 %, brotli -O0 DE + EA +1.8 % and
-  FFmpeg -O0 EA +0.4 %.
+- **On the 13 applications the PRs change nothing measurable in the overall score,** with three exceptions: xz -O0 DE and
+  DE + EA +0.6 %, brotli -O0 DE + EA +1.8 % (🟢), and one Redis workload that DE makes **2.2 % slower** (LRANGE_600 at
+  -O2, footnote ⁶; to be confirmed). SQLite -O0 gains up to +78 % on single tests (footnote ¹), but its overall score
+  does not separate from noise.
 - 🟢 **Kernels: DE gives +76 % to +205 % on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on
-  ocean_ncp; EA gives BT +8.5 %, DE + EA +109 %. At 1 thread DE gives barnes +4.9 %, srad +7 %, hotspot +10 %,
-  water_nsquared and water_spatial +26 % (barnes, srad and water are unresolved or unchanged at 8 threads); raytrace and particlefilter
-  stay unchanged.
+  ocean_ncp; EA gives BT +8.5 %, DE + EA +109 %. Most other kernels are unresolved at 8 threads (the A/A of those legs
+  spans ±3-30 %); they are being re-timed. At 1 thread DE gives barnes +4.9 %, srad +7 %, hotspot +10 %, water +26 %.
 - **7-Zip benchmark** (multi-threaded): DE +1.1 %, DE + EA +1.7 %.
 - **DE + runtime fix keeps DE's machine code,** so its speed should equal DE's except where race reports are frequent
   (SQLite, memcached and MySQL report races, MySQL ~12,000 per run); [why it is needed](#why-de-needs-a-runtime-fix).
-- **No arm adds measurable compile time:** at most +0.4 % on FFmpeg and MySQL; memcached's +2.6 % is 0.2 s.
+- **Compile time:** within stock's own build-to-build spread except memcached DE + EA (+2.3 %, 0.2 s; its two builds
+  differ by 3 %) and FFmpeg DE + EA (+0.3 % against a 0.2 % spread).
 - **Race preservation (N = 10, every arm): no race site lost** on SQLite, memcached and MySQL at -O0 and -O2; the DE gap
-  [below](#why-de-needs-a-runtime-fix) did not show up there. Redis and
-  FFmpeg cannot test it: no build reports a race under their workloads.
+  [below](#why-de-needs-a-runtime-fix) did not show up there. Redis and FFmpeg cannot test it: no build reports a race
+  under their workloads.
 
 ## Columns
 
@@ -32,8 +33,10 @@ the AMD check are pending ([Open items](#open-items)).
 | **DE + runtime fix** | DE plus a runtime that keeps a racing write after reporting it ([why it is needed](#why-de-needs-a-runtime-fix)) | llvm#169897 + a compiler-rt PR in preparation |
 | **DE + EA** | DE + EA | all three |
 
-🟢 faster than A/A (stock timed against itself) · **=** no change (within A/A) · 🟡 unresolved (noise; the number is
-the point estimate) · 🔴 slower ·
+Each arm's 95 % interval is compared with that of A/A (stock timed against itself, same leg):
+🟢 faster (arm's lower bound above A/A's upper bound) · 🔴 slower (arm's upper bound below A/A's lower bound) ·
+**=** no change (point estimate inside the A/A interval) · 🟡 unresolved (neither; the number is the point estimate) ·
+† A/A wider than ±3 % ·
 🟰 same machine code (EA as stock, DE + EA as DE), not timed · — not measured · ⏳ pending · ⏸ stopped
 
 ## Results
@@ -41,74 +44,88 @@ the point estimate) · 🔴 slower ·
 | Program | Threads | EA, % | DE, % | DE + runtime fix, % | DE + EA, % |
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
-| SQLite¹ | 8 | 🟡 +8 | 🟡 +8 | ⏳ | 🟡 +13 |
-| FFmpeg | 8 | 🟢 **+0.4** | = | ⏳ | = |
-| memcached | 8 | = | = | ⏳ | = |
+| SQLite¹ † | 8 | 🟡 +8 | = | ⏳ | 🟡 +13 |
+| FFmpeg | 8 | = | = | ⏳ | = |
+| memcached⁵ † | 8 | = | = | ⏳ | = |
 | Redis | 8 | = | = | ⏳ | = |
 | MySQL | 8 | = | = | ⏳ | = |
 | **Applications, -O2** | | | | | |
-| SQLite² | 8 | 🟰 | = | ⏳ | 🟰 |
+| SQLite² † | 8 | 🟰 | = | ⏳ | 🟰 |
 | FFmpeg | 8 | = | = | ⏳ | = |
-| memcached | 8 | 🟰 | = | ⏳ | 🟰 |
-| Redis | 8 | 🟰 | = | ⏳ | 🟰 |
+| memcached † | 8 | 🟰 | = | ⏳ | 🟰 |
+| Redis⁶ | 8 | 🟰 | = | ⏳ | 🟰 |
 | MySQL | 8 | = | = | ⏳ | = |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
-| RocksDB db_bench³ | 8 | 🟰 | 🟡 +1 | ⏳ | 🟰 |
+| RocksDB db_bench³ † | 8 | 🟰 | = | ⏳ | 🟰 |
 | LevelDB db_bench | 8 | 🟰 | = | ⏳ | 🟰 |
 | DuckDB TPC-H | 8 | = | = | ⏳ | = |
 | zstd | 8 | = | = | ⏳ | = |
 | xz | 8 | 🟰 | = | ⏳ | 🟰 |
 | pigz | 8 | 🟰 | = | ⏳ | 🟰 |
 | brotli | 8 | 🟰 | = | ⏳ | 🟰 |
-| OpenSSL | 8 | = | = | ⏳ | = |
+| OpenSSL | 8 | 🟡 +0.8 | = | ⏳ | = |
 | **Real applications, -O0** | | | | | |
-| RocksDB db_bench³ | 8 | 🟡 +2 | 🟡 +1 | ⏳ | 🟡 +1 |
+| RocksDB db_bench³ † | 8 | = | = | ⏳ | = |
 | LevelDB db_bench | 8 | = | = | ⏳ | = |
 | DuckDB TPC-H | 8 | = | = | ⏳ | = |
 | zstd | 8 | = | = | ⏳ | = |
-| xz | 8 | = | 🟢 **+0.6** | ⏳ | 🟢 **+0.6** |
-| pigz⁴ | 8 | = | = | ⏳ | = |
+| xz | 8 | 🟡 +0.5 | 🟢 **+0.6** | ⏳ | 🟢 **+0.6** |
+| pigz⁴ | 8 | 🟡 −2 | 🟡 −2 | ⏳ | 🟡 −2 |
 | brotli | 8 | 🟡 +1.8 | = | ⏳ | 🟢 **+1.8** |
 | OpenSSL | 8 | = | = | ⏳ | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
-| Rodinia hotspot | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
+| Rodinia hotspot † | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+10** | ⏳ | 🟰 |
-| NPB LU, class A | 8 | — | 🟢 **+127** | ⏳ | — |
-| NPB LU, class W | 8 | 🟡 −4 | 🟢 **+102** | ⏳ | 🟢 **+91** |
-| NPB BT, class A | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
+| NPB LU, class A † | 8 | — | 🟢 **+127** | ⏳ | — |
+| NPB LU, class W † | 8 | = | 🟢 **+102** | ⏳ | 🟢 **+91** |
+| NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
 | SPLASH-2x ocean_ncp | 8 | 🟰 | 🟢 **+6** | ⏳ | 🟰 |
-| SPLASH-2x water_nsquared | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
+| SPLASH-2x water_nsquared † | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+26** | ⏳ | 🟰 |
-| SPLASH-2x water_spatial | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
+| SPLASH-2x water_spatial † | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+26** | ⏳ | 🟰 |
-| Rodinia srad | 8 | 🟰 | = | ⏳ | 🟰 |
+| Rodinia srad † | 8 | 🟰 | = | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+7** | ⏳ | 🟰 |
-| Rodinia lavaMD | 8 | 🟰 | 🟡 ~+10 | ⏳ | 🟰 |
-| SPLASH-2x barnes | 8 | 🟰 | 🟡 +8 | ⏳ | 🟰 |
+| Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +15 | ⏳ | 🟰 |
+| SPLASH-2x barnes † | 8 | 🟰 | = | ⏳ | 🟰 |
 | | 1 | 🟰 | 🟢 **+4.9** | ⏳ | 🟰 |
-| PARSEC freqmine | 8 | 🟰 | 🟡 +5 | ⏳ | 🟰 |
-| Rodinia particlefilter | 8 | 🟰 | 🟡 +3.9 | ⏳ | 🟡 +4.9 |
+| PARSEC freqmine⁸ † | 8 | 🟰 | — | ⏳ | 🟰 |
+| Rodinia particlefilter † | 8 | 🟰 | 🟡 +3.9 | ⏳ | 🟡 +4.9 |
 | | 1 | 🟰 | = | ⏳ | = |
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
-| SPLASH-2x raytrace | 8 | 🟡 +2 | 🟡 −9 | ⏳ | 🟡 −7 |
+| SPLASH-2x raytrace † | 8 | = | 🟡 −9 | ⏳ | = |
 | | 1 | = | = | ⏳ | = |
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
-| PARSEC fluidanimate | 8 | 🟰 | = | ⏳ | 🟰 |
+| PARSEC fluidanimate † | 8 | 🟰 | = | ⏳ | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | ⏳ | 🟢 **+1.7** |
 
 ¹ SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 90 % between runs), but
-single tests do: checkpoint_starvation_1 EA 🟢 **+77**, DE 🟢 **+67**, DE + EA 🟢 **+78**; walthread1 EA and DE + EA
-🟢 **+7**; walthread2 DE + EA 🟢 **+3**.
+single tests do: checkpoint_starvation_1 EA 🟢 **+78**, DE **+67**, DE + EA **+78**; walthread1 EA and DE + EA
+🟢 **+7**; walthread2 EA 🟢 **+2.4**, DE + EA 🟢 **+3**. The DE and DE + EA figures for checkpoint_starvation_1 come from a
+leg whose A/A for that test is itself off zero (+0.9 [+0.2, +1.5]); by the registered rule such a test is reported but
+not called, although the effect is 70 times that offset.
 
-² SQLite -O2: no single test separates from noise for DE (walthread1 +4, unresolved); checkpoint_starvation_1 gains
-nothing at -O2.
+² SQLite -O2: no single test separates from noise for DE (walthread1 +4 lies inside A/A); checkpoint_starvation_1
+gains nothing at -O2.
 
 ³ RocksDB varies by ±3-5 % between runs at 8 threads. A re-time on 25 Oct with twice the runs (N = 8 per layout) did not
 narrow it: -O2 A/A +2.5 [−2.2, +6.5], DE +5.5 [+1.0, +10.1]; -O0 every arm within A/A −2.3 [−4.5, +0.6]. The table
 keeps the first leg.
 
 ⁴ pigz -O0: all four non-stock builds are 2 % slower in both code layouts, by the same amount whatever they remove, which
-points to a shared build or layout effect rather than to the checks; not called slower.
+points to a shared build or layout effect rather than to the checks. The interval reaches the A/A interval, so unresolved.
+
+⁵ memcached -O0 EA: the leg with four code layouts gives =; two earlier legs gave 🟡 −1.7 and 🟡 −4.7.
+
+⁶ Redis -O2 DE: the composite is unchanged, but one workload is **🔴 slower**: LRANGE_600 −2.2 [−3.4, −1.0] against A/A
++0.2 [−0.9, +0.9]. LRANGE_300, LRANGE_500 and SADD point the same way (−2.0, −2.1, −5.3), within noise. At -O0, EA makes
+LRANGE_300/500/600 🟢 faster by 1.9-2.1 %. To be confirmed by a re-run.
+
+⁷ lavaMD DE: three legs disagree, +19 (unresolved), +6 (=) and +15 (unresolved, shown).
+
+⁸ freqmine: the A/A of this leg is itself +13 [−2, +30], so the leg cannot be read; to be re-timed.
+
+† The A/A interval of this row is wider than ±3 %: changes smaller than that cannot be resolved here.
 
 **Selection.** 254 programs were screened by the share of checks DE removes, and the candidates then by the share of
 executed accesses it removes. The real applications were timed regardless; kernels were timed above ~3 % of checks or
@@ -149,15 +166,16 @@ Removing only reads would also close the gap, but it costs much of DE's gain whe
 
 CPU time of the compiler (user + sys summed over every source compile, configure probes excluded), -O2, 40 jobs,
 change against stock in %. "Source files compiled" counts the compiler invocations that compile a source file (SQLite is
-one amalgamated file, sqlite3.c). Stock varies by 0.2-0.6 % between builds. DE + runtime fix compiles as DE.
+one amalgamated file, sqlite3.c). Two builds per arm (MySQL one), mean shown; the spread column is stock's difference between its two builds.
+DE + runtime fix compiles as DE.
 
-| Program | Source files compiled | Stock: compiler CPU time | EA, % | DE, % | DE + EA, % |
-|---|--:|--:|:-:|:-:|:-:|
-| SQLite | 1 | 16.4 s | +0.6 | +0.3 | +0.6 |
-| memcached | 61 | 7.8 s | +0.7 | +1.3 | +2.6 |
-| Redis | 140 | 28.5 s | −0.3 | +0.5 | −0.2 |
-| FFmpeg | 1,936 | 350 s | −0.1 | +0.3 | +0.3 |
-| MySQL | 3,662 | 4,270 s | 0.0 | +0.2 | +0.1 |
+| Program | Source files compiled | Stock: compiler CPU time | Stock spread between builds, % | EA, % | DE, % | DE + EA, % |
+|---|--:|--:|--:|:-:|:-:|:-:|
+| SQLite | 1 | 16.4 s | 0.4 | +0.4 | +0.3 | +0.5 |
+| memcached | 61 | 7.8 s | 0.9 | +0.1 | +0.8 | +2.3 |
+| Redis | 140 | 28.5 s | 0.5 | −0.3 | +0.6 | −0.3 |
+| FFmpeg | 1,936 | 350 s | 0.2 | −0.1 | +0.3 | +0.3 |
+| MySQL | 3,662 | 4,270 s | (one build) | 0.0 | +0.2 | +0.1 |
 
 ## Race preservation
 
@@ -181,6 +199,7 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 |---|---|
 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | ⏳ waits for a quiet window on apollo |
 | DE + runtime fix: compiler-rt PR (port of the paper runtime's keep-the-racing-write step), then timing and race preservation | ⏳ in preparation |
+| Resolve 🟡 and † cells, fill gaps (—): kernels at 8 threads after an A/A pilot per kernel, NPB LU A EA and DE + EA, SQLite -O0, RocksDB, the small 🟡 application cells, confirm the Redis -O2 LRANGE_600 slowdown | ⏳ queued after DE + runtime fix |
 | Chromium (Intel): stock against DE + EA, Speedometer 3, blink_perf.dom and .paint | ⏳ current tree Chromium 156.0.8078.47 (Stable; pins clang 24, so no overrides), lld from the same LLVM commit; sync from 26 Oct 13:32, results expected 27 Oct ~01:00-03:00; the Aug-2024 tree (127) does not build with clang 24 without source edits. In that tree's libbase.so, DE + EA removes 1.74 % of read/write call sites |
 
 Done 20-26 Oct: the applications at -O0 and -O2, the eight real applications, the kernels, the corpus
