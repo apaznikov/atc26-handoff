@@ -220,7 +220,7 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 | FFmpeg, HEVC decoding with slice threads | -O0 | — | 0 lost | 0 lost | — | added 27 Oct (the paper workload reports no race): stock reports races in 10/10 runs; 4 sites kept; EA and DE + EA not run |
 | FFmpeg, HEVC decoding with slice threads | -O2 | — | 0 lost | 0 lost | — | stock 10/10 runs; 3 sites kept |
 | FFmpeg, paper workload | -O0 | — | — | — | — | no test: 0 reports in 50 runs, stock included (the encoders are uninstrumented system libraries) |
-| Redis | -O0 | — | — | — | — | no test: no build reports a race, also with io-threads 4 and 8 and a threaded redis-benchmark at -O0 and -O2 |
+| Redis | -O0 | — | — | — | — | no test: no build reports a race with io-threads 20 (the paper configuration, with threaded reads), 8 or 4, nor with a threaded redis-benchmark, at -O0 and -O2 |
 
 ## Open items
 
@@ -233,7 +233,7 @@ Everything below runs on focs (Intel) first; the AMD check follows if time allow
 | DE + runtime fix, every other row: added to each re-timed leg below; rows not re-timed first get a report census (5 runs each) — a row with no race report runs identical code paths and is marked 🟰, a row with reports is timed | ⏳ census on a-p13 now; timing after the re-timing |
 | Resolve 🟡 and † cells, fill gaps (—): Redis -O2 LRANGE_600 first, kernels at 8 threads after an A/A pilot each (two at a time, one per half), NPB LU A EA and DE + EA, freqmine, SQLite -O0, RocksDB, the small 🟡 application cells | ⏳ after DE + runtime fix; ~29 Oct |
 | Chromium 156 (Intel): proper readout of stock against DE + EA (Speedometer 3, blink_perf.dom, .paint; a possible 3 % slowdown on blink_perf.dom modify-element-classname to check), static counts, then builds for DE alone and EA alone (EA skipped if its code equals stock), DE + runtime fix by relinking, and a 5-repetition leg with all arms | ⏳ readout now; builds and leg after the re-timing |
-| Race preservation for Redis and FFmpeg: workloads that run their own threaded code (Redis io-threads, FFmpeg H.264/HEVC decoding with threads); "—" stays if stock still reports no race | Redis: still no race with io-threads 4 or 8 and a threaded redis-benchmark at -O0/-O2, so it stays "—". FFmpeg: HEVC decoding with slice threads at -O0 reports 47 races (libavcodec hevc_filter.c) in 2 of 2 runs; preservation with stock, DE, DE + runtime fix ⏳ on a-p13 |
+| Race preservation for Redis and FFmpeg: workloads that run their own threaded code (Redis io-threads, FFmpeg H.264/HEVC decoding with threads); "—" stays if stock still reports no race | Redis: still no race with io-threads 20 (paper), 8 or 4 and a threaded redis-benchmark at -O0/-O2, so it stays "—". FFmpeg: HEVC decoding with slice threads at -O0 reports 47 races (libavcodec hevc_filter.c) in 2 of 2 runs; preservation with stock, DE, DE + runtime fix ⏳ on a-p13 |
 | AMD (apollo): NPB BT A, LU W, hotspot, SQLite -O0 | after Intel, if time allows |
 
 ## Method
