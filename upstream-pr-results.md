@@ -14,7 +14,7 @@ the AMD check are pending ([Open items](#open-items)).
   does not separate from noise.
 - 🟢 **Kernels: DE gives +76 % to +205 % on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on
   ocean_ncp; EA gives BT +8.5 %, DE + EA +109 %. Most other kernels are unresolved at 8 threads (the A/A of those legs
-  spans ±3-30 %); they are being re-timed. At 1 thread DE gives barnes +4.9 %, srad +7 %, hotspot +10 %, water +26 %.
+  spans ±3-30 %); they are being re-timed.
 - **7-Zip benchmark** (multi-threaded): DE +1.1 %, DE + EA +1.7 %.
 - **DE + runtime fix keeps DE's machine code,** so its speed should equal DE's except where race reports are frequent
   (SQLite, memcached and MySQL report races, MySQL ~12,000 per run); [why it is needed](#why-de-needs-a-runtime-fix).
@@ -77,26 +77,19 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | OpenSSL | 8 | = | = | 🟰 | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
 | Rodinia hotspot † | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
-| | 1 | 🟰 | 🟢 **+10** | ⏳ | 🟰 |
 | NPB LU, class A † | 8 | — | 🟢 **+127** | ⏳ | — |
 | NPB LU, class W † | 8 | = | 🟢 **+102** | ⏳ | 🟢 **+91** |
 | NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
 | SPLASH-2x ocean_ncp | 8 | 🟰 | 🟢 **+6** | ⏳ | 🟰 |
 | SPLASH-2x water_nsquared † | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
-| | 1 | 🟰 | 🟢 **+26** | ⏳ | 🟰 |
 | SPLASH-2x water_spatial † | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
-| | 1 | 🟰 | 🟢 **+26** | ⏳ | 🟰 |
 | Rodinia srad † | 8 | 🟰 | = | ⏳ | 🟰 |
-| | 1 | 🟰 | 🟢 **+7** | ⏳ | 🟰 |
 | Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +15 | ⏳ | 🟰 |
 | SPLASH-2x barnes † | 8 | 🟰 | = | ⏳ | 🟰 |
-| | 1 | 🟰 | 🟢 **+4.9** | ⏳ | 🟰 |
 | PARSEC freqmine⁸ † | 8 | 🟰 | — | ⏳ | 🟰 |
 | Rodinia particlefilter † | 8 | 🟰 | 🟡 +3.9 | ⏳ | 🟡 +4.9 |
-| | 1 | 🟰 | = | ⏳ | = |
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
 | SPLASH-2x raytrace † | 8 | = | 🟡 −9 | ⏳ | = |
-| | 1 | = | = | ⏳ | = |
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
 | PARSEC fluidanimate † | 8 | 🟰 | = | ⏳ | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
@@ -152,8 +145,8 @@ is not called, although DE + EA's interval [−0.1, +2.3] lies above it. Re-time
 
 **Selection.** 254 programs were screened by the share of checks DE removes, and the candidates then by the share of
 executed accesses it removes. The real applications were timed regardless; kernels were timed above ~3 % of checks or
-~4-5 % of accesses. Single-threaded programs (most of llvm-test-suite, the Abseil benchmarks) were timed too but are not
-reported: a race detector is not run on single-threaded programs in practice. Not timed: NPB IS/SP/FT/CG/MG/EP, GAP, the other PARSEC, SPLASH-2x
+~4-5 % of accesses. Single-threaded programs (most of llvm-test-suite, the Abseil benchmarks) and 1-thread runs of the kernels were timed
+too but are not reported: a race detector is not run on single-threaded programs in practice. Not timed: NPB IS/SP/FT/CG/MG/EP, GAP, the other PARSEC, SPLASH-2x
 and Rodinia kernels, pbbs, LULESH, HPCCG, miniFE, XSBench. In threaded programs, spin loops make the access count vary
 by 13-129 % between runs.
 
@@ -239,7 +232,7 @@ Everything below runs on focs (Intel) first; the AMD check follows if time allow
 ## Method
 
 - All timings: **focs**, Intel Xeon w9-3495X (56 cores, 112 threads, max 4.8 GHz), 250 GB RAM, Linux 6.8.
-- Each run is pinned to one half of the machine (CPUs 4-27, 60-83; 8-thread runs use 4-11, 1-thread runs CPU 4); a run
+- Each run is pinned to one half of the machine (CPUs 4-27, 60-83; 8-thread runs use 4-11); a run
   is discarded if the other half is busy. Every arm is timed in 2-4 code layouts and the results pooled.
 - From 22 Oct on, one compiler carries all three PRs, so the arms differ only by flags. On the kernels, DE + EA and DE
   come from different legs: compare each with stock, not with each other.
