@@ -89,7 +89,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | PARSEC freqmine⁸ † | 8 | 🟰 | = | = | 🟰 |
 | Rodinia particlefilter † | 8 | 🟰 | 🟡 +6.5 | 🟡 +5.1 | 🟡 +4.9 |
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
-| SPLASH-2x raytrace † | 8 | = | 🟡 −9 | ⏳ | = |
+| SPLASH-2x raytrace † | 8 | = | = | = | = |
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
 | PARSEC fluidanimate | 8 | 🟰 | 🟡 +1.8 | = | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
