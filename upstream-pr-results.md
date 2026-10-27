@@ -211,7 +211,8 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 
 ## Open items
 
-Everything below runs on focs (Intel) first; the AMD check follows if time allows.
+Everything below runs on focs (Intel) first; the AMD check follows if time allows. All of it is armed as four unattended chains on focs
+(each starts when the previous ends); expected end ~31 Oct.
 
 | Item | State |
 |---|---|
