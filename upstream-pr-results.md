@@ -84,7 +84,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | SPLASH-2x water_nsquared¹¹ † | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
 | SPLASH-2x water_spatial † | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
 | Rodinia srad † | 8 | 🟰 | = | ⏳ | 🟰 |
-| Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +15 | ⏳ | 🟰 |
+| Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +13 | 🟡 +13 | 🟰 |
 | SPLASH-2x barnes † | 8 | 🟰 | = | ⏳ | 🟰 |
 | PARSEC freqmine⁸ † | 8 | 🟰 | — | ⏳ | 🟰 |
 | Rodinia particlefilter † | 8 | 🟰 | 🟡 +3.9 | ⏳ | 🟡 +4.9 |
@@ -131,7 +131,9 @@ The slowdown is small but repeatable; DE and DE + runtime fix overlap, so the fi
 (code layout, or a change in which shadow cells hit) is to be profiled. At -O0, EA makes LRANGE_300/500/600 🟢 faster by
 1.9-2.1 %.
 
-⁷ lavaMD DE: three legs disagree, +19 (unresolved), +6 (=) and +15 (unresolved, shown).
+⁷ lavaMD: five legs give DE +19, +6, +15 and, on 27 Oct, +13 [+2, +22] with DE + runtime fix also +13 [−2, +28]; the point
+estimates agree, but stock against stock spans ±7-22 % in every setup tried (binding, passive wait, larger input), so no
+leg resolves. A last attempt with 8 runs per layout is queued.
 
 ⁸ freqmine: the A/A of this leg is itself +13 [−2, +30], so the leg cannot be read; to be re-timed.
 
