@@ -55,7 +55,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | SQLite² † | 8 | 🟰 | = | = | 🟰 |
 | FFmpeg | 8 | = | = | 🟰 | = |
 | memcached † | 8 | 🟰 | = | = | 🟰 |
-| Redis⁶ | 8 | 🟰 | = | ⏳ | 🟰 |
+| Redis⁶ | 8 | 🟰 | = | = | 🟰 |
 | MySQL | 8 | = | = | = | = |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
 | RocksDB db_bench³ † | 8 | 🟰 | = | ⏳ | 🟰 |
@@ -125,9 +125,18 @@ points to a shared build or layout effect rather than to the checks. The interva
 
 ⁵ memcached -O0 EA: the leg with four code layouts gives =; two earlier legs gave 🟡 −1.7 and 🟡 −4.7.
 
-⁶ Redis -O2 DE: the composite is unchanged, but one workload is **🔴 slower**: LRANGE_600 −2.2 [−3.4, −1.0] against A/A
-+0.2 [−0.9, +0.9]. LRANGE_300, LRANGE_500 and SADD point the same way (−2.0, −2.1, −5.3), within noise. At -O0, EA makes
-LRANGE_300/500/600 🟢 faster by 1.9-2.1 %. To be confirmed by a re-run.
+⁶ Redis -O2: the composite is unchanged with DE and with DE + runtime fix, but the LRANGE workloads are slower in two
+legs. 22 Oct (DE): LRANGE_600 **🔴 −2.2** [−3.4, −1.0]. 27 Oct re-run, pre-stated check (A/A ±0.5-1 %):
+
+| Workload | DE | DE + runtime fix |
+|---|---|---|
+| LRANGE_300 | 🔴 −1.7 [−3.1, −0.6] | 🔴 −2.2 [−3.4, −1.3] |
+| LRANGE_500 | 🟡 −1.8 [−3.3, −0.2] | 🔴 −2.4 [−3.6, −1.2] |
+| LRANGE_600 | 🟡 −2.2 [−3.7, −0.6] (upper bound equals A/A's lower bound) | 🔴 −2.8 [−3.9, −1.8] |
+
+The slowdown is small but repeatable; DE and DE + runtime fix overlap, so the fix adds no separable cost. Its cause
+(code layout, or a change in which shadow cells hit) is to be profiled. At -O0, EA makes LRANGE_300/500/600 🟢 faster by
+1.9-2.1 %.
 
 ⁷ lavaMD DE: three legs disagree, +19 (unresolved), +6 (=) and +15 (unresolved, shown).
 
