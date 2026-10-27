@@ -47,7 +47,7 @@ census runs on a-p13, so the changed runtime code never runs · — not measured
 | **Applications, -O0** | | | | | |
 | SQLite¹ † | 8 | 🟡 +8 | = | = | 🟡 +13 |
 | FFmpeg | 8 | = | = | ⏳ | = |
-| memcached⁵ † | 8 | = | = | ⏳ | = |
+| memcached⁵ † | 8 | = | = | = | = |
 | Redis | 8 | = | = | ⏳ | = |
 | MySQL | 8 | = | = | ⏳ | = |
 | **Applications, -O2** | | | | | |
@@ -205,7 +205,7 @@ undetermined = stock reports the site too rarely (≤ 2 of 10 runs) for an absen
 | SQLite | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | 2 sites kept; walIndexRecover undetermined (stock 1/10); the two walIndexWriteHdr sites of -O0 are absent at -O2 in every build, stock included |
 | memcached | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | 4 sites kept at 10/10; the scheduling-dependent conn_new/conn_close family (7 sites) is undetermined (stock 2/10) |
 | memcached | -O2 | 0 lost | 0 lost | 0 lost | 0 lost | all 11 sites kept: 4 at 10/10, the conn_new/conn_close family 2-3/10 in every arm, stock included |
-| MySQL | -O0 | 0 lost | 0 lost | ⏳ | 0 lost | ~12,100 reports per run in every arm; 251 sites kept; 13 undetermined |
+| MySQL | -O0 | 0 lost | 0 lost | 0 lost | 0 lost | ~12,100 reports per run in every arm; 251 sites kept; 13 undetermined |
 | MySQL | -O2 | 0 lost | 0 lost | ⏳ | 0 lost | ~12,000 reports per run; 226 sites kept; 26 undetermined. Closest case: dict_stats_set_persistent, stock 4/10, DE 0/10, but DE + EA, which removes every check DE removes, sees it (1/10), so DE's 0/10 is detection noise |
 | Redis, FFmpeg | -O0 | — | — | — | — | no test: no build, stock included, reports any race under these workloads (0 reports in 50 runs each); -O2 skipped |
 
