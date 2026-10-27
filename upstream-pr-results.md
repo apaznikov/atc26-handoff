@@ -53,7 +53,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | MySQL | 8 | = | = | = | = |
 | **Applications, -O2** | | | | | |
 | SQLite² † | 8 | 🟰 | = | = | 🟰 |
-| FFmpeg | 8 | = | = | ⏳ | = |
+| FFmpeg | 8 | = | = | 🟰 | = |
 | memcached † | 8 | 🟰 | = | = | 🟰 |
 | Redis⁶ | 8 | 🟰 | = | ⏳ | 🟰 |
 | MySQL | 8 | = | = | = | = |
