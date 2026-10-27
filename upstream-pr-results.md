@@ -82,7 +82,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
 | SPLASH-2x ocean_ncp | 8 | 🟰 | 🟢 **+6** | ⏳ | 🟰 |
 | SPLASH-2x water_nsquared¹¹ † | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
-| SPLASH-2x water_spatial † | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
+| SPLASH-2x water_spatial¹² † | 8 | 🟰 | 🟡 +10 | 🟡 +6 | 🟰 |
 | Rodinia srad † | 8 | 🟰 | 🟡 +10 | 🟡 +12 | 🟰 |
 | Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +13 | 🟡 +13 | 🟰 |
 | SPLASH-2x barnes † | 8 | 🟰 | = | = | 🟰 |
@@ -146,6 +146,10 @@ is not called, although DE + EA's interval [−0.1, +2.3] lies above it. Re-time
 ¹¹ water_nsquared cannot be resolved on this host: in every setup tried on 27 Oct (as is, input ×2, 8 runs per layout)
 stock against stock spans ±13-16 %, with single runs from 29 to 43 s. TSan's shadow is never reset and its memory is
 constant in every run, so the spread is the program's own behaviour under TSan at 8 threads. No further leg.
+
+¹² water_spatial: DE +10 is from the 22 Oct leg. The 28 Oct re-time (best of three setups, larger input) gives DE +5
+[−14, +29] and DE + runtime fix +6 [−8, +21], but its stock-against-stock point is itself −11.5 % and the two code layouts
+disagree by 30 %, so that leg is not usable either.
 
 † The A/A interval of this row is wider than ±3 %: changes smaller than that cannot be resolved here.
 
