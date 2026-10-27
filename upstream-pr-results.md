@@ -81,7 +81,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | NPB LU, class W † | 8 | = | 🟢 **+102** | ⏳ | 🟢 **+91** |
 | NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
 | SPLASH-2x ocean_ncp | 8 | 🟰 | 🟢 **+6** | ⏳ | 🟰 |
-| SPLASH-2x water_nsquared † | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
+| SPLASH-2x water_nsquared¹¹ † | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
 | SPLASH-2x water_spatial † | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
 | Rodinia srad † | 8 | 🟰 | = | ⏳ | 🟰 |
 | Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +15 | ⏳ | 🟰 |
@@ -140,6 +140,10 @@ is not called, although DE + EA's interval [−0.1, +2.3] lies above it. Re-time
 
 ¹⁰ blink_perf.dom: one story, modify-element-classname, is 2.6-3.1 % slower with DE + EA in all 3 repetitions (A/A
 −0.1 to −0.2 %); a per-story hint, checked with 8 repetitions.
+
+¹¹ water_nsquared cannot be resolved on this host: in every setup tried on 27 Oct (as is, input ×2, 8 runs per layout)
+stock against stock spans ±13-16 %, with single runs from 29 to 43 s. TSan's shadow is never reset and its memory is
+constant in every run, so the spread is the program's own behaviour under TSan at 8 threads. No further leg.
 
 † The A/A interval of this row is wider than ±3 %: changes smaller than that cannot be resolved here.
 
