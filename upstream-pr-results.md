@@ -85,7 +85,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | SPLASH-2x water_spatial † | 8 | 🟰 | 🟡 +10 | ⏳ | 🟰 |
 | Rodinia srad † | 8 | 🟰 | 🟡 +10 | 🟡 +12 | 🟰 |
 | Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +13 | 🟡 +13 | 🟰 |
-| SPLASH-2x barnes † | 8 | 🟰 | = | ⏳ | 🟰 |
+| SPLASH-2x barnes † | 8 | 🟰 | = | = | 🟰 |
 | PARSEC freqmine⁸ † | 8 | 🟰 | — | ⏳ | 🟰 |
 | Rodinia particlefilter † | 8 | 🟰 | 🟡 +3.9 | ⏳ | 🟡 +4.9 |
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
