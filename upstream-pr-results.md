@@ -38,7 +38,8 @@ Each arm's 95 % interval is compared with that of A/A (stock timed against itsel
 **=** no change (point estimate inside the A/A interval) · 🟡 unresolved (neither; the number is the point estimate) ·
 † A/A wider than ±3 % ·
 🟰 same machine code (EA as stock, DE + EA as DE), not timed; in the DE + runtime fix column: no race report in 5
-census runs on a-p13, so the changed runtime code never runs · — not measured · ⏳ pending · ⏸ stopped
+census runs on a-p13 (FFmpeg and Redis -O0: in 50
+runs on focs), so the changed runtime code never runs · — not measured · ⏳ pending · ⏸ stopped
 
 ## Results
 
@@ -46,16 +47,16 @@ census runs on a-p13, so the changed runtime code never runs · — not measured
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
 | SQLite¹ † | 8 | 🟡 +8 | = | = | 🟡 +13 |
-| FFmpeg | 8 | = | = | ⏳ | = |
+| FFmpeg | 8 | = | = | 🟰 | = |
 | memcached⁵ † | 8 | = | = | = | = |
-| Redis | 8 | = | = | ⏳ | = |
-| MySQL | 8 | = | = | ⏳ | = |
+| Redis | 8 | = | = | 🟰 | = |
+| MySQL | 8 | = | = | = | = |
 | **Applications, -O2** | | | | | |
 | SQLite² † | 8 | 🟰 | = | = | 🟰 |
 | FFmpeg | 8 | = | = | ⏳ | = |
-| memcached † | 8 | 🟰 | = | ⏳ | 🟰 |
+| memcached † | 8 | 🟰 | = | = | 🟰 |
 | Redis⁶ | 8 | 🟰 | = | ⏳ | 🟰 |
-| MySQL | 8 | = | = | ⏳ | = |
+| MySQL | 8 | = | = | = | = |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
 | RocksDB db_bench³ † | 8 | 🟰 | = | ⏳ | 🟰 |
 | LevelDB db_bench | 8 | 🟰 | = | 🟰 | 🟰 |
