@@ -86,7 +86,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | Rodinia srad † | 8 | 🟰 | 🟡 +10 | 🟡 +12 | 🟰 |
 | Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +13 | 🟡 +13 | 🟰 |
 | SPLASH-2x barnes † | 8 | 🟰 | = | = | 🟰 |
-| PARSEC freqmine⁸ † | 8 | 🟰 | — | ⏳ | 🟰 |
+| PARSEC freqmine⁸ † | 8 | 🟰 | = | = | 🟰 |
 | Rodinia particlefilter † | 8 | 🟰 | 🟡 +6.5 | 🟡 +5.1 | 🟡 +4.9 |
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
 | SPLASH-2x raytrace † | 8 | = | 🟡 −9 | ⏳ | = |
@@ -135,7 +135,8 @@ The slowdown is small but repeatable; DE and DE + runtime fix overlap, so the fi
 estimates agree, but stock against stock spans ±7-22 % in every setup tried (binding, passive wait, larger input), so no
 leg resolves. A last attempt with 8 runs per layout is queued.
 
-⁸ freqmine: the A/A of this leg is itself +13 [−2, +30], so the leg cannot be read; to be re-timed.
+⁸ freqmine: the 25 Oct leg was unreadable (its stock-against-stock point was +13 %). Re-timed on 28 Oct (best of five
+setups; stock against stock ±10 %): DE +1.9 and DE + runtime fix +2.2, both inside the noise.
 
 ⁹ Speedometer 3: the A/A of this leg is itself −2.0 [−3.4, −0.8] and excludes zero, so by the registered rule the leg
 is not called, although DE + EA's interval [−0.1, +2.3] lies above it. Re-timed with 5 repetitions.
