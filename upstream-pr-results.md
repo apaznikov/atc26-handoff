@@ -91,7 +91,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
 | SPLASH-2x raytrace † | 8 | = | 🟡 −9 | ⏳ | = |
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
-| PARSEC fluidanimate † | 8 | 🟰 | = | ⏳ | 🟰 |
+| PARSEC fluidanimate | 8 | 🟰 | 🟡 +1.8 | = | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
 | **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284, and 1.7 % with its 552 shared libraries, 17,172,360 → 16,882,221) | | | | | |
 | Speedometer 3 (20 stories)⁹ | browser | ⏳ | ⏳ | ⏳ | 🟡 +1.0 |
