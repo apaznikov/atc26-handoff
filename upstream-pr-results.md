@@ -162,7 +162,7 @@ numbers are.
 
 ¹⁴ streamcluster: DE removes the most accesses of any program screened (78 %), yet in the 29 Oct leg both DE and DE + runtime
 fix are 3.2-3.4 % slower, in both code layouts, with the interval reaching just into stock against stock
-(−2.9 [−2.9, +2.0]); the 24 Oct leg gave −2 (inside noise). A slowdown hint to be explained, like Redis LRANGE and pigz -O0.
+(+0.1 [−2.9, +2.0]); the 24 Oct leg gave −2 (inside noise). A slowdown hint to be explained, like Redis LRANGE and pigz -O0.
 
 † The A/A interval of this row is wider than ±3 %: changes smaller than that cannot be resolved here.
 
