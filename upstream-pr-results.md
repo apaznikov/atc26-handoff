@@ -90,7 +90,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | Rodinia particlefilter † | 8 | 🟰 | 🟡 +6.8 | 🟡 +5.5 | 🟡 +4.9 |
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
 | SPLASH-2x raytrace † | 8 | = | = | = | = |
-| PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
+| PARSEC streamcluster¹⁴ | 8 | 🟰 | 🟡 −3.4 | 🟡 −3.2 | 🟰 |
 | PARSEC fluidanimate | 8 | 🟰 | 🟡 +1.8 | = | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | = | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
 | **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284, and 1.7 % with its 552 shared libraries, 17,172,360 → 16,882,221) | | | | | |
@@ -159,6 +159,10 @@ disagree by 30 %, so that leg is not usable either.
 ¹³ hotspot, DE + runtime fix: from the 29 Oct leg, in which DE gives +319 and stock against stock is itself +15 [−11, +36];
 the effect is far outside that noise, but the DE figures of the two legs (+205, +319) show how loose the hotspot
 numbers are.
+
+¹⁴ streamcluster: DE removes the most accesses of any program screened (78 %), yet in the 29 Oct leg both DE and DE + runtime
+fix are 3.2-3.4 % slower, in both code layouts, with the interval reaching just into stock against stock
+(−2.9 [−2.9, +2.0]); the 24 Oct leg gave −2 (inside noise). A slowdown hint to be explained, like Redis LRANGE and pigz -O0.
 
 † The A/A interval of this row is wider than ±3 %: changes smaller than that cannot be resolved here.
 
