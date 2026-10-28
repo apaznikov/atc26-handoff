@@ -58,22 +58,22 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | Redis⁶ | 8 | 🟰 | = | = | 🟰 |
 | MySQL | 8 | = | = | = | = |
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
-| RocksDB db_bench³ † | 8 | 🟰 | = | ⏳ | 🟰 |
+| RocksDB db_bench³ † | 8 | 🟰 | = | 🟡 +3.7 | 🟰 |
 | LevelDB db_bench | 8 | 🟰 | = | 🟰 | 🟰 |
 | DuckDB TPC-H | 8 | = | = | ⏳ | = |
 | zstd | 8 | = | = | 🟰 | = |
 | xz | 8 | 🟰 | = | 🟰 | 🟰 |
 | pigz | 8 | 🟰 | = | ⏳ | 🟰 |
 | brotli | 8 | 🟰 | = | 🟰 | 🟰 |
-| OpenSSL | 8 | 🟡 +0.8 | = | 🟰 | = |
+| OpenSSL | 8 | = | = | 🟰 | = |
 | **Real applications, -O0** | | | | | |
-| RocksDB db_bench³ † | 8 | = | = | ⏳ | = |
+| RocksDB db_bench³ † | 8 | = | = | = | = |
 | LevelDB db_bench | 8 | = | = | 🟰 | = |
 | DuckDB TPC-H | 8 | = | = | ⏳ | = |
 | zstd | 8 | = | = | 🟰 | = |
-| xz | 8 | 🟡 +0.5 | 🟢 **+0.6** | 🟰 | 🟢 **+0.6** |
-| pigz⁴ | 8 | 🟡 −2 | 🟡 −2 | ⏳ | 🟡 −2 |
-| brotli | 8 | 🟡 +1.8 | = | 🟰 | 🟢 **+1.8** |
+| xz | 8 | = | 🟢 **+0.6** | 🟰 | 🟢 **+0.6** |
+| pigz⁴ | 8 | 🔴 −2.3 | 🔴 −2.2 | 🔴 −2.1 | 🔴 −2.3 |
+| brotli | 8 | 🟡 +1.7 | = | 🟰 | 🟢 **+1.8** |
 | OpenSSL | 8 | = | = | 🟰 | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
 | Rodinia hotspot † | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
@@ -92,7 +92,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | SPLASH-2x raytrace † | 8 | = | = | = | = |
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
 | PARSEC fluidanimate | 8 | 🟰 | 🟡 +1.8 | = | 🟰 |
-| 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | 🟡 +0.4 | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
+| 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | = | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
 | **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284, and 1.7 % with its 552 shared libraries, 17,172,360 → 16,882,221) | | | | | |
 | Speedometer 3 (20 stories)⁹ | browser | ⏳ | ⏳ | ⏳ | 🟡 +1.0 |
 | blink_perf.dom (3 stories)¹⁰ | browser | ⏳ | ⏳ | ⏳ | 🟡 −0.3 |
@@ -115,10 +115,12 @@ quiet re-check queued). checkpoint_starvation_1 gains nothing at -O2.
 narrow it: -O2 A/A +2.5 [−2.2, +6.5], DE +5.5 [+1.0, +10.1]; -O0 every arm within A/A −2.3 [−4.5, +0.6]. The table
 keeps the first leg.
 
-⁴ pigz -O0: all four non-stock builds are 2 % slower in both code layouts, by the same amount whatever they remove, which
-points to a shared build or layout effect rather than to the checks. The interval reaches the A/A interval, so unresolved.
+⁴ pigz -O0, re-timed 28 Oct at N 8 (stock against stock −0.1 [−0.6, +0.8]): every arm that removes checks is **2.1-2.3 %
+slower**, in both code layouts, by the same amount whatever it removes (EA, DE, DE + EA, DE + runtime fix). That points to a
+shared build or layout effect rather than to the checks; the cause is not yet known.
 
-⁵ memcached -O0 EA: the leg with four code layouts gives =; two earlier legs gave 🟡 −1.7 and 🟡 −4.7.
+⁵ memcached -O0 EA: three earlier legs gave =, −1.7 and −4.7; the 28 Oct re-time at N 8 gives +1.4, inside stock against
+stock (±2.2 %).
 
 ⁶ Redis -O2: the composite is unchanged with DE and with DE + runtime fix, but the LRANGE workloads are slower in two
 legs. 22 Oct (DE): LRANGE_600 **🔴 −2.2** [−3.4, −1.0]. 27 Oct re-run, pre-stated check (A/A ±0.5-1 %):
