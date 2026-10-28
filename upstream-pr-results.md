@@ -9,8 +9,8 @@ the AMD check are pending ([Open items](#open-items)).
 ## Takeaways
 
 - **On the 13 applications the PRs change nothing measurable in the overall score,** with three exceptions: xz -O0 DE and
-  DE + EA +0.6 %, brotli -O0 DE + EA +1.8 % (🟢), and one Redis workload that DE makes **2.2 % slower** (LRANGE_600 at
-  -O2, footnote ⁶; to be confirmed). SQLite -O0 gains up to +78 % on single tests (footnote ¹), but its overall score
+  DE + EA +0.6 %, brotli -O0 DE + EA +1.8 % (🟢), and two slowdowns: Redis LRANGE at -O2 2-3 % slower with DE (footnote ⁶), and pigz -O0
+  2.2 % slower with every arm, the same whatever is removed (footnote ⁴). SQLite -O0 gains up to +78 % on single tests (footnote ¹), but its overall score
   does not separate from noise.
 - 🟢 **Kernels: DE gives +76 % to +205 % on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on
   ocean_ncp; EA gives BT +8.5 %, DE + EA +109 %. Most other kernels are unresolved at 8 threads (the A/A of those legs
