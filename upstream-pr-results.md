@@ -63,7 +63,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | DuckDB TPC-H | 8 | = | = | ⏳ | = |
 | zstd | 8 | = | = | 🟰 | = |
 | xz | 8 | 🟰 | = | 🟰 | 🟰 |
-| pigz | 8 | 🟰 | = | ⏳ | 🟰 |
+| pigz | 8 | 🟰 | = | = | 🟰 |
 | brotli | 8 | 🟰 | = | 🟰 | 🟰 |
 | OpenSSL | 8 | = | = | 🟰 | = |
 | **Real applications, -O0** | | | | | |
