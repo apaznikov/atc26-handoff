@@ -79,7 +79,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | Rodinia hotspot¹³ † | 8 | 🟰 | 🟢 **+205** | 🟢 **+289** | 🟰 |
 | NPB LU, class A † | 8 | = | 🟢 **+102** | 🟢 **+100** | 🟢 **+107** |
 | NPB LU, class W † | 8 | = | 🟢 **+103** | 🟢 **+101** | 🟢 **+116** |
-| NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
+| NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | 🟢 **+70** | 🟢 **+109** |
 | SPLASH-2x ocean_ncp | 8 | 🟰 | 🟢 **+6** | 🟡 +5.2 | 🟰 |
 | SPLASH-2x water_nsquared¹¹ † | 8 | 🟰 | 🟡 +9 | ⏳ | 🟰 |
 | SPLASH-2x water_spatial¹² † | 8 | 🟰 | 🟡 +10 | 🟡 +6 | 🟰 |
