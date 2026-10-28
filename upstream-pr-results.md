@@ -76,7 +76,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | brotli | 8 | 🟡 +1.7 | = | 🟰 | 🟢 **+1.8** |
 | OpenSSL | 8 | = | = | 🟰 | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
-| Rodinia hotspot † | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
+| Rodinia hotspot¹³ † | 8 | 🟰 | 🟢 **+205** | 🟢 **+289** | 🟰 |
 | NPB LU, class A † | 8 | = | 🟢 **+102** | 🟢 **+100** | 🟢 **+107** |
 | NPB LU, class W † | 8 | = | 🟢 **+103** | 🟢 **+101** | 🟢 **+116** |
 | NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
@@ -155,6 +155,10 @@ constant in every run, so the spread is the program's own behaviour under TSan a
 ¹² water_spatial: DE +10 is from the 22 Oct leg. The 28 Oct re-time (best of three setups, larger input) gives DE +5
 [−14, +29] and DE + runtime fix +6 [−8, +21], but its stock-against-stock point is itself −11.5 % and the two code layouts
 disagree by 30 %, so that leg is not usable either.
+
+¹³ hotspot, DE + runtime fix: from the 29 Oct leg, in which DE gives +319 and stock against stock is itself +15 [−11, +36];
+the effect is far outside that noise, but the DE figures of the two legs (+205, +319) show how loose the hotspot
+numbers are.
 
 † The A/A interval of this row is wider than ±3 %: changes smaller than that cannot be resolved here.
 
