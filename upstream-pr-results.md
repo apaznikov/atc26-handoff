@@ -46,7 +46,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | Program | Threads | EA, % | DE, % | DE + runtime fix, % | DE + EA, % |
 |---|:-:|:-:|:-:|:-:|:-:|
 | **Applications, -O0** | | | | | |
-| SQLite¹ † | 8 | 🟡 +8 | = | = | 🟡 +13 |
+| SQLite¹ † | 8 | 🟡 +11 | 🟡 +8 | 🟡 +8 | 🟡 +10 |
 | FFmpeg | 8 | = | = | 🟰 | = |
 | memcached⁵ † | 8 | = | = | = | = |
 | Redis | 8 | = | = | 🟰 | = |
@@ -87,7 +87,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | Rodinia lavaMD⁷ † | 8 | 🟰 | 🟡 +13 | 🟡 +13 | 🟰 |
 | SPLASH-2x barnes † | 8 | 🟰 | = | = | 🟰 |
 | PARSEC freqmine⁸ † | 8 | 🟰 | = | = | 🟰 |
-| Rodinia particlefilter † | 8 | 🟰 | 🟡 +6.5 | 🟡 +5.1 | 🟡 +4.9 |
+| Rodinia particlefilter † | 8 | 🟰 | 🟡 +6.8 | 🟡 +5.5 | 🟡 +4.9 |
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
 | SPLASH-2x raytrace † | 8 | = | = | = | = |
 | PARSEC streamcluster | 8 | 🟰 | = | ⏳ | 🟰 |
@@ -98,12 +98,14 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | blink_perf.dom (3 stories)¹⁰ | browser | ⏳ | ⏳ | ⏳ | 🟡 −0.3 |
 | blink_perf.paint (2 stories) | browser | ⏳ | ⏳ | ⏳ | = |
 
-¹ SQLite -O0 as a whole does not separate from noise (stress and trigger tests vary by up to 90 % between runs), but
-single tests do: checkpoint_starvation_1 EA 🟢 **+78**, DE **+67**, DE + EA **+78**; walthread1 EA and DE + EA
-🟢 **+7**; walthread2 EA 🟢 **+2.4**, DE + EA 🟢 **+3**. DE + runtime fix (27 Oct leg): checkpoint_starvation_1 🟢 **+66** (DE +65 in the same leg),
-walthread1 🟢 **+4.3** (DE +7.1; intervals overlap). The DE and DE + EA figures for checkpoint_starvation_1 come from a
-leg whose A/A for that test is itself off zero (+0.9 [+0.2, +1.5]); by the registered rule such a test is reported but
-not called, although the effect is 70 times that offset.
+¹ SQLite -O0, re-timed 28 Oct (4 code layouts × 4 runs, all arms in one leg): the overall score does not separate from
+noise (stock against stock −1.5 [−8.0, +5.2]; stress and trigger tests vary by up to 90 %), but single tests do:
+
+| Test | EA | DE | DE + runtime fix | DE + EA |
+|---|---|---|---|---|
+| checkpoint_starvation_1 | 🟢 **+77** | 🟢 **+67** | 🟢 **+67** | 🟢 **+77** |
+| walthread1 | 🟢 **+7.0** | 🟢 **+5.9** | 🟢 **+6.0** | 🟢 **+5.7** |
+| walthread2 | 🟢 **+2.1** | 🟡 +0.4 | = | 🟢 **+2.5** |
 
 ² SQLite -O2: in the 22 Oct leg no single test separates from noise for DE (walthread1 +4 lies inside A/A). In the
 27 Oct leg walthread1 is 🟢 +3.6 with DE and 🟡 +5.6 with DE + runtime fix (its lower bound equals A/A's upper bound;
