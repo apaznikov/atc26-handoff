@@ -2,6 +2,9 @@
 
 Read this first when resuming. Russian translation: tsan-improve-handoff-2026-10-28.ru.md.
 
+Other lanes' handoffs of the same day: /home/alexey/atc26-handoff/tsan-exp-handoff-2026-10-28.md (chains, amendments,
+pitfalls, first checks) and /home/alexey/atc26-handoff/runtime/tsan-rt-handoff-2026-10-28.md (runtime paper).
+
 ## Role and lanes
 
 - **tsan-improve** (this lane, tmux `2-tsan-improve`, config `~/.claude-focs2`) coordinates the measurements of the
