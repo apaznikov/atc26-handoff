@@ -15,7 +15,7 @@ this folder. Russian translation: tsan-rt-handoff-2026-10-28.ru.md.
 | branch | commit | what |
 |---|---|---|
 | `tsan-rt/base` | 00a2b7021c23 | upstream main of 19 Oct; base of the track (same as the upstream PR branches) |
-| `tsan-rt/als` | d9b877c7e046 + 24c4088f486b | ALS ported to upstream, plus the audit fixes. Squash into one commit before any PR; the auto-mode classifier blocked force pushes, so it needs Alexey's OK |
+| `tsan-rt/als` | a87606ee8322 | ALS ported to upstream with the audit fixes, squashed into one commit on 28 Oct (Alexey's OK); same tree as 24c4088f486b, which a-p13's root-als was built from |
 | `meta-shadow/base`, `meta-shadow/{parallel-note,shadow-resident-filter,workload-profiler}` | 73e729f7b2f0; 3995d5da1c07, c883c4524e3a, 8c9c383c792b | Ownership Meta-Shadow Memory project, imported from its fork |
 | `l0-filter/base`, `l0-filter/main` | 4d87e55d8a41, d7a513c92648 | L0 filter project, imported |
 | `aba/base`, `aba/main` | 8947e494f92e, 12582630f5d4 | ABA detection project, imported; another lane will own it |
@@ -25,16 +25,15 @@ this folder. Russian translation: tsan-rt-handoff-2026-10-28.ru.md.
   - Remotes: `paper` = the ATC tree /home/alexey/dev/llvm-project-focs-lab (`paper/camera-ready` = 8345a0396fa5, `paper/als`), and the three project forks.
   - Worktree: /extra/alexey/tsan-rt/wt/als.
 
-## Pending decisions (Alexey)
+## Decisions of 28 Oct (Alexey)
 
-1. **Project branches.** The imported `*/main` (and the meta-shadow) branches already hold the work, so PRs into them would be empty. Two options:
-   - reset them to their bases: a force push, blocked by the classifier until he says "сбросить";
-   - or have PRs target new branches `<folder>/dev`.
-
-   The texts for the three contributors (PR instructions) are in projects/contributor-messages.md; send them after this decision.
-2. **DD-EXACT B1** (memcached +19-22 %): race reports are unchanged, but deadlock (lock-order) reports differ (audit A34 H2). Accept as a separate class, or fix first.
-3. **Paper outline and venue:** README.md, "Paper outline". Venue to be chosen after P1; the 2027 cycles of ASPLOS and EuroSys are closed.
-4. **Where the L0-filter contributor may run benchmarks:** focs is booked for timed legs until about 29 Oct. Options: we measure their branch with our protocol, or a focs window later.
+1. **Project branches stay as imported.** Alexey tells the contributors that everything is ready. They continue in their forks and send new changes as PRs into their folder's branches. The drafts in projects/contributor-messages.md are not needed.
+2. **DD-EXACT: taken into work.** Next step: port `experiment/dd-exact-ab` (944fb9f4c502: options `deadlock_detector_large_table`, `deadlock_detector_exact_prelock`) from the ATC tree to `tsan-rt/dd-exact`, then the gates and timing.
+   - My reading of "берем в работу": the lock-order difference (A34 H2) is accepted for measuring, and it is stated as its own class: race reports exact, deadlock reports may differ.
+   - Re-measure on the record workload, where the detector was only 2 % of memcached.
+3. **Paper outline and venue:** later.
+4. **The L0-filter contributor measures on his own PC.**
+5. **Squashing tsan-rt/als:** done, force push allowed for this branch.
 
 ## State of the work
 
@@ -87,10 +86,11 @@ See apollo:~/tsan-rt/STATE.md, written at the stop of 28 Oct.
 
 ## Next steps, in order
 
-1. Finish P0 (STATE.md lists what is left). Then the A/A calibration leg on node0, announced first.
-2. P1: perf profiles of stock TSan on the five applications, by runtime component.
-3. ALS timing legs (memcached, Redis, MySQL, SQLite, FFmpeg), with race preservation.
-4. After the decisions above: the DD-EXACT port, the project branches, the outline.
+1. Register the protocol, announce to wtc and stretto, then the A/A calibration leg on node0.
+2. Port DD-EXACT to `tsan-rt/dd-exact` (build and gates on a-p13; the tree recipe is in STATE.md), alongside step 1.
+3. P1: perf profiles of stock TSan on the five applications, by runtime component.
+4. Timing legs for ALS and DD-EXACT on the five applications, with race preservation.
+5. The paper outline, when Alexey returns to it.
 
 ## Rules that bite in this lane
 
