@@ -69,7 +69,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | **Real applications, -O0** | | | | | |
 | RocksDB db_bench³ † | 8 | = | = | = | = |
 | LevelDB db_bench | 8 | = | = | 🟰 | = |
-| DuckDB TPC-H | 8 | = | = | ⏳ | = |
+| DuckDB TPC-H | 8 | = | = | = | = |
 | zstd | 8 | = | = | 🟰 | = |
 | xz | 8 | = | 🟢 **+0.6** | 🟰 | 🟢 **+0.6** |
 | pigz⁴ | 8 | 🔴 −2.3 | 🔴 −2.2 | 🔴 −2.1 | 🔴 −2.3 |
