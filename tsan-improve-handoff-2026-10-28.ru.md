@@ -2,6 +2,9 @@
 
 Перевод файла tsan-improve-handoff-2026-10-28.md; при расхождении главный английский.
 
+Передачи других сессий того же дня: /home/alexey/atc26-handoff/tsan-exp-handoff-2026-10-28.md и
+/home/alexey/atc26-handoff/runtime/tsan-rt-handoff-2026-10-28.md.
+
 ## Роли
 - **tsan-improve** (tmux `2-tsan-improve`) — координация замеров версий PR, тексты PR, остатки ATC'26.
 - **tsan-exp** (tmux `2-tsan-exp`) — все сборки, замеры, обработка; цепочки идут сами на focs, сохранность гонок — на
