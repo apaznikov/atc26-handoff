@@ -1,4 +1,6 @@
-# Messages to the contributors (drafts of 26 Oct, not yet sent)
+# Messages to the contributors (drafts of 26 Oct; not needed)
+
+28 Oct: the imported branches stay as they are; Alexey tells the contributors himself that everything is ready.
 
 To be sent once Alexey decides the target branches (reset `*/main` to base, or new `<folder>/dev`). Replace the
 target branch names below if `/dev` is chosen. Fork names: `<fork>` = the contributor's GitHub account.
