@@ -77,7 +77,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | OpenSSL | 8 | = | = | 🟰 | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
 | Rodinia hotspot † | 8 | 🟰 | 🟢 **+205** | ⏳ | 🟰 |
-| NPB LU, class A † | 8 | — | 🟢 **+127** | ⏳ | — |
+| NPB LU, class A † | 8 | = | 🟢 **+102** | 🟢 **+100** | 🟢 **+107** |
 | NPB LU, class W † | 8 | = | 🟢 **+103** | 🟢 **+101** | 🟢 **+116** |
 | NPB BT, class A † | 8 | 🟢 **+8.5** | 🟢 **+76** | ⏳ | 🟢 **+109** |
 | SPLASH-2x ocean_ncp | 8 | 🟰 | 🟢 **+6** | ⏳ | 🟰 |
