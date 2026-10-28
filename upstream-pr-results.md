@@ -99,7 +99,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | blink_perf.paint (2 stories) | browser | ⏳ | ⏳ | ⏳ | = |
 
 ¹ SQLite -O0, re-timed 28 Oct (4 code layouts × 4 runs, all arms in one leg): the overall score does not separate from
-noise (stock against stock −1.5 [−8.0, +5.2]; stress and trigger tests vary by up to 90 %), but single tests do:
+noise (stock against stock spans [−8.0, +5.2]; stress and trigger tests vary by up to 90 %), but single tests do:
 
 | Test | EA | DE | DE + runtime fix | DE + EA |
 |---|---|---|---|---|
