@@ -95,7 +95,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | = | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
 | **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284, and 1.7 % with its 552 shared libraries, 17,172,360 → 16,882,221) | | | | | |
 | Speedometer 3 (20 stories)⁹ | browser | ⏳ | ⏳ | ⏳ | 🟡 +1.0 |
-| blink_perf.dom (3 stories)¹⁰ | browser | ⏳ | ⏳ | ⏳ | 🟡 −0.3 |
+| blink_perf.dom (3 stories)¹⁰ | browser | = | 🟡 −0.1 | 🟡 −0.9 | 🟡 −0.4 |
 | blink_perf.paint (2 stories) | browser | ⏳ | ⏳ | ⏳ | = |
 
 ¹ SQLite -O0, re-timed 28 Oct (4 code layouts × 4 runs, all arms in one leg): the overall score does not separate from
@@ -145,8 +145,10 @@ setups; stock against stock ±10 %): DE +1.9 and DE + runtime fix +2.2, both ins
 ⁹ Speedometer 3: the A/A of this leg is itself −2.0 [−3.4, −0.8] and excludes zero, so by the registered rule the leg
 is not called, although DE + EA's interval [−0.1, +2.3] lies above it. Re-timed with 5 repetitions.
 
-¹⁰ blink_perf.dom: one story, modify-element-classname, is 2.6-3.1 % slower with DE + EA in all 3 repetitions (A/A
-−0.1 to −0.2 %); a per-story hint, checked with 8 repetitions.
+¹⁰ blink_perf.dom, 29 Oct leg with 8 repetitions: one story is **slower in every repetition**, a pre-stated check:
+modify-element-classname DE −2.4 % (repetitions −1.9 to −2.8), DE + EA −2.6 %, DE + runtime fix −3.1 %, while stock against
+stock spans −0.6 to +0.4 % and EA alone is unchanged. The other two stories are unchanged. The suite as a whole stays
+within noise.
 
 ¹¹ water_nsquared cannot be resolved on this host: in every setup tried on 27 Oct (as is, input ×2, 8 runs per layout)
 stock against stock spans ±13-16 %, with single runs from 29 to 43 s. TSan's shadow is never reset and its memory is
