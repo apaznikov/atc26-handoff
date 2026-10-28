@@ -60,7 +60,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | **Real applications, -O2** (fixed work: db_bench --num, compressing a fixed file, OpenSSL enc + dgst) | | | | | |
 | RocksDB db_bench³ † | 8 | 🟰 | = | 🟡 +3.7 | 🟰 |
 | LevelDB db_bench | 8 | 🟰 | = | 🟰 | 🟰 |
-| DuckDB TPC-H | 8 | = | = | ⏳ | = |
+| DuckDB TPC-H | 8 | = | = | = | = |
 | zstd | 8 | = | = | 🟰 | = |
 | xz | 8 | 🟰 | = | 🟰 | 🟰 |
 | pigz | 8 | 🟰 | = | = | 🟰 |
