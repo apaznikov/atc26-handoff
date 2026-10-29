@@ -84,6 +84,24 @@ See apollo:~/tsan-rt/STATE.md, written at the stop of 28 Oct.
   - Frequency is not fixed (schedutil, cell means 2.9-3.9 GHz). It is recorded per cell; the A/A arm carries it.
 - **Rule slips:** two short probes ran on apollo unpinned (under 10 s).
 
+## Results of 29-30 Oct (timed legs on apollo node0; details in apollo:~/tsan-rt/RESULTS.md)
+
+- **Branches added:** `tsan-rt/als` = e078bcda770c (release fences instead of seq_cst, audited SOUND WITH NOTES);
+  `tsan-rt/als-lazy` = 8e71159fffdf (versions only on sync objects a load has cached; audited SOUND WITH NOTES, notes
+  applied; measured as 9a22221f0aca, hot paths identical but for the global read); `tsan-rt/dd-exact` = d30b65678d04.
+- **Layout confound found 30 Oct:** the `.o<k>` offsets moved the program but not the runtime's own code, so each
+  runtime build was timed in one internal layout. Runtime-internal layout alone swings MySQL by +/- 3 %. All legs from
+  30 Oct use `.i00/.i16/.i32/.i48` trees (pad first in libclang_rt.tsan.a, second pad keeps main's class); built for
+  base, als, alsr, alsl, ddx on all five apps.
+- **ALS (skip on):** Redis +20-27 % GREEN (two legs; 99.9 % of hits are spin-wait loads); MySQL, FFmpeg null; SQLite
+  noisy (A/A excludes 1.0), re-measured with iNN; memcached -1.4 % (flag cost on unlocks, layout-free), release fences
+  recover half; alsl legs pending.
+- **DD-EXACT (both options):** memcached +3.9 % (single layout, iNN re-leg running); MySQL null under iNN (the earlier
+  +2.7 % was layout); Redis null; SQLite, FFmpeg queued under iNN.
+- **P1 profiles:** apollo:~/tsan-rt/p1/P1-SUMMARY.txt (SlotLock 51.6 % of Redis, mutex path 29 % of memcached,
+  fast path 70 % of SQLite).
+- **Open question to Alexey:** start the design of merging SlotLock across the mutex path (S3)?
+
 ## Next steps, in order
 
 1. Register the protocol, announce to wtc and stretto, then the A/A calibration leg on node0.
