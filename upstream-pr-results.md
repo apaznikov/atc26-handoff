@@ -94,9 +94,9 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | PARSEC fluidanimate | 8 | 🟰 | 🟡 +1.8 | = | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | = | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
 | **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284, and 1.7 % with its 552 shared libraries, 17,172,360 → 16,882,221) | | | | | |
-| Speedometer 3 (20 stories)⁹ | browser | ⏳ | ⏳ | ⏳ | 🟡 +1.0 |
+| Speedometer 3 (20 stories)⁹ | browser | = | = | = | 🟡 +1.8 |
 | blink_perf.dom (3 stories)¹⁰ | browser | = | 🟡 −0.1 | 🟡 −0.9 | 🟡 −0.4 |
-| blink_perf.paint (2 stories) | browser | ⏳ | ⏳ | ⏳ | = |
+| blink_perf.paint (2 stories)¹⁵ | browser | 🟡 −2.9 | 🟡 −1.8 | 🟡 +1.5 | 🟡 0.0 |
 
 ¹ SQLite -O0, re-timed 28 Oct (4 code layouts × 4 runs, all arms in one leg): the overall score does not separate from
 noise (stock against stock spans [−8.0, +5.2]; stress and trigger tests vary by up to 90 %), but single tests do:
@@ -142,8 +142,12 @@ leg resolves. A last attempt with 8 runs per layout is queued.
 ⁸ freqmine: the 25 Oct leg was unreadable (its stock-against-stock point was +13 %). Re-timed on 28 Oct (best of five
 setups; stock against stock ±10 %): DE +1.9 and DE + runtime fix +2.2, both inside the noise.
 
-⁹ Speedometer 3: the A/A of this leg is itself −2.0 [−3.4, −0.8] and excludes zero, so by the registered rule the leg
-is not called, although DE + EA's interval [−0.1, +2.3] lies above it. Re-timed with 5 repetitions.
+⁹ Speedometer 3, 30 Oct leg with 5 repetitions and every arm (stock against stock +0.5 [−0.5, +1.4]): EA +0.5, DE 0.0 and
+DE + runtime fix −0.4 lie inside the noise; DE + EA +1.8 [+1.0, +2.6] is just short of resolving. The 27 Oct leg (3
+repetitions) had an A/A off zero and was not called.
+
+¹⁵ blink_perf.paint, 30 Oct leg: stock against stock is itself −2.0 [−2.6, −1.3] over only 2 stories, so by the registered
+rule the leg is reported but not called; the arms spread from EA −2.9 to DE + runtime fix +1.5 without a pattern.
 
 ¹⁰ blink_perf.dom, 29 Oct leg with 8 repetitions: one story is **slower in every repetition**, a pre-stated check:
 modify-element-classname DE −2.4 % (repetitions −1.9 to −2.8), DE + EA −2.6 %, DE + runtime fix −3.1 %, while stock against
