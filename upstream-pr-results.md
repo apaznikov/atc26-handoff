@@ -9,8 +9,8 @@ the AMD check are pending ([Open items](#open-items)).
 ## Takeaways
 
 - **On the 13 applications the PRs change nothing measurable in the overall score,** with three exceptions: xz -O0 DE and
-  DE + EA +0.6 %, brotli -O0 DE + EA +1.8 % (🟢), and two slowdowns: Redis LRANGE at -O2 2-3 % slower with DE (footnote ⁶), and pigz -O0
-  2.2 % slower with every arm, the same whatever is removed (footnote ⁴). SQLite -O0 gains up to +78 % on single tests (footnote ¹), but its overall score
+  DE + EA +0.6 %, brotli -O0 DE + EA +1.8 % (🟢), and a few small slowdowns (Redis LRANGE, pigz -O0, streamcluster, one Chromium story), which
+  profiling traces to code layout, caches and barrier waiting, not to extra work ([why](#why-some-cells-are-slower)). SQLite -O0 gains up to +78 % on single tests (footnote ¹), but its overall score
   does not separate from noise.
 - 🟢 **Kernels: DE gives +76 % to +205 % on OpenMP kernels with repeated reads** (hotspot, LU, BT) and +6 % on
   ocean_ncp; EA gives BT +8.5 %, DE + EA +109 %. Most other kernels are unresolved at 8 threads (the A/A of those legs
@@ -209,6 +209,22 @@ regression test for this case: the paper compiler with DE reports 2 races, the P
 second race on a reported cell. The PR removes only plain loads and stores, so no premise is needed here.)
 Removing only reads would also close the gap, but it costs much of DE's gain where the removed writes matter
 (NPB BT +47 instead of +76).
+
+## Why some cells are slower
+
+On 30 Oct the four slower cases were profiled with `perf stat` (user mode, stock against DE, 3 interleaved runs each).
+In none of them does DE add work: the instruction count is unchanged or lower. The extra time comes from how the same or
+fewer instructions run.
+
+| Case | Instructions, DE / stock | Cycles | What changes |
+|---|---|---|---|
+| Redis -O2, LRANGE_600 | 1.000 | **1.041** | LLC misses +16 %; DE removes almost no executed check on this path, so the cycles are a cache or layout effect |
+| streamcluster -O2 | **0.946** | 1.005 | DE removes 5.4 % of the instructions, but the threads then wait longer in the spinning barrier (`parsec_barrier_wait` 0.25 → 1.40 % of samples) and i-cache/iTLB misses rise |
+| Chromium, modify-element-classname | 0.999 | 1.012 | i-cache misses +2.8 %: a code layout effect |
+| pigz -O0 | 1.000 | 0.998 | not reproduced in this profiling run (no cycle difference) |
+
+So the slowdowns are second-order effects of code layout, cache behaviour and barrier waiting, not extra runtime work
+caused by the removed checks.
 
 ## Compile time
 
