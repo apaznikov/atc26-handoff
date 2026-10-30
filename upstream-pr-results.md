@@ -221,7 +221,7 @@ fewer instructions run.
 | Redis -O2, LRANGE_600 | 1.000 | **1.041** | LLC misses +16 %; DE removes almost no executed check on this path, so the cycles are a cache or layout effect |
 | streamcluster -O2 | **0.946** | 1.005 | DE removes 5.4 % of the instructions, but the threads then wait longer in the spinning barrier (`parsec_barrier_wait` 0.25 → 1.40 % of samples) and i-cache/iTLB misses rise |
 | Chromium, modify-element-classname | 0.999 | 1.012 | i-cache misses +2.8 %: a code layout effect |
-| pigz -O0 | 1.000 | 0.998 | not reproduced in this profiling run (no cycle difference) |
+| pigz -O0 | 1.000 | 0.998 | user-mode instructions and cycles are identical, so the 2.2 % wall-time difference lies outside user CPU work (waiting, scheduling or kernel time) |
 
 So the slowdowns are second-order effects of code layout, cache behaviour and barrier waiting, not extra runtime work
 caused by the removed checks.
