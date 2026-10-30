@@ -93,11 +93,20 @@ See apollo:~/tsan-rt/STATE.md, written at the stop of 28 Oct.
   runtime build was timed in one internal layout. Runtime-internal layout alone swings MySQL by +/- 3 %. All legs from
   30 Oct use `.i00/.i16/.i32/.i48` trees (pad first in libclang_rt.tsan.a, second pad keeps main's class); built for
   base, als, alsr, alsl, ddx on all five apps.
-- **ALS (skip on):** Redis +20-27 % GREEN (two legs; 99.9 % of hits are spin-wait loads); MySQL, FFmpeg null; SQLite
-  noisy (A/A excludes 1.0), re-measured with iNN; memcached -1.4 % (flag cost on unlocks, layout-free), release fences
-  recover half; alsl legs pending.
-- **DD-EXACT (both options):** memcached +3.9 % (single layout, iNN re-leg running); MySQL null under iNN (the earlier
-  +2.7 % was layout); Redis null; SQLite, FFmpeg queued under iNN.
+- **ALS, final under iNN (speed-up over stock, 95 % CI; verdict vs A/A):**
+  - Redis: l 1.211 [1.156, 1.262] GREEN, r 1.198 GREEN (99.9 % of hits are spin-wait loads; say so).
+  - memcached: two replicates, side by side: l 0.998 / 1.004 "=" (flag cost removed), r 0.996 "=" / 0.998 YELLOW.
+  - MySQL (after a 7-cell top-up): A/A 1.001, r 0.996, l 0.989, all "=".
+  - FFmpeg: r 1.004, l 1.003, "=".
+  - SQLite (re-measure p1is, quiet, 0 retired; verdict on STEADY, registered M12 before the leg: walthread1/2,
+    checkpoint_starvation_1/2, stress2): r 0.997, l 0.992, "=". dynamic_triggers and stress1 swing +/- 40-60 %.
+- **DD-EXACT (both options), final under iNN:** memcached D 1.030 [1.014, 1.042] GREEN (+31 MiB RSS); MySQL 0.998,
+  Redis 1.010, FFmpeg 0.999, SQLite STEADY 0.991, all "=". The earlier +19-22 % on memcached does not reproduce on the
+  record workload, and the single-layout +1-3 % on MySQL and FFmpeg were runtime layout.
+- **SQLite frequency** reads 2.36-2.40 GHz in every leg: threadtest3 keeps ~2 of 14 bench CPUs busy, and the monitor
+  averages over all 14. A property of the metric, not other load.
+- **Race preservation (gate 4), untimed, from 30 Oct ~17:30:** alsl (with census) and D (with detector stats) vs stock,
+  N=10 per arm, all five apps, ATC P2 tools; any LOST/UNDETERMINED escalates to N=20. Drivers apollo:~/tsan-rt/p2/.
 - **P1 profiles:** apollo:~/tsan-rt/p1/P1-SUMMARY.txt (SlotLock 51.6 % of Redis, mutex path 29 % of memcached,
   fast path 70 % of SQLite).
 - **Open question to Alexey:** start the design of merging SlotLock across the mutex path (S3)?
