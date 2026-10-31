@@ -105,8 +105,19 @@ See apollo:~/tsan-rt/STATE.md, written at the stop of 28 Oct.
   record workload, and the single-layout +1-3 % on MySQL and FFmpeg were runtime layout.
 - **SQLite frequency** reads 2.36-2.40 GHz in every leg: threadtest3 keeps ~2 of 14 bench CPUs busy, and the monitor
   averages over all 14. A property of the metric, not other load.
-- **Race preservation (gate 4), untimed, from 30 Oct ~17:30:** alsl (with census) and D (with detector stats) vs stock,
-  N=10 per arm, all five apps, ATC P2 tools; any LOST/UNDETERMINED escalates to N=20. Drivers apollo:~/tsan-rt/p2/.
+- **Race preservation (gate 4), 30-31 Oct, untimed; no site LOST anywhere** (apollo:~/tsan-rt/RESULTS.md, p2/):
+  - memcached, SQLite: every stock site KEPT by l and D; l is vacuous there (no skippable acquire loads).
+  - Redis, FFmpeg: stock reports no race on their workloads (Redis probes with unit tests and mixed io-thread load
+    also 0), so seeded trees were used (ATC seeds, one compiler, three runtimes, .text identical): every seed kept in
+    10/10 runs in s, l, D (Redis S5, a signal-timing seed: s 24/30, l 28/30, p 0.25).
+  - ALS-aimed Redis seed A4 (reader caches the version before the writer's release, 100 rounds): clean in 20/20 for s
+    and l, a false race in 3/3 under the no-bump-join mutant, so the check can fail.
+  - MySQL at N=20: rare-site UNDETERMINED rows (stock 1/20) in l and D; a stock-vs-stock arm (M18) gives as many, so
+    they are sampling noise.
+  - check-tsan with the options forced into every test: alsl 862 and D 870 statuses identical to plain, 0 FAIL.
+- **P1-MUTEX** (apollo:~/tsan-rt/p1/P1-MUTEX.txt, DWARF call graphs): memcached's pthread mutex path is 36.3 % of
+  server samples; slot-mutex CAS 12.7 % and SyncVar s->mtx CAS 13.1 % of the whole profile; clocks, trace, lookup < 2 %.
+  Three SlotLock and three s->mtx pairs per lock+unlock (from source). Rough S3 ceiling ~17 % of memcached CPU.
 - **P1 profiles:** apollo:~/tsan-rt/p1/P1-SUMMARY.txt (SlotLock 51.6 % of Redis, mutex path 29 % of memcached,
   fast path 70 % of SQLite).
 - **Open question to Alexey:** start the design of merging SlotLock across the mutex path (S3)?
