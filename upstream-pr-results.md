@@ -73,7 +73,7 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | zstd | 8 | = | = | 🟰 | = |
 | xz | 8 | = | 🟢 **+0.6** | 🟰 | 🟢 **+0.6** |
 | pigz⁴ | 8 | 🔴 −2.3 | 🔴 −2.2 | 🔴 −2.1 | 🔴 −2.3 |
-| brotli | 8 | 🟡 +1.7 | = | 🟰 | 🟢 **+1.8** |
+| brotli | 8 | 🟡 +1.4 | = | 🟰 | 🟢 **+1.8** |
 | OpenSSL | 8 | = | = | 🟰 | = |
 | **Benchmark kernels** (NPB, Rodinia, SPLASH-2x, PARSEC: small programs that model one algorithm) | | | | | |
 | Rodinia hotspot¹³ † | 8 | 🟰 | 🟢 **+205** | 🟢 **+289** | 🟰 |
@@ -91,10 +91,10 @@ runs on focs), so the changed runtime code never runs · — not measured · ⏳
 | SPLASH-2x radiosity | 8 | 🟰 | = | ⏳ | 🟰 |
 | SPLASH-2x raytrace † | 8 | = | = | = | = |
 | PARSEC streamcluster¹⁴ | 8 | 🟰 | 🟡 −3.4 | 🟡 −3.2 | 🟰 |
-| PARSEC fluidanimate | 8 | 🟰 | 🟡 +1.8 | = | 🟰 |
+| PARSEC fluidanimate | 8 | 🟰 | = | = | 🟰 |
 | 7-Zip benchmark (llvm-test-suite; multi-threaded) | auto | = | 🟢 **+1.1** | 🟰 | 🟢 **+1.7** |
 | **Chromium 156** (Intel; browser benchmarks, 95 % bootstrap over stories; 3 repetitions; static: DE + EA removes 1.4 % of the checks in the chrome binary, 3,328,362 → 3,282,284, and 1.7 % with its 552 shared libraries, 17,172,360 → 16,882,221) | | | | | |
-| Speedometer 3 (20 stories)⁹ | browser | = | = | = | 🟡 +1.8 |
+| Speedometer 3 (20 stories)⁹ | browser | = | = | = | = |
 | blink_perf.dom (3 stories)¹⁰ | browser | = | 🟡 −0.1 | 🟡 −0.9 | 🟡 −0.4 |
 | blink_perf.paint (2 stories)¹⁵ | browser | 🟡 −2.9 | 🟡 −1.8 | 🟡 +1.5 | 🟡 0.0 |
 
@@ -107,9 +107,9 @@ noise (stock against stock spans [−8.0, +5.2]; stress and trigger tests vary b
 | walthread1 | 🟢 **+7.0** | 🟢 **+5.9** | 🟢 **+6.0** | 🟢 **+5.7** |
 | walthread2 | 🟢 **+2.1** | 🟡 +0.4 | = | 🟢 **+2.5** |
 
-² SQLite -O2: in the 22 Oct leg no single test separates from noise for DE (walthread1 +4 lies inside A/A). In the
-27 Oct leg walthread1 is 🟢 +3.6 with DE and 🟡 +5.6 with DE + runtime fix (its lower bound equals A/A's upper bound;
-quiet re-check queued). checkpoint_starvation_1 gains nothing at -O2.
+² SQLite -O2: no single test resolves reliably. walthread1 was inside A/A on 22 Oct, 🟢 +3.6 with DE and 🟡 +5.6 with
+DE + runtime fix on 27 Oct, and "=" for both in a 31 Oct re-check with 4 code layouts (DE +0.5, fix −0.4); the gain is not
+established. checkpoint_starvation_1 gains nothing at -O2.
 
 ³ RocksDB varies by ±3-5 % between runs at 8 threads. A re-time on 25 Oct with twice the runs (N = 8 per layout) did not
 narrow it: -O2 A/A +2.5 [−2.2, +6.5], DE +5.5 [+1.0, +10.1]; -O0 every arm within A/A −2.3 [−4.5, +0.6]. The table
@@ -143,8 +143,8 @@ leg resolves. A last attempt with 8 runs per layout is queued.
 setups; stock against stock ±10 %): DE +1.9 and DE + runtime fix +2.2, both inside the noise.
 
 ⁹ Speedometer 3, 30 Oct leg with 5 repetitions and every arm (stock against stock +0.5 [−0.5, +1.4]): EA +0.5, DE 0.0 and
-DE + runtime fix −0.4 lie inside the noise; DE + EA +1.8 [+1.0, +2.6] is just short of resolving. The 27 Oct leg (3
-repetitions) had an A/A off zero and was not called.
+DE + runtime fix −0.4 lie inside the noise. DE + EA was +1.8 [+1.0, +2.6] there, just short of resolving; a 31 Oct re-check
+(5 repetitions) gives +0.1, inside the noise. The 27 Oct leg had an A/A off zero and was not called.
 
 ¹⁵ blink_perf.paint, 30 Oct leg: stock against stock is itself −2.0 [−2.6, −1.3] over only 2 stories, so by the registered
 rule the leg is reported but not called; the arms spread from EA −2.9 to DE + runtime fix +1.5 without a pattern.
